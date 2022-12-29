@@ -1,12 +1,13 @@
 from fastapi.testclient import TestClient
 import pytest
 from sqlalchemy.future import Engine
-from sqlmodel import Session, create_engine, select, SQLModel
+from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
 
 from swole_v2.app import SwoleApp
 from swole_v2.models import User
 from swole_v2.settings import get_settings
+
 from .factories import UserFactory
 
 
