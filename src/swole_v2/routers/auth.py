@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Form, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
-from ..models import Token
+from ..models import Token, UserLogin
 from ..security import authenticate_user, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=Token)
-def login(username: str = Form(), password: str = Form()) -> Token:
-    if not (user := authenticate_user(username, password)):
+def login(login_creds: UserLogin) -> Token:
+    if not (user := authenticate_user(login_creds.username, login_creds.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

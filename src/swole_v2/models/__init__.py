@@ -2,7 +2,7 @@ from swole_v2.models.exercise import Exercise
 from swole_v2.models.links import WorkoutExerciseLink
 from swole_v2.models.responses import ErrorResponse, SuccessResponse
 from swole_v2.models.token import Token, TokenData
-from swole_v2.models.user import User, UserRead
+from swole_v2.models.user import User, UserLogin, UserRead
 from swole_v2.models.workout import (
     Workout,
     WorkoutCreate,
@@ -13,6 +13,7 @@ from swole_v2.models.workout import (
 __all__ = [
     "User",
     "UserRead",
+    "UserLogin",
     "Token",
     "TokenData",
     "Workout",

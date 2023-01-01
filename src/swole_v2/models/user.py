@@ -23,3 +23,8 @@ class UserRead(SQLModel):
     username: str
     email: EmailStr | None = None
     full_name: str | None = None
+
+
+class UserLogin(SQLModel):
+    username: str
+    password: str
