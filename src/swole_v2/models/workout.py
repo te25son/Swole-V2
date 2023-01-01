@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .user import User
     from .exercise import Exercise
 
-from ..database.validators import check_empty_string
+from ..database.validators import check_date_format, check_empty_string
 from .links import WorkoutExerciseLink
 
 
@@ -37,6 +37,7 @@ class WorkoutCreate(SQLModel):
     date: datetime.date
 
     _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
+    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format)
 
 
 class WorkoutUpdate(SQLModel):
@@ -44,3 +45,4 @@ class WorkoutUpdate(SQLModel):
     date: datetime.date | None = None
 
     _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
+    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format)
