@@ -2,17 +2,18 @@ from uuid import UUID
 
 from sqlmodel import Session, select
 
-from ...models import Result, User
+from ...exceptions import BusinessError
+from ...models import User, UserRead
 from .base import BaseRepository
 
 USER_WITH_ID_NOT_FOUND = "No user with given id could be found."
 
 
 class UserRepository(BaseRepository):
-    def get_user_by_id(self, user_id: UUID | None) -> Result:
+    def get_user_by_id(self, user_id: UUID | None) -> UserRead:
         with Session(self.database) as session:
-            result = session.exec(select(User).where(User.id == user_id)).one_or_none()
+            user = session.exec(select(User).where(User.id == user_id)).one_or_none()
 
-            if result:
-                return Result(success=True, product=[result])
-            return Result(success=False, message=USER_WITH_ID_NOT_FOUND)
+            if not user:
+                raise BusinessError(USER_WITH_ID_NOT_FOUND)
+            return UserRead(**user.dict())

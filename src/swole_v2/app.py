@@ -3,10 +3,12 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from .error_handlers import (
+    business_error_handler,
     database_operation_error_handler,
     http_exception_handler,
     request_validation_error_handler,
 )
+from .exceptions import BusinessError
 from .models import ErrorResponse
 from .routers import auth, users, workouts
 from .settings import Settings, get_settings
@@ -39,3 +41,4 @@ class SwoleApp:
         self.app.add_exception_handler(HTTPException, http_exception_handler)
         self.app.add_exception_handler(RequestValidationError, request_validation_error_handler)
         self.app.add_exception_handler(SQLAlchemyError, database_operation_error_handler)
+        self.app.add_exception_handler(BusinessError, business_error_handler)
