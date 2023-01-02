@@ -29,14 +29,39 @@ class TestWorkouts(APITestBase):
         assert response.code == "ok"
         assert len(response.results) == len(workouts)
 
+    def test_workout_detail_succeeds(self) -> None:
+        workout = WorkoutFactory.create_sync(user=self.user)
+
+        response = SuccessResponse(**self.client.post(f"/workouts/detail/{workout.id}").json())
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [
+            {"name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}
+        ]
+
+    def test_workout_detail_fails_with_invalid_user_id(self) -> None:
+        workout = WorkoutFactory.create_sync(user=UserFactory.create_sync())
+
+        response = ErrorResponse(**self.client.post(f"/workouts/detail/{workout.id}").json())
+
+        assert response.code == "error"
+        assert response.message == NO_WORKOUT_FOUND
+
+    def test_workout_detail_fails_with_invalid_workout_id(self) -> None:
+        response = ErrorResponse(**self.client.post(f"/workouts/detail/{uuid4()}").json())
+
+        assert response.code == "error"
+        assert response.message == NO_WORKOUT_FOUND
+
     @pytest.mark.parametrize(
         "name, date, should_succeed, error_message",
         [
-            pytest.param("", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty string.",),
-            pytest.param("   ", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank string.",),
-            pytest.param(fake.text(), "12345", False, INCORRECT_DATE_FORMAT, id="Test invalid date.",),
-            pytest.param(fake.text(), "2022/01/12", False, INCORRECT_DATE_FORMAT, id="Test incorrectly formatted date.",),
-            pytest.param(fake.text(), fake.date(), True, None, id="Test invalid date."),
+            pytest.param("", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty string fails",),
+            pytest.param("   ", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank string fails",),
+            pytest.param(fake.text(), "12345", False, INCORRECT_DATE_FORMAT, id="Test invalid date fails",),
+            pytest.param(fake.text(), "2022/01/12", False, INCORRECT_DATE_FORMAT, id="Test incorrectly formatted date fails",),
+            pytest.param(fake.text(), fake.date(), True, None, id="Test succeeds"),
         ],
     )
     def test_workout_create(self, name: str, date: str, should_succeed: bool, error_message: str | None) -> None:
