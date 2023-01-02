@@ -1,21 +1,59 @@
-from pydantic_factories import Ignore, ModelFactory
+from typing import TypeVar
+
+from pydantic_factories import Ignore, ModelFactory, SyncPersistenceProtocol
+from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel.pool import StaticPool
 
 from swole_v2 import models
+from swole_v2.settings import get_settings
+
+T = TypeVar("T", bound=SQLModel)
 
 
-class ExerciseFactory(ModelFactory[models.Exercise]):
-    __model__ = models.Exercise
+# ============ PERSISTENCE HANDLERS =============
+
+
+class SqlModelSyncPersistenceHandler(SyncPersistenceProtocol[T]):
+    def __init__(self) -> None:
+        self.database = create_engine(
+            url=get_settings().DB_CONNECTION,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+            echo=True,
+        )
+
+    def save(self, data: T) -> T:
+        with Session(self.database, expire_on_commit=False) as session:
+            session.expire_on_commit = False
+            session.add(data)
+            session.commit()
+
+            return data
+
+    def save_many(self, data: list[T]) -> list[T]:
+        with Session(self.database, expire_on_commit=False) as session:
+            session.add_all(data)
+            session.commit()
+
+            return data
+
+
+# ================== FACTORIES ==================
+
+
+class BaseFactory(ModelFactory[T]):
+    __sync_persistence__ = SqlModelSyncPersistenceHandler  # type: ignore
 
     id = Ignore()
 
 
-class WorkoutFactory(ModelFactory[models.Workout]):
-    __model__ = models.Workout
-
-    id = Ignore()
-
-
-class UserFactory(ModelFactory[models.User]):
+class UserFactory(BaseFactory[models.User]):
     __model__ = models.User
 
-    id = Ignore()
+
+class ExerciseFactory(BaseFactory[models.Exercise]):
+    __model__ = models.Exercise
+
+
+class WorkoutFactory(BaseFactory[models.Workout]):
+    __model__ = models.Workout

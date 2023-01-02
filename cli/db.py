@@ -62,7 +62,9 @@ def create_instances(settings: Settings, session: Session) -> None:
     # Create user instances
     user_instances = UserFactory.batch(10)
     admin = UserFactory.build(
-        username=settings.DUMMY_USERNAME, hashed_password=hash_password(settings.DUMMY_PASSWORD), disabled=False
+        username=settings.DUMMY_USERNAME,
+        hashed_password=hash_password(settings.DUMMY_PASSWORD),
+        disabled=False,
     )
     user_instances.append(admin)
 

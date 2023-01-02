@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -17,7 +17,7 @@ from .links import WorkoutExerciseLink
 class Workout(SQLModel, table=True):  # type: ignore
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(index=True)
-    date: datetime.date = Field(index=True)
+    date: dt.date = Field(index=True)
 
     user_id: UUID = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="workouts")
@@ -29,20 +29,20 @@ class Workout(SQLModel, table=True):  # type: ignore
 
 class WorkoutRead(SQLModel):
     name: str
-    date: datetime.date
+    date: dt.date
 
 
 class WorkoutCreate(SQLModel):
     name: str
-    date: datetime.date
+    date: dt.date
 
     _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
-    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format)
+    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format())
 
 
 class WorkoutUpdate(SQLModel):
     name: str | None = None
-    date: datetime.date | None = None
+    date: dt.date | None = None
 
-    _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
-    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format)
+    _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name", allow_none=True))
+    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format(allow_none=True))

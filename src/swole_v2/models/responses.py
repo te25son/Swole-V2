@@ -14,4 +14,4 @@ class ErrorResponse(Response):
 
 class SuccessResponse(Response):
     code: str = "ok"
-    result: list[Any] | None = None
+    results: list[Any] | None = None

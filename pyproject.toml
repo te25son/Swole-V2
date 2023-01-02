@@ -71,7 +71,8 @@ module = [
     "pydantic_factories.*",
     "uvicorn.*",
     "sqlalchemy_utils.*",
-    "hypothesis.*"
+    "hypothesis.*",
+    "faker.*"
 ]
 ignore_missing_imports = true
 
@@ -92,7 +93,7 @@ fail_under = 100
 exclude_lines = ["if TYPE_CHECKING:"]
 
 [tool.flake8]
-max-line-length = 120
+max-line-length = 130
 select = ["BLK","C","F","W","I"]
 # E203,W503 don't play well with black (BLK)
 ignore = ["E203","W503","E731","I100","I101","I202"]
@@ -101,7 +102,7 @@ application-import-names = ["swole_v2","tests"]
 import-order-style = "google"
 
 [tool.black]
-line-length = 120
+line-length = 130
 
 [tool.isort]
 profile = "google"

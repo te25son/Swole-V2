@@ -10,11 +10,17 @@ DATABASE_ERROR = "An error occurred when performing an operation on the database
 
 
 def http_exception_handler(request: Request, exception: HTTPException) -> JSONResponse:
-    return JSONResponse(status_code=exception.status_code, content=ErrorResponse(message=exception.detail).dict())
+    return JSONResponse(
+        status_code=exception.status_code,
+        content=ErrorResponse(message=exception.detail).dict(),
+    )
 
 
 def business_error_handler(request: Request, exception: BusinessError) -> JSONResponse:
-    return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=ErrorResponse(message=str(exception)).dict())
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=ErrorResponse(message=str(exception)).dict(),
+    )
 
 
 def request_validation_error_handler(request: Request, exception: RequestValidationError) -> JSONResponse:
