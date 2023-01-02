@@ -22,6 +22,17 @@ class WorkoutRepository(BaseRepository):
                 for result in session.exec(select(Workout).where(Workout.user_id == user_id)).all()
             ]
 
+    def detail(self, user_id: UUID | None, workout_id: str) -> WorkoutRead:
+        workout_uuid = check_is_uuid(workout_id)
+        with Session(self.database) as session:
+            query = select(Workout).where(Workout.id == workout_uuid).where(Workout.user_id == user_id)
+            workout = session.exec(query).one_or_none()
+
+            if not workout:
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+
+            return WorkoutRead(**workout.dict())
+
     def create(self, user_id: UUID | None, create_data: WorkoutCreate) -> WorkoutRead:
         with Session(self.database) as session:
             data = create_data.dict()
