@@ -18,7 +18,8 @@ class WorkoutRepository(BaseRepository):
     def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
         with Session(self.database) as session:
             return [
-                WorkoutRead(**result.dict()) for result in session.exec(select(Workout).where(Workout.user_id == user_id)).all()
+                WorkoutRead(**result.dict())
+                for result in session.exec(select(Workout).where(Workout.user_id == user_id)).all()
             ]
 
     def create(self, user_id: UUID | None, create_data: WorkoutCreate) -> WorkoutRead:
