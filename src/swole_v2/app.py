@@ -10,7 +10,7 @@ from .error_handlers import (
 )
 from .exceptions import BusinessError
 from .models import ErrorResponse
-from .routers import auth, users, workouts
+from .routers import auth, exercises, users, workouts
 from .settings import Settings, get_settings
 
 
@@ -34,6 +34,7 @@ class SwoleApp:
         app.include_router(users.router)
         app.include_router(auth.router)
         app.include_router(workouts.router)
+        app.include_router(exercises.router)
 
         return app
 

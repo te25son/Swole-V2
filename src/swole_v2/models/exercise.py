@@ -1,12 +1,20 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+from pydantic import validator
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .workout import Workout
 
+from ..database.validators import check_is_uuid
 from .links import WorkoutExerciseLink
+
+
+class ExerciseGetAll(SQLModel):
+    workout_id: UUID
+
+    _check_id = validator("workout_id", allow_reuse=True, pre=True)(check_is_uuid)
 
 
 class Exercise(SQLModel, table=True):  # type: ignore

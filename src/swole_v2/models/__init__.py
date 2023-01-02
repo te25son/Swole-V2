@@ -1,4 +1,4 @@
-from swole_v2.models.exercise import Exercise, ExerciseRead
+from swole_v2.models.exercise import Exercise, ExerciseGetAll, ExerciseRead
 from swole_v2.models.links import WorkoutExerciseLink
 from swole_v2.models.responses import ErrorResponse, SuccessResponse
 from swole_v2.models.token import Token, TokenData
@@ -22,6 +22,7 @@ __all__ = [
     "WorkoutUpdate",
     "Exercise",
     "ExerciseRead",
+    "ExerciseGetAll",
     "WorkoutExerciseLink",
     "SuccessResponse",
     "ErrorResponse",
