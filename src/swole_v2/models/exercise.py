@@ -14,3 +14,7 @@ class Exercise(SQLModel, table=True):  # type: ignore
     name: str = Field(index=True)
 
     workouts: list["Workout"] = Relationship(back_populates="exercises", link_model=WorkoutExerciseLink)
+
+
+class ExerciseRead(SQLModel):
+    name: str
