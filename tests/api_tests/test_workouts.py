@@ -13,8 +13,8 @@ from swole_v2.database.validators import (
 )
 from swole_v2.models import ErrorResponse, SuccessResponse, Workout
 
-from . import APITestBase, fake
 from ..factories import UserFactory, WorkoutFactory
+from .base import APITestBase, fake
 
 
 # fmt: off

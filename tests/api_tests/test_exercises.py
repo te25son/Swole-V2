@@ -7,8 +7,8 @@ from swole_v2.database.repositories.workouts import NO_WORKOUT_FOUND
 from swole_v2.database.validators import INVALID_ID
 from swole_v2.models import ErrorResponse, SuccessResponse
 
-from . import APITestBase, fake
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
+from .base import APITestBase, fake
 
 
 class TestWorkouts(APITestBase):
