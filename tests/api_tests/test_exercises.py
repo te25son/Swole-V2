@@ -1,9 +1,13 @@
+from typing import Any
 from uuid import uuid4
 
+import pytest
+
 from swole_v2.database.repositories.workouts import NO_WORKOUT_FOUND
+from swole_v2.database.validators import INVALID_ID
 from swole_v2.models import ErrorResponse, SuccessResponse
 
-from . import APITestBase
+from . import APITestBase, fake
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
 
 
@@ -27,10 +31,22 @@ class TestWorkouts(APITestBase):
         assert response.code == "error"
         assert response.message == NO_WORKOUT_FOUND
 
-    def test_exercise_get_all_fails_with_invalid_workout_id(self) -> None:
+    @pytest.mark.parametrize(
+        "workout_id, message",
+        [
+            pytest.param(uuid4(), NO_WORKOUT_FOUND, id="Test random uuid fails"),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails"),
+            pytest.param(
+                WorkoutFactory.create_sync(user=UserFactory.create_sync()).id,
+                NO_WORKOUT_FOUND,
+                id="Test other owned workout id fails",
+            ),
+        ],
+    )
+    def test_exercise_get_all_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
         WorkoutFactory.create_sync(user=self.user, exercises=ExerciseFactory.create_batch_sync(size=5))
 
-        response = ErrorResponse(**self.client.post("/exercises/all", json={"workout_id": str(uuid4())}).json())
+        response = ErrorResponse(**self.client.post("/exercises/all", json={"workout_id": str(workout_id)}).json())
 
         assert response.code == "error"
-        assert response.message == NO_WORKOUT_FOUND
+        assert response.message == message
