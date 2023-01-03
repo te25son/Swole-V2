@@ -17,6 +17,12 @@ class ExerciseGetAll(SQLModel):
     _check_id = validator("workout_id", allow_reuse=True, pre=True)(check_is_uuid)
 
 
+class ExerciseDetail(SQLModel):
+    exercise_id: UUID
+
+    _check_id = validator("exercise_id", allow_reuse=True, pre=True)(check_is_uuid)
+
+
 class Exercise(SQLModel, table=True):  # type: ignore
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(index=True)
