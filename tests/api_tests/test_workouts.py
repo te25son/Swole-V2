@@ -1,6 +1,5 @@
 from uuid import uuid4
 
-from faker import Faker
 import pytest
 from sqlmodel import select
 
@@ -14,10 +13,9 @@ from swole_v2.database.validators import (
 )
 from swole_v2.models import ErrorResponse, SuccessResponse, Workout
 
-from . import APITestBase
+from . import APITestBase, fake
 from ..factories import UserFactory, WorkoutFactory
 
-fake = Faker()
 
 # fmt: off
 class TestWorkouts(APITestBase):

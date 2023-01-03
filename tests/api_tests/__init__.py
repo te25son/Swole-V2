@@ -1,12 +1,13 @@
 from faker import Faker
 from fastapi.testclient import TestClient
 import pytest
-from sqlalchemy.future import Engine
 from sqlmodel import Session
 
 from swole_v2.app import SwoleApp
 from swole_v2.models import User
 from swole_v2.security import get_current_active_user
+
+fake = Faker()
 
 
 class APITestBase:
