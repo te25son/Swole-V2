@@ -24,8 +24,8 @@ def detail(
     return SuccessResponse(results=[respository.detail(current_user.id, workout_id)])
 
 
-@router.post("/add", response_model=SuccessResponse)
-def add(
+@router.post("/create", response_model=SuccessResponse)
+def create(
     workout: WorkoutCreate,
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),

@@ -64,7 +64,7 @@ class TestWorkouts(APITestBase):
     )
     def test_workout_create(self, name: str, date: str, should_succeed: bool, error_message: str | None) -> None:
         data = {"name": name, "date": date}
-        response = self.client.post("/workouts/add", json=data)
+        response = self.client.post("/workouts/create", json=data)
 
         if should_succeed:
             success_response = SuccessResponse(**response.json())
@@ -83,7 +83,7 @@ class TestWorkouts(APITestBase):
         date = fake.date()
         WorkoutFactory.create_sync(user=UserFactory.create_sync(), name=name, date=date)
 
-        response = SuccessResponse(**self.client.post("/workouts/add", json={"name": name, "date": date}).json())
+        response = SuccessResponse(**self.client.post("/workouts/create", json={"name": name, "date": date}).json())
 
         assert response.results
         assert response.code == "ok"
@@ -96,7 +96,7 @@ class TestWorkouts(APITestBase):
         existing_date = existing_workout.date.strftime("%Y-%m-%d")
 
         # Create second workout with same name and date
-        response = ErrorResponse(**self.client.post("/workouts/add", json={"name": existing_name, "date": existing_date}).json())
+        response = ErrorResponse(**self.client.post("/workouts/create", json={"name": existing_name, "date": existing_date}).json())
 
         assert response.code == "error"
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
