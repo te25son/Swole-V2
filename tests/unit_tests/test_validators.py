@@ -4,13 +4,13 @@ from hypothesis import given
 from hypothesis import strategies as st
 import pytest
 
-from swole_v2.database.validators import (
+from swole_v2.exceptions import BusinessError
+from swole_v2.schemas.validators import (
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
     check_date_format,
     check_is_uuid,
 )
-from swole_v2.exceptions import BusinessError
 
 
 @given(value=st.uuids())

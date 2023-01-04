@@ -9,8 +9,8 @@ from .error_handlers import (
     request_validation_error_handler,
 )
 from .exceptions import BusinessError
-from .models import ErrorResponse
 from .routers import auth, exercises, users, workouts
+from .schemas import ErrorResponse
 from .settings import Settings, get_settings
 
 

@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from .exceptions import BusinessError
-from .models import ErrorResponse
+from .schemas import ErrorResponse
 
 DATABASE_ERROR = "An error occurred when performing an operation on the database with the following message. {msg}."
 

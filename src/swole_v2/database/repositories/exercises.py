@@ -5,13 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from ...exceptions import BusinessError
-from ...models import (
-    Exercise,
-    ExerciseAddToWorkout,
-    ExerciseCreate,
-    ExerciseRead,
-    Workout,
-)
+from ...models import Exercise, ExerciseRead, Workout
+from ...schemas import ExerciseAddToWorkout, ExerciseCreate
 from .base import BaseRepository
 
 MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND = "Matching workout and exercise not found."

@@ -2,14 +2,12 @@ import datetime as dt
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from pydantic import validator
 from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from . import User, Exercise
 
-from ..database.validators import check_date_format, check_empty_string
 from ..models.links import WorkoutExerciseLink
 
 
@@ -36,19 +34,3 @@ class Workout(SQLModel, table=True):  # type: ignore
 class WorkoutRead(SQLModel):
     name: str
     date: dt.date
-
-
-class WorkoutCreate(SQLModel):
-    name: str
-    date: dt.date
-
-    _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
-    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format())
-
-
-class WorkoutUpdate(SQLModel):
-    name: str | None = None
-    date: dt.date | None = None
-
-    _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name", allow_none=True))
-    _check_date_format = validator("date", allow_reuse=True, pre=True)(check_date_format(allow_none=True))

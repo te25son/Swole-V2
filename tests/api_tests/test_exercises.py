@@ -9,8 +9,9 @@ from swole_v2.database.repositories.exercises import (
     MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
     NO_EXERCISE_FOUND,
 )
-from swole_v2.database.validators import INVALID_ID
-from swole_v2.models import ErrorResponse, ExerciseRead, SuccessResponse
+from swole_v2.models import ExerciseRead
+from swole_v2.schemas import ErrorResponse, SuccessResponse
+from swole_v2.schemas.validators import INVALID_ID
 
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
 from .base import APITestBase, fake
