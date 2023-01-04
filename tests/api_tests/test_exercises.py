@@ -158,7 +158,6 @@ class TestExercises(APITestBase):
         assert response.code == "error"
         assert response.message == message
 
-    @pytest.mark.skip("Failing because the unique constraint within the link model is useless.")
     def test_exercise_add_fails_when_adding_exercise_that_already_exists_in_workout(self) -> None:
         exercise = ExerciseFactory.create_sync(user=self.user)
         workout = WorkoutFactory.create_sync(user=self.user, exercises=[exercise])

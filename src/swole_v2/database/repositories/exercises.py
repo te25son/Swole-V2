@@ -69,12 +69,12 @@ class ExerciseRepository(BaseRepository):
             exercise = result[0][0]
             workout = result[0][1]
 
-            try:
-                workout.exercises.append(exercise)
-                session.add(workout)
-                session.commit()
-                session.refresh(exercise)
-
-                return ExerciseRead(**exercise.dict())
-            except IntegrityError:
+            if exercise in workout.exercises:
                 raise BusinessError(EXERCISE_ALREADY_EXISTS_IN_WORKOUT)
+
+            workout.exercises.append(exercise)
+            session.add(workout)
+            session.commit()
+            session.refresh(exercise)
+
+            return ExerciseRead(**exercise.dict())
