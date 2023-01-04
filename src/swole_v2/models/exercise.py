@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from . import Workout, User
 
 from ..database.validators import check_empty_string, check_is_uuid
-from .links import WorkoutExerciseLink
+from ..models.links import WorkoutExerciseLink
 
 
 class ExerciseDetail(SQLModel):
@@ -33,7 +33,14 @@ class Exercise(SQLModel, table=True):  # type: ignore
     user_id: UUID = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="exercises")
 
-    workouts: list["Workout"] = Relationship(back_populates="exercises", link_model=WorkoutExerciseLink)
+    workouts: list["Workout"] = Relationship(
+        back_populates="exercises",
+        link_model=WorkoutExerciseLink,
+        sa_relationship_kwargs=dict(
+            primaryjoin="and_(Exercise.id==WorkoutExerciseLink.exercise_id, Exercise.user_id==WorkoutExerciseLink.exercise_user_id)",
+            secondaryjoin="and_(Workout.id==WorkoutExerciseLink.workout_id, Workout.user_id==WorkoutExerciseLink.workout_user_id)",
+        ),
+    )
 
     __table_args__ = (UniqueConstraint("user_id", "name", name="user_id_and_name_uc"),)
 

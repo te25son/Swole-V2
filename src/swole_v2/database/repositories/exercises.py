@@ -5,18 +5,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from ...exceptions import BusinessError
-from ...models import (
-    Exercise,
-    ExerciseCreate,
-    ExerciseRead,
-    Workout,
-    WorkoutExerciseLink,
-)
+from ...models import Exercise, ExerciseCreate, ExerciseRead, Workout
 from .base import BaseRepository
 from .workouts import NO_WORKOUT_FOUND
 
 NO_EXERCISE_FOUND = "No exercise found."
-NAME_MUST_BE_UNIQUE = "Name must be unique"
+EXERCISE_ALREADY_EXISTS_IN_WORKOUT = "Exercise with the given name already exists in this workout."
 
 
 class ExerciseRepository(BaseRepository):
@@ -30,18 +24,8 @@ class ExerciseRepository(BaseRepository):
     def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
         with Session(self.database) as session:
             exercise = (
-                (
-                    session.exec(
-                        select(Exercise)
-                        .join(WorkoutExerciseLink)
-                        .join(Workout)
-                        .where(Workout.user_id == user_id)
-                        .where(Exercise.id == exercise_id)
-                    )
-                )
-                .unique()
-                .one_or_none()
-            )
+                session.exec(select(Exercise).where(Exercise.user_id == user_id).where(Exercise.id == exercise_id))
+            ).one_or_none()
 
             if not exercise:
                 raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
@@ -68,4 +52,4 @@ class ExerciseRepository(BaseRepository):
 
                 return ExerciseRead(**created_exercise.dict())
             except IntegrityError:
-                raise BusinessError(NAME_MUST_BE_UNIQUE)
+                raise BusinessError(EXERCISE_ALREADY_EXISTS_IN_WORKOUT)
