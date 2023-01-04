@@ -20,16 +20,12 @@ NAME_MUST_BE_UNIQUE = "Name must be unique"
 
 
 class ExerciseRepository(BaseRepository):
-    def get_all(self, user_id: UUID | None, workout_id: UUID) -> list[ExerciseRead]:
+    def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
         with Session(self.database) as session:
-            workout = session.exec(
-                select(Workout).where(Workout.id == workout_id).where(Workout.user_id == user_id)
-            ).one_or_none()
-
-            if not workout:
-                raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
-
-            return [ExerciseRead(**exercise.dict()) for exercise in workout.exercises]
+            return [
+                ExerciseRead(**e.dict())
+                for e in session.exec(select(Exercise).where(Exercise.user_id == user_id)).all()
+            ]
 
     def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
         with Session(self.database) as session:
@@ -61,8 +57,11 @@ class ExerciseRepository(BaseRepository):
             if not workout:
                 raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
+            create_data = data.dict()
+            create_data["user_id"] = user_id
+
             try:
-                workout.exercises.append(created_exercise := Exercise(**data.dict()))
+                workout.exercises.append(created_exercise := Exercise(**create_data))
                 session.add(workout)
                 session.commit()
                 session.refresh(created_exercise)

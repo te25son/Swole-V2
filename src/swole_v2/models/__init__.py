@@ -2,7 +2,6 @@ from swole_v2.models.exercise import (
     Exercise,
     ExerciseCreate,
     ExerciseDetail,
-    ExerciseGetAll,
     ExerciseRead,
 )
 from swole_v2.models.links import WorkoutExerciseLink
@@ -28,7 +27,6 @@ __all__ = [
     "WorkoutUpdate",
     "Exercise",
     "ExerciseRead",
-    "ExerciseGetAll",
     "ExerciseDetail",
     "ExerciseCreate",
     "WorkoutExerciseLink",

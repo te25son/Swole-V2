@@ -2,19 +2,14 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from pydantic import validator
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from .workout import Workout
+    from . import Workout, User
 
 from ..database.validators import check_empty_string, check_is_uuid
 from .links import WorkoutExerciseLink
-
-
-class ExerciseGetAll(SQLModel):
-    workout_id: UUID
-
-    _check_id = validator("workout_id", allow_reuse=True, pre=True)(check_is_uuid)
 
 
 class ExerciseDetail(SQLModel):
@@ -35,7 +30,12 @@ class Exercise(SQLModel, table=True):  # type: ignore
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(index=True)
 
+    user_id: UUID = Field(foreign_key="user.id")
+    user: "User" = Relationship(back_populates="exercises")
+
     workouts: list["Workout"] = Relationship(back_populates="exercises", link_model=WorkoutExerciseLink)
+
+    __table_args__ = (UniqueConstraint("user_id", "name", name="user_id_and_name_uc"),)
 
 
 class ExerciseRead(SQLModel):

@@ -7,8 +7,7 @@ from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from .user import User
-    from .exercise import Exercise
+    from . import User, Exercise
 
 from ..database.validators import check_date_format, check_empty_string
 from .links import WorkoutExerciseLink

@@ -14,23 +14,19 @@ from .base import APITestBase, fake
 
 class TestExercises(APITestBase):
     def test_exercise_get_all_succeeds(self) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user, exercises=ExerciseFactory.create_batch_sync(size=5))
+        exercises = ExerciseFactory.create_batch_sync(user=self.user, size=5)
 
-        response = SuccessResponse(**self.client.post("/exercises/all", json={"workout_id": str(workout.id)}).json())
+        response = SuccessResponse(**self.client.post("/exercises/all").json())
 
         assert response.results
         assert response.code == "ok"
-        assert len(response.results) == len(workout.exercises)
-        assert all(
-            result in response.results for result in [ExerciseRead(**e.dict()).dict() for e in workout.exercises]
-        )
+        assert len(response.results) == len(exercises)
+        assert all(result in response.results for result in [ExerciseRead(**e.dict()).dict() for e in exercises])
 
     def test_exercise_get_all_fails_with_invalid_user_id(self) -> None:
-        workout = WorkoutFactory.create_sync(
-            user=UserFactory.create_sync(), exercises=ExerciseFactory.create_batch_sync(size=5)
-        )
+        WorkoutFactory.create_sync(user=UserFactory.create_sync(), exercises=ExerciseFactory.create_batch_sync(size=5))
 
-        response = ErrorResponse(**self.client.post("/exercises/all", json={"workout_id": str(workout.id)}).json())
+        response = ErrorResponse(**self.client.post("/exercises/all").json())
 
         assert response.code == "error"
         assert response.message == NO_WORKOUT_FOUND

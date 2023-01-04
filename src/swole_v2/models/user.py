@@ -5,7 +5,7 @@ from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from .workout import Workout
+    from . import Exercise, Workout
 
 
 class User(SQLModel, table=True):  # type: ignore
@@ -17,6 +17,7 @@ class User(SQLModel, table=True):  # type: ignore
     disabled: bool | None = False
 
     workouts: list["Workout"] = Relationship(back_populates="user")
+    exercises: list["Exercise"] = Relationship(back_populates="user")
 
 
 class UserRead(SQLModel):
