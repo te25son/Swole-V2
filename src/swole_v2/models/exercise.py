@@ -24,6 +24,13 @@ class ExerciseCreate(SQLModel):
     _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
 
 
+class ExerciseAddToWorkout(SQLModel):
+    exercise_id: UUID
+    workout_id: UUID
+
+    _check_ids = validator("exercise_id", "workout_id", allow_reuse=True, pre=True)(check_is_uuid)
+
+
 class Exercise(SQLModel, table=True):  # type: ignore
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(index=True)

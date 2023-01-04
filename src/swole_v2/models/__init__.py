@@ -1,5 +1,6 @@
 from swole_v2.models.exercise import (
     Exercise,
+    ExerciseAddToWorkout,
     ExerciseCreate,
     ExerciseDetail,
     ExerciseRead,
@@ -29,6 +30,7 @@ __all__ = [
     "ExerciseRead",
     "ExerciseDetail",
     "ExerciseCreate",
+    "ExerciseAddToWorkout",
     "WorkoutExerciseLink",
     "SuccessResponse",
     "ErrorResponse",

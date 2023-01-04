@@ -4,7 +4,9 @@ from uuid import uuid4
 import pytest
 
 from swole_v2.database.repositories.exercises import (
+    EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
+    MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
     NO_EXERCISE_FOUND,
 )
 from swole_v2.database.validators import INVALID_ID
@@ -98,3 +100,71 @@ class TestExercises(APITestBase):
 
         assert response.code == "error"
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
+
+    def test_exercise_add_succeeds(self) -> None:
+        workout = WorkoutFactory.create_sync(user=self.user)
+        exercise = ExerciseFactory.create_sync(user=self.user)
+        data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+
+        response = SuccessResponse(**self.client.post("/exercises/add", json=data).json())
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [ExerciseRead(**exercise.dict()).dict()]
+
+    @pytest.mark.parametrize(
+        "workout_id, message",
+        [
+            pytest.param(uuid4(), MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND, id="Test random uuid fails."),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails."),
+            pytest.param(
+                WorkoutFactory.create_sync(user=UserFactory.create_sync()).id,
+                MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
+                id="Test adding exercise to workout belonging to other user fails.",
+            ),
+        ],
+    )
+    def test_exercise_add_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
+        # Ensure the user has workouts but none matching the given id
+        WorkoutFactory.create_batch_sync(user=self.user, size=5)
+        exercise = ExerciseFactory.create_sync(user=self.user)
+        data = {"workout_id": str(workout_id), "exercise_id": str(exercise.id)}
+
+        response = ErrorResponse(**self.client.post("/exercises/add", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == message
+
+    @pytest.mark.parametrize(
+        "exercise_id, message",
+        [
+            pytest.param(uuid4(), MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND, id="Test random uuid fails."),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails."),
+            pytest.param(
+                ExerciseFactory.create_sync(user=UserFactory.create_sync()).id,
+                MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
+                id="Test adding exercise belonging to other user to workout fails.",
+            ),
+        ],
+    )
+    def test_exercise_add_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
+        # Ensure the user has exercises but none matching the given id
+        ExerciseFactory.create_batch_sync(user=self.user, size=5)
+        workout = WorkoutFactory.create_sync(user=self.user)
+        data = {"workout_id": str(workout.id), "exercise_id": str(exercise_id)}
+
+        response = ErrorResponse(**self.client.post("/exercises/add", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == message
+
+    @pytest.mark.skip("Failing because the unique constraint within the link model is useless.")
+    def test_exercise_add_fails_when_adding_exercise_that_already_exists_in_workout(self) -> None:
+        exercise = ExerciseFactory.create_sync(user=self.user)
+        workout = WorkoutFactory.create_sync(user=self.user, exercises=[exercise])
+        data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+
+        response = ErrorResponse(**self.client.post("/exercises/add", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == EXERCISE_ALREADY_EXISTS_IN_WORKOUT

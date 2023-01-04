@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends
 
 from ..database.repositories import ExerciseRepository
-from ..models import ExerciseCreate, ExerciseDetail, SuccessResponse, User
+from ..models import (
+    ExerciseAddToWorkout,
+    ExerciseCreate,
+    ExerciseDetail,
+    SuccessResponse,
+    User,
+)
 from ..security import get_current_active_user
 
 router = APIRouter(prefix="/exercises", tags=["exercises"])
@@ -25,9 +31,18 @@ def detail(
 
 
 @router.post("/create", response_model=SuccessResponse)
-def add(
+def create(
     data: ExerciseCreate,
     current_user: User = Depends(get_current_active_user),
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=[respository.create(current_user.id, data)])
+
+
+@router.post("/add", response_model=SuccessResponse)
+def add_to_workout(
+    data: ExerciseAddToWorkout,
+    current_user: User = Depends(get_current_active_user),
+    respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=[respository.add_to_workout(current_user.id, data)])
