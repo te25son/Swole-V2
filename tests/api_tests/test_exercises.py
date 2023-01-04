@@ -97,3 +97,16 @@ class TestExercises(APITestBase):
 
         assert response.code == "error"
         assert response.message == message
+
+    def test_exercise_create_succeeds(self) -> None:
+        workout = WorkoutFactory.create_sync(user=self.user)
+        data = {
+            "workout_id": str(workout.id),
+            "name": fake.text()
+        }
+
+        response = SuccessResponse(**self.client.post("/exercises/add", json=data).json())
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [ExerciseRead(**data).dict()]

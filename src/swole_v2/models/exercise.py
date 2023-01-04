@@ -5,10 +5,9 @@ from pydantic import validator
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from .workout import Workout
+    from . import Workout, WorkoutExerciseLink
 
-from ..database.validators import check_is_uuid
-from .links import WorkoutExerciseLink
+from ..database.validators import check_is_uuid, check_empty_string
 
 
 class ExerciseGetAll(SQLModel):
