@@ -24,7 +24,7 @@ class Workout(SQLModel, table=True):  # type: ignore
 
     exercises: list["Exercise"] = Relationship(back_populates="workouts", link_model=WorkoutExerciseLink)
 
-    __table_args__ = (UniqueConstraint("name", "date", name="name_date_uc"),)
+    __table_args__ = (UniqueConstraint("user_id", "name", "date", name="name_date_user_id_uc"),)
 
 
 class WorkoutRead(SQLModel):

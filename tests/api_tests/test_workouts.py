@@ -78,6 +78,17 @@ class TestWorkouts(APITestBase):
             assert error_response.code == "error"
             assert error_response.message == error_message
 
+    def test_workout_create_succeeds_when_creating_workout_with_same_name_and_date_but_different_user(self) -> None:
+        name = fake.text()
+        date = fake.date()
+        WorkoutFactory.create_sync(user=UserFactory.create_sync(), name=name, date=date)
+
+        response = SuccessResponse(**self.client.post("/workouts/add", json={"name": name, "date": date}).json())
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [{"name": name, "date": date}]
+
     def test_workout_create_fails_with_unique_constraint(self) -> None:
         # Add first workout
         existing_workout = WorkoutFactory.create_sync(user=self.user)
