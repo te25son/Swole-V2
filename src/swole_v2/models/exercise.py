@@ -19,10 +19,8 @@ class ExerciseDetail(SQLModel):
 
 
 class ExerciseCreate(SQLModel):
-    workout_id: UUID
     name: str
 
-    _check_id = validator("workout_id", allow_reuse=True, pre=True)(check_is_uuid)
     _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
 
 

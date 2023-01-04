@@ -24,7 +24,7 @@ def detail(
     return SuccessResponse(results=[respository.detail(current_user.id, data.exercise_id)])
 
 
-@router.post("/add", response_model=SuccessResponse)
+@router.post("/create", response_model=SuccessResponse)
 def add(
     data: ExerciseCreate,
     current_user: User = Depends(get_current_active_user),

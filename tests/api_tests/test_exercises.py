@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from swole_v2.database.repositories.exercises import (
-    EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
+    EXERCISE_WITH_NAME_ALREADY_EXISTS,
     NO_EXERCISE_FOUND,
 )
 from swole_v2.database.validators import INVALID_ID
@@ -79,10 +79,12 @@ class TestExercises(APITestBase):
         assert response.message == message
 
     def test_exercise_create_succeeds(self) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user)
-        data = {"workout_id": str(workout.id), "name": fake.text()}
+        name = fake.text()
+        data = {"name": name}
+        # Excercise with name exists but belongs to other user
+        ExerciseFactory.create_sync(user=UserFactory.create_sync(), name=name)
 
-        response = SuccessResponse(**self.client.post("/exercises/add", json=data).json())
+        response = SuccessResponse(**self.client.post("/exercises/create", json=data).json())
 
         assert response.results
         assert response.code == "ok"
@@ -90,12 +92,9 @@ class TestExercises(APITestBase):
 
     def test_exercise_create_with_existing_name_fails(self) -> None:
         name = fake.text()
-        exercise = ExerciseFactory.create_sync(user=self.user, name=name)
-        workout = WorkoutFactory.create_sync(user=self.user, exercises=[exercise])
+        ExerciseFactory.create_sync(user=self.user, name=name)
 
-        response = ErrorResponse(
-            **self.client.post("/exercises/add", json={"workout_id": str(workout.id), "name": name}).json()
-        )
+        response = ErrorResponse(**self.client.post("/exercises/create", json={"name": name}).json())
 
         assert response.code == "error"
-        assert response.message == EXERCISE_ALREADY_EXISTS_IN_WORKOUT
+        assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
