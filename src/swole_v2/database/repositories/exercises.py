@@ -1,13 +1,19 @@
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, select
 
-from ...models import Exercise, ExerciseRead, Workout, WorkoutExerciseLink, ExerciseCreate
+from ...exceptions import BusinessError
+from ...models import (
+    Exercise,
+    ExerciseCreate,
+    ExerciseRead,
+    Workout,
+    WorkoutExerciseLink,
+)
 from .base import BaseRepository
 from .workouts import NO_WORKOUT_FOUND
-from ...exceptions import BusinessError
 
 NO_EXERCISE_FOUND = "No exercise found."
 NAME_MUST_BE_UNIQUE = "Name must be unique"
@@ -56,7 +62,7 @@ class ExerciseRepository(BaseRepository):
                 raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
             try:
-                workout.exercieses.append(created_exercise := Exercise(**data.dict()))
+                workout.exercises.append(created_exercise := Exercise(**data.dict()))
                 session.add(workout)
                 session.commit()
                 session.refresh(created_exercise)

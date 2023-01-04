@@ -100,10 +100,7 @@ class TestExercises(APITestBase):
 
     def test_exercise_create_succeeds(self) -> None:
         workout = WorkoutFactory.create_sync(user=self.user)
-        data = {
-            "workout_id": str(workout.id),
-            "name": fake.text()
-        }
+        data = {"workout_id": str(workout.id), "name": fake.text()}
 
         response = SuccessResponse(**self.client.post("/exercises/add", json=data).json())
 

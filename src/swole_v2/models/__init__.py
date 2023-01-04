@@ -1,9 +1,9 @@
 from swole_v2.models.exercise import (
     Exercise,
+    ExerciseCreate,
     ExerciseDetail,
     ExerciseGetAll,
     ExerciseRead,
-    ExerciseCreate
 )
 from swole_v2.models.links import WorkoutExerciseLink
 from swole_v2.models.responses import ErrorResponse, SuccessResponse
