@@ -2,11 +2,10 @@ from uuid import UUID
 
 from sqlmodel import Session, select
 
-from ...exceptions import BusinessError
+from ...errors.exceptions import BusinessError
+from ...errors.messages import NO_USER_FOUND
 from ...models import User, UserRead
 from .base import BaseRepository
-
-USER_WITH_ID_NOT_FOUND = "No user with given id could be found."
 
 
 class UserRepository(BaseRepository):
@@ -15,5 +14,5 @@ class UserRepository(BaseRepository):
             user = session.exec(select(User).where(User.id == user_id)).one_or_none()
 
             if not user:
-                raise BusinessError(USER_WITH_ID_NOT_FOUND)
+                raise BusinessError(NO_USER_FOUND)
             return UserRead(**user.dict())

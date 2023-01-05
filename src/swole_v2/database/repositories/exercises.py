@@ -4,7 +4,13 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from ...exceptions import BusinessError
+from ...errors.exceptions import BusinessError
+from ...errors.messages import (
+    EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
+    EXERCISE_WITH_NAME_ALREADY_EXISTS,
+    NO_EXERCISE_FOUND,
+    NO_WORKOUT_OR_EXERCISE_FOUND,
+)
 from ...models import Exercise, ExerciseRead, Workout
 from ...schemas import (
     ExerciseAddToWorkout,
@@ -13,11 +19,6 @@ from ...schemas import (
     ExerciseUpdate,
 )
 from .base import BaseRepository
-
-MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND = "Matching workout and exercise not found."
-NO_EXERCISE_FOUND = "No exercise found."
-EXERCISE_ALREADY_EXISTS_IN_WORKOUT = "Exercise with the given name already exists in this workout."
-EXERCISE_WITH_NAME_ALREADY_EXISTS = "Exercise with the given name already exists."
 
 
 class ExerciseRepository(BaseRepository):
@@ -64,7 +65,7 @@ class ExerciseRepository(BaseRepository):
             ).all()
 
             if not result or len(result) > 1:
-                raise HTTPException(status_code=404, detail=MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND)
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_OR_EXERCISE_FOUND)
 
             exercise = result[0][0]
             workout = result[0][1]

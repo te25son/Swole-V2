@@ -8,11 +8,12 @@ from pydantic.typing import AnyCallable
 if TYPE_CHECKING:
     from pydantic.typing import AnyClassMethod
 
-from ..exceptions import BusinessError
-
-FIELD_CANNOT_BE_EMPTY = "Field '{}' cannot be empty."
-INCORRECT_DATE_FORMAT = "Incorrect date format, should be YYYY-MM-DD"
-INVALID_ID = "Invalid ID"
+from ..errors.exceptions import BusinessError
+from ..errors.messages import (
+    FIELD_CANNOT_BE_EMPTY,
+    INCORRECT_DATE_FORMAT,
+    INVALID_ID,
+)
 
 
 def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "AnyClassMethod"]:

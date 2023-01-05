@@ -2,10 +2,8 @@ from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from ..schemas import ErrorResponse
 from .exceptions import BusinessError
-from .schemas import ErrorResponse
-
-DATABASE_ERROR = "An error occurred when performing an operation on the database with the following message. {msg}."
 
 
 def http_exception_handler(request: Request, exception: HTTPException) -> JSONResponse:

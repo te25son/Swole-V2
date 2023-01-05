@@ -4,15 +4,16 @@ from uuid import uuid4
 import pytest
 from sqlmodel import select
 
-from swole_v2.database.repositories.exercises import (
+from swole_v2.errors.messages import (
     EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
-    MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
+    FIELD_CANNOT_BE_EMPTY,
+    INVALID_ID,
     NO_EXERCISE_FOUND,
+    NO_WORKOUT_OR_EXERCISE_FOUND,
 )
 from swole_v2.models import Exercise, ExerciseRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
-from swole_v2.schemas.validators import FIELD_CANNOT_BE_EMPTY, INVALID_ID
 
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
 from .base import APITestBase, fake
@@ -135,11 +136,11 @@ class TestExercises(APITestBase):
     @pytest.mark.parametrize(
         "workout_id, message",
         [
-            pytest.param(uuid4(), MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND, id="Test random uuid fails."),
+            pytest.param(uuid4(), NO_WORKOUT_OR_EXERCISE_FOUND, id="Test random uuid fails."),
             pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails."),
             pytest.param(
                 WorkoutFactory.create_sync(user=UserFactory.create_sync()).id,
-                MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
+                NO_WORKOUT_OR_EXERCISE_FOUND,
                 id="Test adding exercise to workout belonging to other user fails.",
             ),
         ],
@@ -158,11 +159,11 @@ class TestExercises(APITestBase):
     @pytest.mark.parametrize(
         "exercise_id, message",
         [
-            pytest.param(uuid4(), MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND, id="Test random uuid fails."),
+            pytest.param(uuid4(), NO_WORKOUT_OR_EXERCISE_FOUND, id="Test random uuid fails."),
             pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails."),
             pytest.param(
                 ExerciseFactory.create_sync(user=UserFactory.create_sync()).id,
-                MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
+                NO_WORKOUT_OR_EXERCISE_FOUND,
                 id="Test adding exercise belonging to other user to workout fails.",
             ),
         ],

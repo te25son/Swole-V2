@@ -4,17 +4,15 @@ from uuid import uuid4
 import pytest
 from sqlmodel import select
 
-from swole_v2.database.repositories.workouts import (
+from swole_v2.errors.messages import (
+    FIELD_CANNOT_BE_EMPTY,
+    INCORRECT_DATE_FORMAT,
+    INVALID_ID,
     NAME_AND_DATE_MUST_BE_UNIQUE,
     NO_WORKOUT_FOUND,
 )
 from swole_v2.models import Workout
 from swole_v2.schemas import ErrorResponse, SuccessResponse
-from swole_v2.schemas.validators import (
-    FIELD_CANNOT_BE_EMPTY,
-    INCORRECT_DATE_FORMAT,
-    INVALID_ID,
-)
 
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
 from .base import APITestBase, fake

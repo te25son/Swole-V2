@@ -4,13 +4,11 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
-from ...exceptions import BusinessError
+from ...errors.exceptions import BusinessError
+from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
 from ...models import Workout, WorkoutRead
 from ...schemas import WorkoutCreate, WorkoutUpdate
 from .base import BaseRepository
-
-NO_WORKOUT_FOUND = "No workout found."
-NAME_AND_DATE_MUST_BE_UNIQUE = "Another workout already exists with the same name and date."
 
 
 class WorkoutRepository(BaseRepository):

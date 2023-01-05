@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 
-from .error_handlers import (
+from .errors.exceptions import BusinessError
+from .errors.handlers import (
     business_error_handler,
     http_exception_handler,
     request_validation_error_handler,
 )
-from .exceptions import BusinessError
 from .routers import auth, exercises, users, workouts
 from .schemas import ErrorResponse
 from .settings import Settings, get_settings
