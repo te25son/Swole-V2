@@ -19,6 +19,31 @@ from .base import APITestBase, fake
 
 
 class TestExercises(APITestBase):
+    invalid_exercise_id_params = (
+        "exercise_id, message",
+        [
+            pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random id fails."),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
+            pytest.param(
+                ExerciseFactory.create_sync(
+                    user=(user := UserFactory.create_sync()),
+                    workouts=WorkoutFactory.create_batch_sync(user=user, size=1),  # type: ignore
+                ).id,
+                NO_EXERCISE_FOUND,
+                id="Test exercise id belonging to other user fails.",
+            ),
+        ],
+    )
+
+    invalid_name_params = (
+        "name, message",
+        [
+            pytest.param("", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty name fails."),
+            pytest.param("   ", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank name fails."),
+            pytest.param(None, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test none name fails."),
+        ],
+    )
+
     def test_exercise_get_all_succeeds(self) -> None:
         exercises = ExerciseFactory.create_batch_sync(user=self.user, size=5)
 
@@ -59,21 +84,7 @@ class TestExercises(APITestBase):
         assert response.code == "error"
         assert response.message == NO_EXERCISE_FOUND
 
-    @pytest.mark.parametrize(
-        "exercise_id, message",
-        [
-            pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random uuid fails"),
-            pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails"),
-            pytest.param(
-                ExerciseFactory.create_sync(
-                    user=(user := UserFactory.create_sync()),
-                    workouts=WorkoutFactory.create_batch_sync(user=user, size=1),  # type: ignore
-                ).id,
-                NO_EXERCISE_FOUND,
-                id="Test other owned exercise id fails",
-            ),
-        ],
-    )
+    @pytest.mark.parametrize(*invalid_exercise_id_params)
     def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
         WorkoutFactory.create_sync(user=self.user, exercises=ExerciseFactory.create_batch_sync(user=self.user, size=5))
 
@@ -93,6 +104,13 @@ class TestExercises(APITestBase):
         assert response.results
         assert response.code == "ok"
         assert response.results == [ExerciseRead(**data).dict()]
+
+    @pytest.mark.parametrize(*invalid_name_params)
+    def test_exercise_create_with_invalid_name_fails(self, name: Any, message: str) -> None:
+        response = ErrorResponse(**self.client.post("/exercises/create", json={"name": name}).json())
+
+        assert response.code == "error"
+        assert response.message == message
 
     def test_exercise_create_with_existing_name_fails(self) -> None:
         name = fake.text()
@@ -185,15 +203,8 @@ class TestExercises(APITestBase):
         assert response.code == "ok"
         assert response.results == [ExerciseRead(**updated_exercise.dict()).dict()]
 
-    @pytest.mark.parametrize(
-        "name, message",
-        [
-            pytest.param("", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty name fails."),
-            pytest.param("   ", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank name fails."),
-            pytest.param(None, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test none name fails."),
-        ],
-    )
-    def test_exercise_update_fails_with_invalid_name(self, name: str, message: str) -> None:
+    @pytest.mark.parametrize(*invalid_name_params)
+    def test_exercise_update_fails_with_invalid_name(self, name: Any, message: str) -> None:
         exercise = ExerciseFactory.create_sync(user=self.user)
 
         response = ErrorResponse(
@@ -214,18 +225,7 @@ class TestExercises(APITestBase):
         assert response.code == "error"
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 
-    @pytest.mark.parametrize(
-        "exercise_id, message",
-        [
-            pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random id fails."),
-            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
-            pytest.param(
-                ExerciseFactory.create_sync(user=UserFactory.create_sync()).id,
-                NO_EXERCISE_FOUND,
-                id="Test exercise id belonging to other user fails.",
-            ),
-        ],
-    )
+    @pytest.mark.parametrize(*invalid_exercise_id_params)
     def test_exercise_update_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
         response = ErrorResponse(
             **self.client.post("/exercises/update", json={"exercise_id": str(exercise_id), "name": fake.text()}).json()

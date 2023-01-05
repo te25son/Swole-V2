@@ -15,7 +15,7 @@ class ExerciseDetail(SQLModel):
 class ExerciseCreate(SQLModel):
     name: str
 
-    _check_empty_name = validator("name", allow_reuse=True)(check_empty_string("name"))
+    _check_empty_name = validator("name", allow_reuse=True, pre=True, always=True)(check_empty_string("name"))
 
 
 class ExerciseAddToWorkout(SQLModel):
