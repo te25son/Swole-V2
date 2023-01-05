@@ -72,8 +72,7 @@ def create_instances(settings: Settings, session: Session) -> None:
     for _ in range(20):
         user = choice(all_users)
         WorkoutFactory.create_sync(
-            user=user,
-            exercises=ExerciseFactory.create_batch_sync(user=user, size=choice(range(0, 10)))
+            user=user, exercises=ExerciseFactory.create_batch_sync(user=user, size=choice(range(0, 10)))
         )
 
 
