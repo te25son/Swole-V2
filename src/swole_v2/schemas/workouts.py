@@ -1,7 +1,7 @@
 import datetime as dt
 from uuid import UUID
 
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 from .validators import (
     check_date_format,
@@ -11,13 +11,13 @@ from .validators import (
 )
 
 
-class WorkoutDetail(SQLModel):
+class WorkoutDetail(BaseModel):
     workout_id: UUID
 
     _check_id = schema_validator("workout_id")(check_is_uuid)
 
 
-class WorkoutCreate(SQLModel):
+class WorkoutCreate(BaseModel):
     name: str
     date: dt.date
 
@@ -25,7 +25,7 @@ class WorkoutCreate(SQLModel):
     _check_date_format = schema_validator("date")(check_date_format())
 
 
-class WorkoutUpdate(SQLModel):
+class WorkoutUpdate(BaseModel):
     workout_id: UUID
     name: str | None = None
     date: dt.date | None = None
@@ -35,7 +35,7 @@ class WorkoutUpdate(SQLModel):
     _check_date_format = schema_validator("date")(check_date_format(allow_none=True))
 
 
-class WorkoutDelete(SQLModel):
+class WorkoutDelete(BaseModel):
     workout_id: UUID
 
     _check_id = schema_validator("workout_id")(check_is_uuid)

@@ -1,9 +1,9 @@
 from typing import Any
 
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 
 
-class Response(SQLModel):
+class Response(BaseModel):
     code: str
 
 
