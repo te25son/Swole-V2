@@ -60,22 +60,21 @@ def seed(context: CliContext) -> None:
 
 def create_instances(settings: Settings, session: Session) -> None:
     # Create user instances
-    user_instances = UserFactory.batch(10)
-    admin = UserFactory.build(
+    users = UserFactory.create_batch_sync(10)
+    admin_user = UserFactory.create_sync(
         username=settings.DUMMY_USERNAME,
         hashed_password=hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
     )
-    user_instances.append(admin)
+    all_users = users + [admin_user]
 
-    # Create workout instances
-    workout_instances = [WorkoutFactory.build(user=choice(user_instances)) for _ in range(20)]
-
-    # Create exercise instances
-    exercise_instances = [ExerciseFactory.build(workouts=choice(random_chunk(workout_instances))) for _ in range(15)]
-
-    session.add_all(user_instances + workout_instances + exercise_instances)
-    session.commit()
+    # Create workout and exercise instances
+    for _ in range(20):
+        user = choice(all_users)
+        WorkoutFactory.create_sync(
+            user=user,
+            exercises=ExerciseFactory.create_batch_sync(user=user, size=choice(range(0, 10)))
+        )
 
 
 def random_chunk(sequence: list[T]) -> list[list[T]]:
