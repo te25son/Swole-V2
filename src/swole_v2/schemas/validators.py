@@ -18,11 +18,14 @@ def check_is_uuid(id: str) -> UUID:
 
 def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[str], str | None]:
     def wrapper(value: Any) -> str | None:
-        if allow_none and (value is None):
+        error = BusinessError(FIELD_CANNOT_BE_EMPTY.format(field_name))
+        if allow_none and value is None:
             return value
-        if isinstance(value, str):
-            if value.strip() == "":
-                raise BusinessError(FIELD_CANNOT_BE_EMPTY.format(field_name))
+        else:
+            if value is None:
+                raise error
+            if isinstance(value, str) and value.strip() == "":
+                raise error
         return value
 
     return wrapper
