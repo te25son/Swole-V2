@@ -27,7 +27,7 @@ class ExerciseAddToWorkout(SQLModel):
 
 class ExerciseUpdate(SQLModel):
     exercise_id: UUID
-    name: str | None = None
+    name: str
 
     _check_ids = validator("exercise_id", allow_reuse=True, pre=True)(check_is_uuid)
     _check_empty_name = validator("name", allow_reuse=True, pre=True, always=True)(check_empty_string("name"))
