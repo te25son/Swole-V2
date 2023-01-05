@@ -1,4 +1,9 @@
-from .exercises import ExerciseAddToWorkout, ExerciseCreate, ExerciseDetail
+from .exercises import (
+    ExerciseAddToWorkout,
+    ExerciseCreate,
+    ExerciseDetail,
+    ExerciseUpdate,
+)
 from .responses import ErrorResponse, SuccessResponse
 from .workouts import (
     WorkoutCreate,
@@ -11,6 +16,7 @@ __all__ = [
     "ExerciseCreate",
     "ExerciseDetail",
     "ExerciseAddToWorkout",
+    "ExerciseUpdate",
     "WorkoutCreate",
     "WorkoutUpdate",
     "WorkoutDetail",

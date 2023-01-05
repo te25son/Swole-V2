@@ -2,6 +2,7 @@ from typing import Any
 from uuid import uuid4
 
 import pytest
+from sqlmodel import select
 
 from swole_v2.database.repositories.exercises import (
     EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
@@ -9,9 +10,9 @@ from swole_v2.database.repositories.exercises import (
     MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND,
     NO_EXERCISE_FOUND,
 )
-from swole_v2.models import ExerciseRead
+from swole_v2.models import Exercise, ExerciseRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
-from swole_v2.schemas.validators import INVALID_ID
+from swole_v2.schemas.validators import FIELD_CANNOT_BE_EMPTY, INVALID_ID
 
 from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
 from .base import APITestBase, fake
@@ -168,3 +169,67 @@ class TestExercises(APITestBase):
 
         assert response.code == "error"
         assert response.message == EXERCISE_ALREADY_EXISTS_IN_WORKOUT
+
+    def test_exercise_update_succeeds(self) -> None:
+        new_name = fake.text()
+        # Existing exercise with the new name but different user should work
+        ExerciseFactory.create_sync(user=UserFactory.create_sync(), name=new_name)
+        exercise = ExerciseFactory.create_sync(user=self.user)
+
+        response = SuccessResponse(
+            **self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": new_name}).json()
+        )
+        updated_exercise = self.session.exec(select(Exercise).where(Exercise.id == exercise.id)).one()
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [ExerciseRead(**updated_exercise.dict()).dict()]
+
+    @pytest.mark.parametrize(
+        "name, message",
+        [
+            pytest.param("", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty name fails."),
+            pytest.param("   ", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank name fails."),
+            pytest.param(None, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test none name fails."),
+        ],
+    )
+    def test_exercise_update_fails_with_invalid_name(self, name: str, message: str) -> None:
+        exercise = ExerciseFactory.create_sync(user=self.user)
+
+        response = ErrorResponse(
+            **self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": name}).json()
+        )
+
+        assert response.code == "error"
+        assert response.message == message
+
+    def test_exercise_update_fails_with_existing_name_and_same_user(self) -> None:
+        name = ExerciseFactory.create_sync(user=self.user).name
+        exercise = ExerciseFactory.create_sync(user=self.user)
+
+        response = ErrorResponse(
+            **self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": name}).json()
+        )
+
+        assert response.code == "error"
+        assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
+
+    @pytest.mark.parametrize(
+        "exercise_id, message",
+        [
+            pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random id fails."),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
+            pytest.param(
+                ExerciseFactory.create_sync(user=UserFactory.create_sync()).id,
+                NO_EXERCISE_FOUND,
+                id="Test exercise id belonging to other user fails.",
+            ),
+        ],
+    )
+    def test_exercise_update_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
+        response = ErrorResponse(
+            **self.client.post("/exercises/update", json={"exercise_id": str(exercise_id), "name": fake.text()}).json()
+        )
+
+        assert response.code == "error"
+        assert response.message == message
