@@ -1,12 +1,22 @@
 from datetime import date, datetime
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
+
+from pydantic import validator
+from pydantic.typing import AnyCallable
+
+if TYPE_CHECKING:
+    from pydantic.typing import AnyClassMethod
 
 from ..exceptions import BusinessError
 
 FIELD_CANNOT_BE_EMPTY = "Field '{}' cannot be empty."
 INCORRECT_DATE_FORMAT = "Incorrect date format, should be YYYY-MM-DD"
 INVALID_ID = "Invalid ID"
+
+
+def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "AnyClassMethod"]:
+    return validator(*fields, allow_reuse=True, pre=True, always=True, **kwargs)
 
 
 def check_is_uuid(id: str) -> UUID:
