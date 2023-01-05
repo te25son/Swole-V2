@@ -1,10 +1,8 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
-from sqlalchemy.exc import SQLAlchemyError
 
 from .error_handlers import (
     business_error_handler,
-    database_operation_error_handler,
     http_exception_handler,
     request_validation_error_handler,
 )
@@ -41,5 +39,4 @@ class SwoleApp:
     def register_error_handlers(self) -> None:
         self.app.add_exception_handler(HTTPException, http_exception_handler)
         self.app.add_exception_handler(RequestValidationError, request_validation_error_handler)
-        self.app.add_exception_handler(SQLAlchemyError, database_operation_error_handler)
         self.app.add_exception_handler(BusinessError, business_error_handler)
