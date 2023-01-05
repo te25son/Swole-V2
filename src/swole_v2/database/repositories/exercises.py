@@ -6,7 +6,12 @@ from sqlmodel import Session, select
 
 from ...exceptions import BusinessError
 from ...models import Exercise, ExerciseRead, Workout
-from ...schemas import ExerciseAddToWorkout, ExerciseCreate, ExerciseUpdate
+from ...schemas import (
+    ExerciseAddToWorkout,
+    ExerciseCreate,
+    ExerciseDelete,
+    ExerciseUpdate,
+)
 from .base import BaseRepository
 
 MATCHING_WORKOUT_AND_EXERCISE_NOT_FOUND = "Matching workout and exercise not found."
@@ -92,3 +97,15 @@ class ExerciseRepository(BaseRepository):
                 return ExerciseRead(**exercise.dict())
             except IntegrityError:
                 raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
+
+    def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
+        with Session(self.database) as session:
+            exercise = session.exec(
+                select(Exercise).where(Exercise.user_id == user_id).where(Exercise.id == data.exercise_id)
+            ).one_or_none()
+
+            if not exercise:
+                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+
+            session.delete(exercise)
+            session.commit()

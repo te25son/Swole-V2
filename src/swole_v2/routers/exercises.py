@@ -5,6 +5,7 @@ from ..models import User
 from ..schemas import (
     ExerciseAddToWorkout,
     ExerciseCreate,
+    ExerciseDelete,
     ExerciseDetail,
     ExerciseUpdate,
     SuccessResponse,
@@ -56,3 +57,13 @@ def update(
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=[respository.update(current_user.id, data)])
+
+
+@router.post("/delete", response_model=SuccessResponse)
+def delete(
+    data: ExerciseDelete,
+    current_user: User = Depends(get_current_active_user),
+    respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
+) -> SuccessResponse:
+    respository.delete(current_user.id, data)
+    return SuccessResponse()

@@ -31,3 +31,9 @@ class ExerciseUpdate(SQLModel):
 
     _check_ids = validator("exercise_id", allow_reuse=True, pre=True)(check_is_uuid)
     _check_empty_name = validator("name", allow_reuse=True, pre=True, always=True)(check_empty_string("name"))
+
+
+class ExerciseDelete(SQLModel):
+    exercise_id: UUID
+
+    _check_ids = validator("exercise_id", allow_reuse=True, pre=True)(check_is_uuid)

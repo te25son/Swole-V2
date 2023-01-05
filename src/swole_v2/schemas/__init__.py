@@ -1,6 +1,7 @@
 from .exercises import (
     ExerciseAddToWorkout,
     ExerciseCreate,
+    ExerciseDelete,
     ExerciseDetail,
     ExerciseUpdate,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "ExerciseDetail",
     "ExerciseAddToWorkout",
     "ExerciseUpdate",
+    "ExerciseDelete",
     "WorkoutCreate",
     "WorkoutUpdate",
     "WorkoutDetail",

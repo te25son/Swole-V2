@@ -233,3 +233,22 @@ class TestExercises(APITestBase):
 
         assert response.code == "error"
         assert response.message == message
+
+    def test_exercise_delete_succeeds(self) -> None:
+        exercise = ExerciseFactory.create_sync(user=self.user)
+
+        response = SuccessResponse(
+            **self.client.post("exercises/delete", json={"exercise_id": str(exercise.id)}).json()
+        )
+        deleted_exercise = self.session.exec(select(Exercise).where(Exercise.id == exercise.id)).one_or_none()
+
+        assert deleted_exercise is None
+        assert response.code == "ok"
+        assert response.results is None
+
+    @pytest.mark.parametrize(*invalid_exercise_id_params)
+    def test_exercise_delete_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
+        response = ErrorResponse(**self.client.post("/exercises/delete", json={"exercise_id": str(exercise_id)}).json())
+
+        assert response.code == "error"
+        assert response.message == message
