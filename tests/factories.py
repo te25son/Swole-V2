@@ -57,3 +57,7 @@ class ExerciseFactory(BaseFactory[models.Exercise]):
 
 class WorkoutFactory(BaseFactory[models.Workout]):
     __model__ = models.Workout
+
+
+class SetFactory(BaseFactory[models.Set]):
+    __model__ = models.Set

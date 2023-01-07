@@ -16,7 +16,7 @@ router = APIRouter(prefix="/exercises", tags=["exercises"])
 
 
 @router.post("/all", response_model=SuccessResponse)
-def get_all_by_workout(
+def get_all_by_user(
     current_user: User = Depends(get_current_active_user),
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
