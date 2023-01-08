@@ -6,7 +6,7 @@ from .exercises import (
     ExerciseUpdate,
 )
 from .responses import ErrorResponse, SuccessResponse
-from .sets import SetGetAll
+from .sets import SetAdd, SetDelete, SetGetAll
 from .workouts import (
     WorkoutCreate,
     WorkoutDelete,
@@ -27,4 +27,6 @@ __all__ = [
     "SuccessResponse",
     "ErrorResponse",
     "SetGetAll",
+    "SetAdd",
+    "SetDelete",
 ]

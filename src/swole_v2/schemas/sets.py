@@ -10,3 +10,20 @@ class SetGetAll(BaseModel):
     exercise_id: UUID
 
     _check_ids = schema_validator("workout_id", "exercise_id")(check_is_uuid)
+
+
+class SetAdd(BaseModel):
+    rep_count: int
+    weight: int
+    workout_id: UUID
+    exercise_id: UUID
+
+    _check_ids = schema_validator("workout_id", "exercise_id")(check_is_uuid)
+
+
+class SetDelete(BaseModel):
+    set_id: UUID
+    workout_id: UUID
+    exercise_id: UUID
+
+    _check_ids = schema_validator("set_id", "workout_id", "exercise_id")(check_is_uuid)

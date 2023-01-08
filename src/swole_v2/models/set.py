@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 class Set(SQLModel, table=True):  # type: ignore
     id: UUID | None = Field(default_factory=uuid4, primary_key=True)
 
-    rep_count: int = 0
+    rep_count: int
+    weight: int
 
     exercise_id: UUID = Field(foreign_key="exercise.id")
     exercise_user_id: UUID = Field(foreign_key="exercise.user_id")
@@ -36,3 +37,4 @@ class Set(SQLModel, table=True):  # type: ignore
 
 class SetRead(SQLModel):
     rep_count: int
+    weight: int
