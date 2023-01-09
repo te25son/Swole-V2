@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, NonNegativeInt
 
 from .validators import check_is_uuid, schema_validator
 
@@ -13,8 +13,8 @@ class SetGetAll(BaseModel):
 
 
 class SetAdd(BaseModel):
-    rep_count: int
-    weight: int
+    rep_count: NonNegativeInt
+    weight: NonNegativeInt
     workout_id: UUID
     exercise_id: UUID
 

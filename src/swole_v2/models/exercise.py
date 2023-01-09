@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, Index
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -34,7 +34,10 @@ class Exercise(SQLModel, table=True):  # type: ignore
         ),
     )
 
-    __table_args__ = (UniqueConstraint("user_id", "name", name="user_id_and_name_uc"),)
+    __table_args__ = (
+        Index("search_exercise_by_id_and_user_id", "id", "user_id"),
+        UniqueConstraint("user_id", "name", name="user_id_and_name_uc"),
+    )
 
 
 class ExerciseRead(SQLModel):
