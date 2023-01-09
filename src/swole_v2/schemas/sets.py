@@ -27,3 +27,13 @@ class SetDelete(BaseModel):
     exercise_id: UUID
 
     _check_ids = schema_validator("set_id", "workout_id", "exercise_id")(check_is_uuid)
+
+
+class SetUpdate(BaseModel):
+    rep_count: NonNegativeInt | None = None
+    weight: NonNegativeInt | None = None
+    set_id: UUID
+    workout_id: UUID
+    exercise_id: UUID
+
+    _check_ids = schema_validator("set_id", "workout_id", "exercise_id")(check_is_uuid)

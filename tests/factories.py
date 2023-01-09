@@ -1,6 +1,7 @@
 from typing import TypeVar
+from random import choice
 
-from pydantic_factories import Ignore, ModelFactory, SyncPersistenceProtocol
+from pydantic_factories import Ignore, ModelFactory, SyncPersistenceProtocol, Use
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
@@ -61,3 +62,6 @@ class WorkoutFactory(BaseFactory[models.Workout]):
 
 class SetFactory(BaseFactory[models.Set]):
     __model__ = models.Set
+
+    rep_count = Use(choice, [*range(1, 501)])
+    weight = Use(choice, [*range(1, 10001)])

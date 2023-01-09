@@ -182,3 +182,30 @@ class TestSets(APITestBase):
 
         assert response.code == "error"
         assert response.message == message
+
+    @pytest.mark.parametrize(
+        "rep_count, weight", [
+            pytest.param(fake.random_digit(), None, id="Test only update rep count succeeds."),
+            pytest.param(None, fake.random_digit(), id="Test only update weight succeeds."),
+            pytest.param(fake.random_digit(), fake.random_digit(), id="Test update both rep count and weight succeeds."),
+        ]
+    )
+    def test_update_succeeds(self, rep_count: int | None, weight: int | None) -> None:
+        workout = WorkoutFactory.create_sync(user=self.user)
+        exercise = ExerciseFactory.create_sync(user=self.user)
+        set = SetFactory.create_sync(workout=workout, exercise=exercise)
+        data = {
+            "rep_count": rep_count,
+            "weight": weight,
+            "set_id": str(set.id),
+            "workout_id": str(workout.id),
+            "exercise_id": str(exercise.id),
+        }
+
+        response = SuccessResponse(**self.client.post("/sets/update", json=data).json())
+
+        assert response.results
+        assert response.code == "ok"
+        assert response.results == [
+            {"rep_count": rep_count or set.rep_count, "weight": weight or set.weight}
+        ]

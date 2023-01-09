@@ -10,7 +10,7 @@ from ...errors.messages import (
     NO_WORKOUT_FOUND,
 )
 from ...models import Exercise, Set, SetRead, Workout
-from ...schemas import SetAdd, SetDelete, SetGetAll
+from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .base import BaseRepository
 
 
@@ -60,3 +60,24 @@ class SetRepository(BaseRepository):
 
             session.delete(set)
             session.commit()
+
+    def update(self, user_id: UUID | None, data: SetUpdate) -> SetRead:
+        with Session(self.database) as session:
+            set = session.exec(
+                select(Set)
+                .where(Set.id == data.set_id)
+                .where(and_(Set.exercise_id == data.exercise_id, Set.exercise_user_id == user_id))
+                .where(and_(Set.workout_id == data.workout_id, Set.workout_user_id == user_id))
+            ).one_or_none()
+
+            if not set:
+                raise HTTPException(status_code=404, detail=NO_SET_FOUND)
+
+            set.rep_count = data.rep_count or set.rep_count
+            set.weight = data.weight or set.weight
+
+            session.add(set)
+            session.commit()
+            session.refresh(set)
+
+            return SetRead(**set.dict())

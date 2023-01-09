@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from ..database.repositories import SetRepository
 from ..models import User
-from ..schemas import SetAdd, SetDelete, SetGetAll, SuccessResponse
+from ..schemas import SetAdd, SetDelete, SetGetAll, SuccessResponse, SetUpdate
 from ..security import get_current_active_user
 
 router = APIRouter(prefix="/sets", tags=["sets"])
@@ -34,3 +34,12 @@ def delete(
 ) -> SuccessResponse:
     respository.delete(current_user.id, data)
     return SuccessResponse()
+
+
+@router.post("/update", response_model=SuccessResponse)
+def update(
+    data: SetUpdate,
+    current_user: User = Depends(get_current_active_user),
+    respository: SetRepository = Depends(SetRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=[respository.update(current_user.id, data)])
