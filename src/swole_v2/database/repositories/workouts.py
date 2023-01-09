@@ -62,10 +62,8 @@ class WorkoutRepository(BaseRepository):
             if not workout:
                 raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
-            if data.name:
-                workout.name = data.name
-            if data.date:
-                workout.date = data.date
+            workout.name = data.name or workout.name
+            workout.date = data.date or workout.date
 
             try:
                 session.add(workout)
