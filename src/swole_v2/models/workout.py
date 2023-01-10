@@ -20,7 +20,8 @@ class Workout(SQLModel, table=True):  # type: ignore
     exercise_links: list["WorkoutExerciseLink"] = Relationship(
         back_populates="workout",
         sa_relationship_kwargs=dict(
-            primaryjoin="and_(Workout.id==WorkoutExerciseLink.workout_id, Workout.user_id==WorkoutExerciseLink.workout_user_id)"
+            primaryjoin="and_(Workout.id==WorkoutExerciseLink.workout_id, Workout.user_id==WorkoutExerciseLink.workout_user_id)",
+            cascade="all, delete-orphan"
         ),
     )
 

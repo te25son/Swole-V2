@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, Column
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -9,8 +9,8 @@ if TYPE_CHECKING:
 
 
 class WorkoutExerciseLink(SQLModel, table=True):  # type: ignore
-    workout_id: UUID = Field(foreign_key="workout.id", primary_key=True)
-    workout_user_id: UUID = Field(foreign_key="workout.user_id")
+    workout_id: UUID = Field(sa_column=Column(ForeignKey("workout.id", ondelete="CASCADE"), primary_key=True))
+    workout_user_id: UUID = Field(sa_column=Column(ForeignKey("workout.user_id", ondelete="CASCADE")))
     workout: "Workout" = Relationship(
         back_populates="exercise_links",
         sa_relationship_kwargs=dict(
@@ -18,8 +18,8 @@ class WorkoutExerciseLink(SQLModel, table=True):  # type: ignore
         ),
     )
 
-    exercise_id: UUID = Field(foreign_key="exercise.id", primary_key=True)
-    exercise_user_id: UUID = Field(foreign_key="exercise.user_id")
+    exercise_id: UUID = Field(sa_column=Column(ForeignKey("exercise.id", ondelete="CASCADE"), primary_key=True))
+    exercise_user_id: UUID = Field(sa_column=Column(ForeignKey("exercise.user_id", ondelete="CASCADE")))
     exercise: "Exercise" = Relationship(
         back_populates="workout_links",
         sa_relationship_kwargs=dict(
@@ -30,7 +30,8 @@ class WorkoutExerciseLink(SQLModel, table=True):  # type: ignore
     sets: list["Set"] = Relationship(
         back_populates="workout_exercise_link",
         sa_relationship_kwargs=dict(
-            primaryjoin="and_(WorkoutExerciseLink.workout_id==Set.workout_id, WorkoutExerciseLink.exercise_id==Set.exercise_id)"
+            primaryjoin="and_(WorkoutExerciseLink.workout_id==Set.workout_id, WorkoutExerciseLink.exercise_id==Set.exercise_id)",
+            cascade="all, delete-orphan"
         ),
     )
 
