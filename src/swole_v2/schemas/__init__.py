@@ -29,5 +29,5 @@ __all__ = [
     "SetGetAll",
     "SetAdd",
     "SetDelete",
-    "SetUpdate"
+    "SetUpdate",
 ]

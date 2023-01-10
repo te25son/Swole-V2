@@ -1,11 +1,16 @@
-from typing import TypeVar
 from random import choice
+from typing import Any, TypeVar
 
-from pydantic_factories import Ignore, ModelFactory, SyncPersistenceProtocol, Use
+from pydantic_factories import (
+    Ignore,
+    ModelFactory,
+    SyncPersistenceProtocol,
+    Use,
+)
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
-from swole_v2 import models
+from swole_v2.models import Exercise, Set, User, Workout
 from swole_v2.settings import get_settings
 
 T = TypeVar("T", bound=SQLModel)
@@ -16,6 +21,7 @@ T = TypeVar("T", bound=SQLModel)
 
 class SqlModelSyncPersistenceHandler(SyncPersistenceProtocol[T]):
     def __init__(self) -> None:
+        # copied from engine creation in conftest
         self.database = create_engine(
             url=get_settings().DB_CONNECTION,
             connect_args={"check_same_thread": False},
@@ -48,20 +54,53 @@ class BaseFactory(ModelFactory[T]):
     id = Ignore()
 
 
-class UserFactory(BaseFactory[models.User]):
-    __model__ = models.User
+class UserFactory(BaseFactory[User]):
+    __model__ = User
 
 
-class ExerciseFactory(BaseFactory[models.Exercise]):
-    __model__ = models.Exercise
+class ExerciseFactory(BaseFactory[Exercise]):
+    __model__ = Exercise
 
 
-class WorkoutFactory(BaseFactory[models.Workout]):
-    __model__ = models.Workout
+class WorkoutFactory(BaseFactory[Workout]):
+    __model__ = Workout
 
 
-class SetFactory(BaseFactory[models.Set]):
-    __model__ = models.Set
+class SetFactory(BaseFactory[Set]):
+    __model__ = Set
 
     rep_count = Use(choice, [*range(1, 501)])
     weight = Use(choice, [*range(1, 10001)])
+
+
+# =================== SAMPLE ===================
+
+
+class Sample:
+    def __init__(self, user: User = UserFactory.create_sync()):
+        self.test_user = user
+
+    def user(self, **kwargs: Any) -> User:
+        return UserFactory.create_sync(**kwargs)
+
+    def workout(self, user: User | None = None, **kwargs: Any) -> Workout:
+        return WorkoutFactory.create_sync(user=user or self.test_user, **kwargs)
+
+    def workouts(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Workout]:
+        return WorkoutFactory.create_batch_sync(size=size, user=user or self.test_user, **kwargs)
+
+    def exercise(self, user: User | None = None, **kwargs: Any) -> Exercise:
+        return ExerciseFactory.create_sync(user=user or self.test_user, **kwargs)
+
+    def exercises(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Exercise]:
+        return ExerciseFactory.create_batch_sync(size=size, user=user or self.test_user, **kwargs)
+
+    def set(self, workout: Workout | None = None, exercise: Exercise | None = None, **kwargs: Any) -> Set:
+        return SetFactory.create_sync(workout=workout or self.workout(), exercise=exercise or self.exercise(), **kwargs)
+
+    def sets(
+        self, workout: Workout | None = None, exercise: Exercise | None = None, size: int = 5, **kwargs: Any
+    ) -> list[Set]:
+        return SetFactory.create_batch_sync(
+            size=size, workout=workout or self.workout(), exercise=exercise or self.exercise(), **kwargs
+        )

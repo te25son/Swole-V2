@@ -8,7 +8,7 @@ from swole_v2.app import SwoleApp
 from swole_v2.models import User
 from swole_v2.settings import get_settings
 
-from .factories import UserFactory
+from .factories import Sample, UserFactory
 
 
 @pytest.fixture(scope="session")
@@ -42,3 +42,8 @@ def test_session(test_database: Engine) -> Session:  # type: ignore
 @pytest.fixture(scope="function")
 def test_user() -> User:
     return UserFactory.create_sync()
+
+
+@pytest.fixture(scope="function")
+def test_sample(test_user: User) -> Sample:
+    return Sample(test_user)

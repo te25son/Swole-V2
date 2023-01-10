@@ -34,11 +34,7 @@ class Set(SQLModel, table=True):  # type: ignore
 
     __table_args__ = (
         Index(
-            "search_by_workout_and_exercise_index",
-            "exercise_id",
-            "exercise_user_id",
-            "workout_id",
-            "workout_user_id"
+            "search_by_workout_and_exercise_index", "exercise_id", "exercise_user_id", "workout_id", "workout_user_id"
         ),
         CheckConstraint("workout_user_id == exercise_user_id"),
     )

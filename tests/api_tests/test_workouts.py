@@ -14,8 +14,7 @@ from swole_v2.errors.messages import (
 from swole_v2.models import Workout
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
-from ..factories import ExerciseFactory, UserFactory, WorkoutFactory
-from .base import APITestBase, fake
+from .base import APITestBase, fake, sample
 
 
 # fmt: off
@@ -26,10 +25,7 @@ class TestWorkouts(APITestBase):
             pytest.param(uuid4(), NO_WORKOUT_FOUND, id="Test random id fails."),
             pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
             pytest.param(
-                WorkoutFactory.create_sync(
-                    user=(user := UserFactory.create_sync()),
-                    exercises=ExerciseFactory.create_batch_sync(user=user, size=1),  # type: ignore
-                ).id,
+                sample.workout(exercises=sample.exercises()).id,
                 NO_WORKOUT_FOUND,
                 id="Test workout id belonging to other user fails.",
             ),
@@ -37,7 +33,7 @@ class TestWorkouts(APITestBase):
     )
 
     def test_workout_get_all(self) -> None:
-        workouts = WorkoutFactory.create_batch_sync(user=self.user, size=5)
+        workouts = self.sample.workouts()
         response = SuccessResponse(**self.client.post("/workouts/all").json())
 
         assert response.results
@@ -45,7 +41,7 @@ class TestWorkouts(APITestBase):
         assert len(response.results) == len(workouts)
 
     def test_workout_detail_succeeds(self) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user)
+        workout = self.sample.workout()
 
         response = SuccessResponse(
             **self.client.post("/workouts/detail", json={"workout_id": str(workout.id)}).json()
@@ -90,10 +86,10 @@ class TestWorkouts(APITestBase):
             assert error_response.code == "error"
             assert error_response.message == error_message
 
-    def test_workout_create_succeeds_when_creating_workout_with_same_name_and_date_but_different_user(self) -> None:
+    def test_workout_create_succeeds_when_creating_workout_with_same_name_and_date_as_workout_owned_by_different_user(self) -> None:
         name = fake.text()
         date = fake.date()
-        WorkoutFactory.create_sync(user=UserFactory.create_sync(), name=name, date=date)
+        self.sample.workout(user=self.sample.user(), name=name, date=date)
 
         response = SuccessResponse(**self.client.post("/workouts/create", json={"name": name, "date": date}).json())
 
@@ -105,7 +101,7 @@ class TestWorkouts(APITestBase):
         # Add first workout
         name = fake.text()
         date = fake.date()
-        WorkoutFactory.create_sync(user=self.user, name=name, date=date)
+        self.sample.workout(name=name, date=date)
 
         # Create second workout with same name and date
         response = ErrorResponse(**self.client.post("/workouts/create", json={"name": name, "date": date}).json())
@@ -114,7 +110,7 @@ class TestWorkouts(APITestBase):
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     def test_workout_delete_with_valid_id(self) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user)
+        workout = self.sample.workout()
 
         result = SuccessResponse(
             **self.client.post("/workouts/delete", json={"workout_id": str(workout.id)}).json()
@@ -143,7 +139,7 @@ class TestWorkouts(APITestBase):
         ],
     )
     def test_workout_update_succeeds(self, name: str | None, date: str | None) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user)
+        workout = self.sample.workout()
         data = {"workout_id": str(workout.id), "name": name, "date": date}
         original_workout_date = workout.date.strftime("%Y-%m-%d")
         original_workout_name = workout.name
@@ -172,7 +168,7 @@ class TestWorkouts(APITestBase):
         ],
     )
     def test_workout_update_fails_with_params(self, name: str, date: str, message: str) -> None:
-        workout = WorkoutFactory.create_sync(user=self.user)
+        workout = self.sample.workout()
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
         response = ErrorResponse(**self.client.post("/workouts/update", json=data).json())
@@ -184,8 +180,8 @@ class TestWorkouts(APITestBase):
         assert not_updated_workout.date == workout.date
 
     def test_workout_update_fails_when_updating_to_existing_name_and_date(self) -> None:
-        workout_one = WorkoutFactory.create_sync(user=self.user)
-        workout_two = WorkoutFactory.create_sync(user=self.user)
+        workout_one = self.sample.workout()
+        workout_two = self.sample.workout()
         data = {
             "workout_id": str(workout_two.id),
             "name": workout_one.name,
