@@ -31,10 +31,7 @@ class TestSets(APITestBase):
         assert response.results == [SetRead(**s.dict()).dict() for s in sets]
 
     def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
-        user = self.sample.user()
-        link = self.sample.workout_exercise_link(
-            workout=self.sample.workout(user=user), exercise=self.sample.exercise(user=user)
-        )
+        link = self.sample.workout_exercise_link(user=self.sample.user())
         self.sample.sets(link=link)
 
         response = ErrorResponse(
