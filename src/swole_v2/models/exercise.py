@@ -5,9 +5,7 @@ from sqlalchemy import Index, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from . import Workout, User, Set
-
-from ..models.links import WorkoutExerciseLink
+    from . import User, WorkoutExerciseLink
 
 
 class Exercise(SQLModel, table=True):  # type: ignore
@@ -17,20 +15,10 @@ class Exercise(SQLModel, table=True):  # type: ignore
     user_id: UUID = Field(foreign_key="user.id")
     user: "User" = Relationship(back_populates="exercises")
 
-    sets: list["Set"] = Relationship(
+    workout_links: list["WorkoutExerciseLink"] = Relationship(
         back_populates="exercise",
         sa_relationship_kwargs=dict(
-            primaryjoin="and_(Exercise.id==Set.exercise_id, Exercise.user_id==Set.exercise_user_id)",
-            cascade="all, delete-orphan",
-        ),
-    )
-
-    workouts: list["Workout"] = Relationship(
-        back_populates="exercises",
-        link_model=WorkoutExerciseLink,
-        sa_relationship_kwargs=dict(
-            primaryjoin="and_(Exercise.id==WorkoutExerciseLink.exercise_id, Exercise.user_id==WorkoutExerciseLink.exercise_user_id)",
-            secondaryjoin="and_(Workout.id==WorkoutExerciseLink.workout_id, Workout.user_id==WorkoutExerciseLink.workout_user_id)",
+            primaryjoin="and_(Exercise.id==WorkoutExerciseLink.exercise_id, Exercise.user_id==WorkoutExerciseLink.exercise_user_id)"
         ),
     )
 

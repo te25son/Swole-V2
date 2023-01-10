@@ -6,11 +6,10 @@ from sqlmodel import select
 
 from swole_v2.errors.messages import (
     INVALID_ID,
-    NO_EXERCISE_FOUND,
     NO_SET_FOUND,
-    NO_WORKOUT_FOUND,
+    NO_WORKOUT_AND_EXERCISE_LINK_FOUND,
 )
-from swole_v2.models import Exercise, Set, SetRead, Workout
+from swole_v2.models import Set, SetRead, WorkoutExerciseLink
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
 from .base import APITestBase, fake, sample
@@ -18,13 +17,12 @@ from .base import APITestBase, fake, sample
 
 class TestSets(APITestBase):
     def test_set_get_all(self) -> None:
-        workout = self.sample.workout()
-        exercise = self.sample.exercise()
-        sets = self.sample.sets(workout=workout, exercise=exercise)
+        link = self.sample.workout_exercise_link()
+        sets = self.sample.sets(link=link)
 
         response = SuccessResponse(
             **self.client.post(
-                "/sets/all", json={"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+                "/sets/all", json={"workout_id": str(link.workout_id), "exercise_id": str(link.exercise_id)}
             ).json()
         )
 
@@ -34,27 +32,27 @@ class TestSets(APITestBase):
 
     def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
         user = self.sample.user()
-        workout = self.sample.workout(user=user)
-        exercise = self.sample.exercise(user=user)
-        self.sample.sets(workout=workout, exercise=exercise)
+        link = self.sample.workout_exercise_link(
+            workout=self.sample.workout(user=user), exercise=self.sample.exercise(user=user)
+        )
+        self.sample.sets(link=link)
 
-        response = SuccessResponse(
+        response = ErrorResponse(
             **self.client.post(
-                "/sets/all", json={"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+                "/sets/all", json={"workout_id": str(link.workout_id), "exercise_id": str(link.exercise_id)}
             ).json()
         )
 
-        assert response.code == "ok"
-        assert response.results == []
+        assert response.code == "error"
+        assert response.message == NO_WORKOUT_AND_EXERCISE_LINK_FOUND
 
     def test_set_add_succeeds(self) -> None:
         rep_count = fake.random_digit_not_null()
         weight = fake.random_digit_not_null()
-        workout = self.sample.workout()
-        exercise = self.sample.exercise()
+        link = self.sample.workout_exercise_link()
         data = {
-            "workout_id": str(workout.id),
-            "exercise_id": str(exercise.id),
+            "workout_id": str(link.workout_id),
+            "exercise_id": str(link.exercise_id),
             "rep_count": rep_count,
             "weight": weight,
         }
@@ -80,46 +78,57 @@ class TestSets(APITestBase):
         response = ErrorResponse(**self.client.post("/sets/add", json=data).json())
 
         assert response.code == "error"
-        assert response.message == NO_EXERCISE_FOUND
+        assert response.message == NO_WORKOUT_AND_EXERCISE_LINK_FOUND
 
     def test_set_add_fails_with_workout_belonging_to_other_user(self) -> None:
-        rep_count = fake.random_digit_not_null()
-        weight = fake.random_digit_not_null()
         workout = self.sample.workout(user=self.sample.user())
         exercise = self.sample.exercise()
         data = {
             "workout_id": str(workout.id),
             "exercise_id": str(exercise.id),
-            "rep_count": rep_count,
-            "weight": weight,
+            "rep_count": fake.random_digit_not_null(),
+            "weight": fake.random_digit_not_null(),
         }
 
         response = ErrorResponse(**self.client.post("/sets/add", json=data).json())
 
         assert response.code == "error"
-        assert response.message == NO_WORKOUT_FOUND
+        assert response.message == NO_WORKOUT_AND_EXERCISE_LINK_FOUND
+
+    def test_set_add_fails_with_workout_and_exercise_that_are_owned_by_logged_in_user_but_are_not_linked(self) -> None:
+        workout = self.sample.workout()
+        exercise = self.sample.exercise()
+        data = {
+            "workout_id": str(workout.id),
+            "exercise_id": str(exercise.id),
+            "rep_count": fake.random_digit_not_null(),
+            "weight": fake.random_digit_not_null(),
+        }
+
+        response = ErrorResponse(**self.client.post("/sets/add", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == NO_WORKOUT_AND_EXERCISE_LINK_FOUND
 
     @pytest.mark.parametrize(
         "workout_id, exercise_id, message",
         [
-            pytest.param(uuid4(), uuid4(), NO_EXERCISE_FOUND, id="Test random uuid fails."),
+            pytest.param(uuid4(), uuid4(), NO_WORKOUT_AND_EXERCISE_LINK_FOUND, id="Test random uuid fails."),
             pytest.param(fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails."),
             pytest.param(
-                sample.workout().id,
-                sample.exercise().id,
-                NO_EXERCISE_FOUND,
+                (link := sample.workout_exercise_link()).workout_id,
+                link.exercise_id,  # type: ignore
+                NO_WORKOUT_AND_EXERCISE_LINK_FOUND,
                 id="Test workout and exercise belonging to other user fails.",
             ),
         ],
     )
     def test_set_add_fails_with_invalid_ids(self, workout_id: Any, exercise_id: Any, message: str) -> None:
-        rep_count = fake.random_digit_not_null()
-        weight = fake.random_digit_not_null()
         data = {
             "workout_id": str(workout_id),
             "exercise_id": str(exercise_id),
-            "rep_count": rep_count,
-            "weight": weight,
+            "rep_count": fake.random_digit_not_null(),
+            "weight": fake.random_digit_not_null(),
         }
 
         response = ErrorResponse(**self.client.post("/sets/add", json=data).json())
@@ -137,12 +146,14 @@ class TestSets(APITestBase):
 
         response = SuccessResponse(**self.client.post("/sets/delete", json=data).json())
 
-        post_workout = self.session.exec(select(Workout).where(Workout.id == set.workout_id)).one()
-        post_exercise = self.session.exec(select(Exercise).where(Exercise.id == set.exercise_id)).one()
+        link = self.session.exec(
+            select(WorkoutExerciseLink)
+            .where(WorkoutExerciseLink.workout_id == set.workout_id)
+            .where(WorkoutExerciseLink.exercise_id == set.exercise_id)
+        ).one()
         post_set = self.session.exec(select(Set).where(Set.id == set.id)).one_or_none()
 
-        assert set not in post_workout.sets
-        assert set not in post_exercise.sets
+        assert set not in link.sets
         assert post_set is None
         assert response.code == "ok"
         assert response.results == None

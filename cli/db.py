@@ -7,7 +7,9 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from swole_v2.helpers import hash_password
 from swole_v2.settings import Settings, get_settings
-from tests.factories import ExerciseFactory, UserFactory, WorkoutFactory
+from tests.factories import (
+    Sample
+)
 
 from . import CliContext, Environments, load_environment_variables
 
@@ -60,20 +62,26 @@ def seed(context: CliContext) -> None:
 
 def create_instances(settings: Settings, session: Session) -> None:
     # Create user instances
-    users = UserFactory.create_batch_sync(10)
-    admin_user = UserFactory.create_sync(
+    sample = Sample()
+    admin_user = sample.user(
         username=settings.DUMMY_USERNAME,
         hashed_password=hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
     )
-    all_users = users + [admin_user]
+    users = sample.users(size=10) + [admin_user]
 
     # Create workout and exercise instances
     for _ in range(20):
-        user = choice(all_users)
-        WorkoutFactory.create_sync(
-            user=user, exercises=ExerciseFactory.create_batch_sync(user=user, size=choice(range(0, 10)))
-        )
+        user = choice(users)
+
+        # Create some workouts without exercises
+        sample.workouts(user=user, size=choice(range(0, 10)))
+        # Create some exercises without workouts
+        sample.exercises(user=user, size=choice(range(0, 10)))
+        # Create some workout and exercise links without sets
+        links = [sample.workout_exercise_link(user=user) for _ in range(1, 10)]
+        # Add some sets to the existing workout and exercise links
+        sample.sets(link=choice(links), size=choice(range(0, 10)))
 
 
 def random_chunk(sequence: list[T]) -> list[list[T]]:

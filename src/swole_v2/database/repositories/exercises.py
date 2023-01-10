@@ -11,7 +11,7 @@ from ...errors.messages import (
     NO_EXERCISE_FOUND,
     NO_WORKOUT_OR_EXERCISE_FOUND,
 )
-from ...models import Exercise, ExerciseRead, Workout
+from ...models import Exercise, ExerciseRead, Workout, WorkoutExerciseLink
 from ...schemas import (
     ExerciseAddToWorkout,
     ExerciseCreate,
@@ -70,11 +70,10 @@ class ExerciseRepository(BaseRepository):
             exercise = result[0][0]
             workout = result[0][1]
 
-            if exercise in workout.exercises:
+            if exercise in [l.exercise for l in workout.exercise_links]:
                 raise BusinessError(EXERCISE_ALREADY_EXISTS_IN_WORKOUT)
 
-            workout.exercises.append(exercise)
-            session.add(workout)
+            session.add(WorkoutExerciseLink(workout=workout, exercise=exercise))
             session.commit()
             session.refresh(exercise)
 

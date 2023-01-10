@@ -12,7 +12,7 @@ from swole_v2.errors.messages import (
     NO_EXERCISE_FOUND,
     NO_WORKOUT_OR_EXERCISE_FOUND,
 )
-from swole_v2.models import Exercise, ExerciseRead
+from swole_v2.models import Exercise, ExerciseRead, WorkoutExerciseLink
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
 from .base import APITestBase, fake, sample
@@ -25,7 +25,7 @@ class TestExercises(APITestBase):
             pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random id fails."),
             pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
             pytest.param(
-                sample.exercise(workouts=sample.workouts()).id,
+                sample.workout_exercise_link().exercise_id,
                 NO_EXERCISE_FOUND,
                 id="Test exercise id belonging to other user fails.",
             ),
@@ -60,7 +60,7 @@ class TestExercises(APITestBase):
         assert response.results == []
 
     def test_exercise_detail_succeeds(self) -> None:
-        exercise = self.sample.exercise(workouts=self.sample.workouts())
+        exercise = self.sample.workout_exercise_link().exercise
 
         response = SuccessResponse(
             **self.client.post("/exercises/detail", json={"exercise_id": str(exercise.id)}).json()
@@ -72,7 +72,7 @@ class TestExercises(APITestBase):
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        self.sample.workout(exercises=self.sample.exercises())
+        self.sample.workout_exercise_link()
 
         response = ErrorResponse(**self.client.post("/exercises/detail", json={"exercise_id": str(exercise_id)}).json())
 
@@ -112,6 +112,13 @@ class TestExercises(APITestBase):
         data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
 
         response = SuccessResponse(**self.client.post("/exercises/add", json=data).json())
+
+        # Check link was created
+        self.session.exec(
+            select(WorkoutExerciseLink)
+            .where(WorkoutExerciseLink.workout_id == workout.id)
+            .where(WorkoutExerciseLink.exercise_id == exercise.id)
+        ).one()
 
         assert response.results
         assert response.code == "ok"
@@ -164,9 +171,8 @@ class TestExercises(APITestBase):
         assert response.message == message
 
     def test_exercise_add_fails_when_adding_exercise_that_already_exists_in_workout(self) -> None:
-        exercise = self.sample.exercise()
-        workout = self.sample.workout(exercises=[exercise])
-        data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+        link = self.sample.workout_exercise_link()
+        data = {"workout_id": str(link.workout_id), "exercise_id": str(link.exercise_id)}
 
         response = ErrorResponse(**self.client.post("/exercises/add", json=data).json())
 

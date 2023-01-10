@@ -4,12 +4,8 @@ from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlmodel import Session, select
 
-from ...errors.messages import (
-    NO_EXERCISE_FOUND,
-    NO_SET_FOUND,
-    NO_WORKOUT_FOUND,
-)
-from ...models import Exercise, Set, SetRead, Workout
+from ...errors.messages import NO_SET_FOUND, NO_WORKOUT_AND_EXERCISE_LINK_FOUND
+from ...models import Set, SetRead, WorkoutExerciseLink
 from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .base import BaseRepository
 
@@ -17,29 +13,33 @@ from .base import BaseRepository
 class SetRepository(BaseRepository):
     def get_all(self, user_id: UUID | None, data: SetGetAll) -> list[SetRead]:
         with Session(self.database) as session:
-            sets = session.exec(
-                select(Set)
-                .where(and_(Set.exercise_id == data.exercise_id, Set.exercise_user_id == user_id))
-                .where(and_(Set.workout_id == data.workout_id, Set.workout_user_id == user_id))
-            ).all()
+            link = session.exec(
+                select(WorkoutExerciseLink)
+                .where(WorkoutExerciseLink.workout_user_id == user_id)
+                .where(WorkoutExerciseLink.workout_id == data.workout_id)
+                .where(WorkoutExerciseLink.exercise_user_id == user_id)
+                .where(WorkoutExerciseLink.exercise_id == data.exercise_id)
+            ).one_or_none()
 
-            return [SetRead(**s.dict()) for s in sets]
+            if not link:
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_AND_EXERCISE_LINK_FOUND)
+
+            return [SetRead(**s.dict()) for s in link.sets]
 
     def add(self, user_id: UUID | None, data: SetAdd) -> SetRead:
         with Session(self.database) as session:
-            exercise = session.exec(
-                select(Exercise).where(Exercise.id == data.exercise_id).where(Exercise.user_id == user_id)
-            ).one_or_none()
-            workout = session.exec(
-                select(Workout).where(Workout.id == data.workout_id).where(Workout.user_id == user_id)
+            link = session.exec(
+                select(WorkoutExerciseLink)
+                .where(WorkoutExerciseLink.workout_user_id == user_id)
+                .where(WorkoutExerciseLink.workout_id == data.workout_id)
+                .where(WorkoutExerciseLink.exercise_user_id == user_id)
+                .where(WorkoutExerciseLink.exercise_id == data.exercise_id)
             ).one_or_none()
 
-            if not exercise:
-                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-            if not workout:
-                raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+            if not link:
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_AND_EXERCISE_LINK_FOUND)
 
-            set = Set(rep_count=data.rep_count, weight=data.weight, workout=workout, exercise=exercise)
+            set = Set(rep_count=data.rep_count, weight=data.weight, workout_exercise_link=link)
             session.add(set)
             session.commit()
             session.refresh(set)
@@ -51,8 +51,8 @@ class SetRepository(BaseRepository):
             set = session.exec(
                 select(Set)
                 .where(Set.id == data.set_id)
-                .where(and_(Set.exercise_id == data.exercise_id, Set.exercise_user_id == user_id))
-                .where(and_(Set.workout_id == data.workout_id, Set.workout_user_id == user_id))
+                .where(Set.exercise_id == data.exercise_id)
+                .where(Set.workout_id == data.workout_id)
             ).one_or_none()
 
             if not set:
@@ -66,8 +66,8 @@ class SetRepository(BaseRepository):
             set = session.exec(
                 select(Set)
                 .where(Set.id == data.set_id)
-                .where(and_(Set.exercise_id == data.exercise_id, Set.exercise_user_id == user_id))
-                .where(and_(Set.workout_id == data.workout_id, Set.workout_user_id == user_id))
+                .where(and_(Set.exercise_id == data.exercise_id))
+                .where(and_(Set.workout_id == data.workout_id))
             ).one_or_none()
 
             if not set:

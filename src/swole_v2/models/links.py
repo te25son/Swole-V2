@@ -1,14 +1,37 @@
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from . import Exercise, Set, Workout
 
 
 class WorkoutExerciseLink(SQLModel, table=True):  # type: ignore
     workout_id: UUID = Field(foreign_key="workout.id", primary_key=True)
-    exercise_id: UUID = Field(foreign_key="exercise.id", primary_key=True)
+    workout_user_id: UUID = Field(foreign_key="workout.user_id")
+    workout: "Workout" = Relationship(
+        back_populates="exercise_links",
+        sa_relationship_kwargs=dict(
+            primaryjoin="and_(WorkoutExerciseLink.workout_id==Workout.id, WorkoutExerciseLink.workout_user_id==Workout.user_id)"
+        ),
+    )
 
-    workout_user_id: UUID
-    exercise_user_id: UUID
+    exercise_id: UUID = Field(foreign_key="exercise.id", primary_key=True)
+    exercise_user_id: UUID = Field(foreign_key="exercise.user_id")
+    exercise: "Exercise" = Relationship(
+        back_populates="workout_links",
+        sa_relationship_kwargs=dict(
+            primaryjoin="and_(WorkoutExerciseLink.exercise_id==Exercise.id, WorkoutExerciseLink.exercise_user_id==Exercise.user_id)"
+        ),
+    )
+
+    sets: list["Set"] = Relationship(
+        back_populates="workout_exercise_link",
+        sa_relationship_kwargs=dict(
+            primaryjoin="and_(WorkoutExerciseLink.workout_id==Set.workout_id, WorkoutExerciseLink.exercise_id==Set.exercise_id)"
+        ),
+    )
 
     __table_args__ = (CheckConstraint("workout_user_id == exercise_user_id"),)
