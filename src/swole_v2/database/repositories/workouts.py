@@ -6,8 +6,8 @@ from sqlmodel import Session, select
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
-from ...models import Workout, WorkoutRead
-from ...schemas import WorkoutCreate, WorkoutUpdate
+from ...models import ExerciseRead, Workout, WorkoutRead
+from ...schemas import WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
 from .base import BaseRepository
 
 
@@ -18,6 +18,17 @@ class WorkoutRepository(BaseRepository):
                 WorkoutRead(**result.dict())
                 for result in session.exec(select(Workout).where(Workout.user_id == user_id)).all()
             ]
+
+    def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
+        with Session(self.database) as session:
+            workout = session.exec(
+                select(Workout).where(Workout.id == data.workout_id).where(Workout.user_id == user_id)
+            ).one_or_none()
+
+            if not workout:
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+
+            return [ExerciseRead(**link.exercise.dict()) for link in workout.exercise_links]
 
     def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
         with Session(self.database) as session:

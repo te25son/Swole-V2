@@ -106,6 +106,13 @@ class Sample:
             workout=self.workout(user or self.test_user), exercise=self.exercise(user or self.test_user), **kwargs
         )
 
+    def new_workout_exercise_link(
+        self, workout: Workout | None = None, exercise: Exercise | None = None, **kwargs: Any
+    ) -> WorkoutExerciseLink:
+        return WorkoutExerciseLinkFactory.create_sync(
+            workout=workout or self.workout(), exercise=exercise or self.exercise(), **kwargs
+        )
+
     def set(self, link: WorkoutExerciseLink | None = None, **kwargs: Any) -> Set:
         return SetFactory.create_sync(workout_exercise_link=link or self.workout_exercise_link(), **kwargs)
 

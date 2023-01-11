@@ -301,7 +301,9 @@ class TestSets(APITestBase):
         assert response.message == message
 
     @pytest.mark.parametrize(*invalid_set_id_params)
-    def test_set_update_fails_with_invalid_ids(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
+    def test_set_update_fails_with_invalid_ids(
+        self, set_id: Any, workout_id: Any, exercise_id: Any, message: str
+    ) -> None:
         data = {
             "rep_count": fake.random_digit_not_null(),
             "weight": fake.random_digit_not_null(),

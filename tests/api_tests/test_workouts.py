@@ -11,7 +11,7 @@ from swole_v2.errors.messages import (
     NAME_AND_DATE_MUST_BE_UNIQUE,
     NO_WORKOUT_FOUND,
 )
-from swole_v2.models import Workout
+from swole_v2.models import ExerciseRead, Workout
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
 from .base import APITestBase, fake, sample
@@ -201,8 +201,23 @@ class TestWorkouts(APITestBase):
             "date": fake.date()
         }
 
-        result = ErrorResponse(**self.client.post("/workouts/update", json=data).json())
+        response = ErrorResponse(**self.client.post("/workouts/update", json=data).json())
 
-        assert result.code == "error"
-        assert result.message == message
+        assert response.code == "error"
+        assert response.message == message
+
+    def test_get_all_exercises_by_workout_succeeds(self) -> None:
+        workout = self.sample.workout()
+        links = [self.sample.new_workout_exercise_link(workout) for _ in range(0, 3)]
+
+        response = SuccessResponse(
+            **self.client.post("/workouts/exercises", json={"workout_id": str(workout.id)}).json()
+        )
+
+        assert response.results
+        assert response.code == "ok"
+        assert all(
+            exercise in [ExerciseRead(**link.exercise.dict()).dict() for link in links]
+            for exercise in response.results
+        )
 # fmt: on

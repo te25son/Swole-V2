@@ -7,6 +7,7 @@ from ..schemas import (
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
+    WorkoutGetAllExercises,
     WorkoutUpdate,
 )
 from ..security import get_current_active_user
@@ -57,3 +58,12 @@ def update(
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=[respository.update(current_user.id, data)])
+
+
+@router.post("/exercises", response_model=SuccessResponse)
+def get_all_exercises(
+    data: WorkoutGetAllExercises,
+    current_user: User = Depends(get_current_active_user),
+    respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=respository.get_all_exercises(current_user.id, data))
