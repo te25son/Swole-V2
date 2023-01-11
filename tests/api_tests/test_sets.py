@@ -6,8 +6,9 @@ from sqlmodel import select
 
 from swole_v2.errors.messages import (
     INVALID_ID,
+    MUST_BE_A_NON_NEGATIVE_NUMBER,
+    MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
     MUST_BE_LESS_THAN,
-    MUST_BY_A_NON_NEGATIVE_NUMBER,
     NO_SET_FOUND,
     NO_WORKOUT_AND_EXERCISE_LINK_FOUND,
 )
@@ -18,6 +19,62 @@ from .base import APITestBase, fake, sample
 
 
 class TestSets(APITestBase):
+    invalid_set_data_params = [
+        pytest.param(
+            -fake.random_digit_not_null(),
+            fake.random_digit_not_null(),
+            MUST_BE_A_NON_NEGATIVE_NUMBER,
+            id="Test negative rep count fails",
+        ),
+        pytest.param(
+            fake.random_digit_not_null(),
+            -fake.random_digit_not_null(),
+            MUST_BE_A_NON_NEGATIVE_NUMBER,
+            id="Test negative weight fails",
+        ),
+        pytest.param(
+            501,
+            fake.random_digit_not_null(),
+            MUST_BE_LESS_THAN.format(501),
+            id="Test rep count greater than 500 fails",
+        ),
+        pytest.param(
+            fake.random_digit_not_null(),
+            10001,
+            MUST_BE_LESS_THAN.format(10001),
+            id="Test weight greater than 10000 fails",
+        ),
+        pytest.param(
+            fake.random_digit_not_null(), "  ", MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test blank weight fails"
+        ),
+        pytest.param(
+            fake.random_digit_not_null(), "", MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test empty weight fails"
+        ),
+        pytest.param(
+            "", fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test blank rep count fails"
+        ),
+        pytest.param(
+            "", fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test empty weight fails"
+        ),
+    ]
+
+    invalid_set_id_params = (
+        "workout_id, exercise_id, set_id, message",
+        [
+            pytest.param(uuid4(), uuid4(), uuid4(), NO_SET_FOUND, id="Test random uuid fails."),
+            pytest.param(
+                fake.random_digit(), fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails."
+            ),
+            pytest.param(
+                (set := sample.set()).id,
+                set.workout_id,  # type: ignore
+                set.exercise_id,  # type: ignore
+                NO_SET_FOUND,
+                id="Test set belonging to other user fails.",
+            ),
+        ],
+    )
+
     def test_set_get_all(self) -> None:
         link = self.sample.workout_exercise_link()
         sets = self.sample.sets(link=link)
@@ -110,6 +167,35 @@ class TestSets(APITestBase):
         assert response.message == NO_WORKOUT_AND_EXERCISE_LINK_FOUND
 
     @pytest.mark.parametrize(
+        "rep_count, weight, message",
+        invalid_set_data_params
+        + [
+            pytest.param(
+                None,
+                fake.random_digit_not_null(),
+                MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
+                id="Test no rep count fails",
+            ),
+            pytest.param(
+                fake.random_digit_not_null(), None, MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test no weight fails"
+            ),
+        ],
+    )
+    def test_set_add_fails_with_invalid_data(self, rep_count: Any, weight: Any, message: str) -> None:
+        link = self.sample.workout_exercise_link()
+        data = {
+            "workout_id": str(link.workout_id),
+            "exercise_id": str(link.exercise_id),
+            "rep_count": rep_count,
+            "weight": weight,
+        }
+
+        response = ErrorResponse(**self.client.post("/sets/add", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == message
+
+    @pytest.mark.parametrize(
         "workout_id, exercise_id, message",
         [
             pytest.param(uuid4(), uuid4(), NO_WORKOUT_AND_EXERCISE_LINK_FOUND, id="Test random uuid fails."),
@@ -157,22 +243,7 @@ class TestSets(APITestBase):
         assert response.code == "ok"
         assert response.results == None
 
-    @pytest.mark.parametrize(
-        "workout_id, exercise_id, set_id, message",
-        [
-            pytest.param(uuid4(), uuid4(), uuid4(), NO_SET_FOUND, id="Test random uuid fails."),
-            pytest.param(
-                fake.random_digit(), fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails."
-            ),
-            pytest.param(
-                (set := sample.set()).id,
-                set.workout_id,  # type: ignore
-                set.exercise_id,  # type: ignore
-                NO_SET_FOUND,
-                id="Test set belonging to other user fails.",
-            ),
-        ],
-    )
+    @pytest.mark.parametrize(*invalid_set_id_params)
     def test_set_delete_fails(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
         data = {
             "set_id": str(set_id),
@@ -213,35 +284,7 @@ class TestSets(APITestBase):
         assert response.code == "ok"
         assert response.results == [{"rep_count": rep_count or set.rep_count, "weight": weight or set.weight}]
 
-    @pytest.mark.parametrize(
-        "rep_count, weight, message",
-        [
-            pytest.param(
-                -fake.random_digit_not_null(),
-                fake.random_digit_not_null(),
-                MUST_BY_A_NON_NEGATIVE_NUMBER,
-                id="Test negative rep count fails",
-            ),
-            pytest.param(
-                fake.random_digit_not_null(),
-                -fake.random_digit_not_null(),
-                MUST_BY_A_NON_NEGATIVE_NUMBER,
-                id="Test negative weight fails",
-            ),
-            pytest.param(
-                501,
-                fake.random_digit_not_null(),
-                MUST_BE_LESS_THAN.format(501),
-                id="Test rep count greater than 500 fails",
-            ),
-            pytest.param(
-                fake.random_digit_not_null(),
-                10001,
-                MUST_BE_LESS_THAN.format(10001),
-                id="Test weight greater than 10000 fails",
-            ),
-        ],
-    )
+    @pytest.mark.parametrize("rep_count, weight, message", invalid_set_data_params)
     def test_set_update_fails(self, rep_count: int | None, weight: int | None, message: str) -> None:
         set = self.sample.set()
         data = {
@@ -250,6 +293,21 @@ class TestSets(APITestBase):
             "set_id": str(set.id),
             "workout_id": str(set.workout_id),
             "exercise_id": str(set.exercise_id),
+        }
+
+        response = ErrorResponse(**self.client.post("/sets/update", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == message
+
+    @pytest.mark.parametrize(*invalid_set_id_params)
+    def test_set_update_fails_with_invalid_ids(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
+        data = {
+            "rep_count": fake.random_digit_not_null(),
+            "weight": fake.random_digit_not_null(),
+            "set_id": str(set_id),
+            "workout_id": str(workout_id),
+            "exercise_id": str(exercise_id),
         }
 
         response = ErrorResponse(**self.client.post("/sets/update", json=data).json())

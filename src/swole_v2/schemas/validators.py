@@ -13,8 +13,9 @@ from ..errors.messages import (
     FIELD_CANNOT_BE_EMPTY,
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
+    MUST_BE_A_NON_NEGATIVE_NUMBER,
+    MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
     MUST_BE_LESS_THAN,
-    MUST_BY_A_NON_NEGATIVE_NUMBER,
 )
 
 
@@ -49,9 +50,13 @@ def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | Non
         if allow_none and value is None:
             return value
         else:
-            if isinstance(value, int) and value > 0:
-                return value
-        raise BusinessError(MUST_BY_A_NON_NEGATIVE_NUMBER)
+            try:
+                value_as_int = int(value)
+                if value_as_int > 0:
+                    return value_as_int
+                raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
+            except (TypeError, ValueError):
+                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER)
 
     return wrapper
 
@@ -61,9 +66,13 @@ def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int],
         if allow_none and value is None:
             return value
         else:
-            if isinstance(value, int) and value < number:
-                return value
-        raise BusinessError(MUST_BE_LESS_THAN.format(number))
+            try:
+                value_as_int = int(value)
+                if value_as_int < number:
+                    return value_as_int
+                raise BusinessError(MUST_BE_LESS_THAN.format(number))
+            except (TypeError, ValueError):
+                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER)
 
     return wrapper
 

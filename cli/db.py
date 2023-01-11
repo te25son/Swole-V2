@@ -59,14 +59,15 @@ def seed(context: CliContext) -> None:
 
 
 def create_instances(settings: Settings, session: Session) -> None:
-    # Create user instances
     sample = Sample()
-    admin_user = sample.user(
+    # Create admin user
+    sample.user(
         username=settings.DUMMY_USERNAME,
         hashed_password=hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
     )
-    users = sample.users(size=10) + [admin_user]
+    # Create other users
+    users = sample.users(size=10)
 
     # Create workout and exercise instances
     for _ in range(20):
