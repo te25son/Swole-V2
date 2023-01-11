@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
+from sqlalchemy import Column, ForeignKey
 from sqlmodel import Field, Relationship, SQLModel
-from sqlalchemy import ForeignKey, Column
 
 if TYPE_CHECKING:
     from . import WorkoutExerciseLink

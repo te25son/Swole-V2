@@ -19,7 +19,7 @@ class Exercise(SQLModel, table=True):  # type: ignore
         back_populates="exercise",
         sa_relationship_kwargs=dict(
             primaryjoin="and_(Exercise.id==WorkoutExerciseLink.exercise_id, Exercise.user_id==WorkoutExerciseLink.exercise_user_id)",
-            cascade="all, delete-orphan"
+            cascade="all, delete-orphan",
         ),
     )
 

@@ -7,9 +7,7 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from swole_v2.helpers import hash_password
 from swole_v2.settings import Settings, get_settings
-from tests.factories import (
-    Sample
-)
+from tests.factories import Sample
 
 from . import CliContext, Environments, load_environment_variables
 

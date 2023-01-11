@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, ForeignKey, Column
+from sqlalchemy import CheckConstraint, Column, ForeignKey
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class WorkoutExerciseLink(SQLModel, table=True):  # type: ignore
         back_populates="workout_exercise_link",
         sa_relationship_kwargs=dict(
             primaryjoin="and_(WorkoutExerciseLink.workout_id==Set.workout_id, WorkoutExerciseLink.exercise_id==Set.exercise_id)",
-            cascade="all, delete-orphan"
+            cascade="all, delete-orphan",
         ),
     )
 
