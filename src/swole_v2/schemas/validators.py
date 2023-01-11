@@ -13,6 +13,8 @@ from ..errors.messages import (
     FIELD_CANNOT_BE_EMPTY,
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
+    MUST_BE_LESS_THAN,
+    MUST_BY_A_NON_NEGATIVE_NUMBER,
 )
 
 
@@ -38,6 +40,30 @@ def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[s
             if isinstance(value, str) and value.strip() == "":
                 raise error
         return value
+
+    return wrapper
+
+
+def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:
+    def wrapper(value: Any) -> int | None:
+        if allow_none and value is None:
+            return value
+        else:
+            if isinstance(value, int) and value > 0:
+                return value
+        raise BusinessError(MUST_BY_A_NON_NEGATIVE_NUMBER)
+
+    return wrapper
+
+
+def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:
+    def wrapper(value: Any) -> int | None:
+        if allow_none and value is None:
+            return value
+        else:
+            if isinstance(value, int) and value < number:
+                return value
+        raise BusinessError(MUST_BE_LESS_THAN.format(number))
 
     return wrapper
 

@@ -6,6 +6,8 @@ from sqlmodel import select
 
 from swole_v2.errors.messages import (
     INVALID_ID,
+    MUST_BE_LESS_THAN,
+    MUST_BY_A_NON_NEGATIVE_NUMBER,
     NO_SET_FOUND,
     NO_WORKOUT_AND_EXERCISE_LINK_FOUND,
 )
@@ -195,7 +197,7 @@ class TestSets(APITestBase):
             ),
         ],
     )
-    def test_update_succeeds(self, rep_count: int | None, weight: int | None) -> None:
+    def test_set_update_succeeds(self, rep_count: int | None, weight: int | None) -> None:
         set = self.sample.set()
         data = {
             "rep_count": rep_count,
@@ -210,3 +212,47 @@ class TestSets(APITestBase):
         assert response.results
         assert response.code == "ok"
         assert response.results == [{"rep_count": rep_count or set.rep_count, "weight": weight or set.weight}]
+
+    @pytest.mark.parametrize(
+        "rep_count, weight, message",
+        [
+            pytest.param(
+                -fake.random_digit_not_null(),
+                fake.random_digit_not_null(),
+                MUST_BY_A_NON_NEGATIVE_NUMBER,
+                id="Test negative rep count fails",
+            ),
+            pytest.param(
+                fake.random_digit_not_null(),
+                -fake.random_digit_not_null(),
+                MUST_BY_A_NON_NEGATIVE_NUMBER,
+                id="Test negative weight fails",
+            ),
+            pytest.param(
+                501,
+                fake.random_digit_not_null(),
+                MUST_BE_LESS_THAN.format(501),
+                id="Test rep count greater than 500 fails",
+            ),
+            pytest.param(
+                fake.random_digit_not_null(),
+                10001,
+                MUST_BE_LESS_THAN.format(10001),
+                id="Test weight greater than 10000 fails",
+            ),
+        ],
+    )
+    def test_set_update_fails(self, rep_count: int | None, weight: int | None, message: str) -> None:
+        set = self.sample.set()
+        data = {
+            "rep_count": rep_count,
+            "weight": weight,
+            "set_id": str(set.id),
+            "workout_id": str(set.workout_id),
+            "exercise_id": str(set.exercise_id),
+        }
+
+        response = ErrorResponse(**self.client.post("/sets/update", json=data).json())
+
+        assert response.code == "error"
+        assert response.message == message
