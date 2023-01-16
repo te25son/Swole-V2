@@ -22,14 +22,23 @@ from .base import BaseRepository
 class ExerciseRepository(BaseRepository):
     def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
         results = json.loads(
-            self.client.query_json("SELECT Exercise {name} FILTER .user.id = <uuid>$user_id", user_id=user_id)
+            self.client.query_json(
+                """
+                SELECT Exercise {name}
+                FILTER .user.id = <uuid>$user_id
+                """,
+                user_id=user_id,
+            )
         )
         return [ExerciseRead(**result) for result in results]
 
     def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
         result = json.loads(
             self.client.query_single_json(
-                "SELECT Exercise {name} FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)",
+                """
+                SELECT Exercise {name}
+                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                """,
                 exercise_id=exercise_id,
                 user_id=user_id,
             )
@@ -42,39 +51,39 @@ class ExerciseRepository(BaseRepository):
 
     def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
         try:
-            result = json.loads(
-                self.client.query_single_json(
-                    """
-                INSERT Exercise {
-                    name := <str>$name,
-                    user := (SELECT User FILTER .id = <uuid>$user_id)
-                }""",
-                    name=data.name,
-                    user_id=user_id,
-                )
-            )
             exercise = self.client.query_single_json(
-                "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=result["id"]
+                """
+                WITH exercise := (
+                    INSERT Exercise {
+                        name := <str>$name,
+                        user := (SELECT User FILTER .id = <uuid>$user_id)
+                    }
+                )
+                SELECT exercise {name}
+                """,
+                name=data.name,
+                user_id=user_id,
             )
             return ExerciseRead.parse_raw(exercise)
         except ConstraintViolationError:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
     def add_to_workout(self, user_id: UUID | None, data: ExerciseAddToWorkout) -> ExerciseRead:
-        self.client.query_single_json(
-            """
-            UPDATE Exercise
-            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-            SET {
-                workouts += (SELECT Workout FILTER .id = <uuid>$workout_id)
-            }""",
-            workout_id=data.workout_id,
-            exercise_id=data.exercise_id,
-            user_id=user_id,
-        )
         result = json.loads(
             self.client.query_single_json(
-                "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=data.exercise_id
+                """
+                WITH exercise := (
+                    UPDATE Exercise
+                    FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                    SET {
+                        workouts += (SELECT Workout FILTER .id = <uuid>$workout_id)
+                    }
+                )
+                SELECT exercise {name}
+                """,
+                workout_id=data.workout_id,
+                exercise_id=data.exercise_id,
+                user_id=user_id,
             )
         )
 
@@ -85,19 +94,20 @@ class ExerciseRepository(BaseRepository):
 
     def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:
-            self.client.query_single_json(
+            result = self.client.query_single_json(
                 """
-                UPDATE Exercise
-                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                SET {
-                    name := <str>$name ?? .name,
-                }""",
+                WITH exercise := (
+                    UPDATE Exercise
+                    FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                    SET {
+                        name := <str>$name ?? .name,
+                    }
+                )
+                SELECT exercise
+                """,
                 exercise_id=data.exercise_id,
                 user_id=user_id,
                 name=data.name,
-            )
-            result = self.client.query_single_json(
-                "SELECT Exercise FILTER .id = <uuid>$exercise_id", exercise_id=data.exercise_id
             )
             return ExerciseRead.parse_raw(result)
         except ConstraintViolationError:
@@ -105,7 +115,10 @@ class ExerciseRepository(BaseRepository):
 
     def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
         self.client.query_single_json(
-            "DELETE Exercise FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)",
+            """
+            DELETE Exercise
+            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+            """,
             exercise_id=data.exercise_id,
             user_id=user_id,
         )

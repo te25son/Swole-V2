@@ -9,7 +9,11 @@ from .base import BaseRepository
 class UserRepository(BaseRepository):
     def get_user_by_id(self, user_id: UUID | None) -> UserRead:
         result = self.client.query_single_json(
-            "SELECT User {username, email} FILTER .id = <uuid>$user_id", user_id=user_id
+            """
+            SELECT User {username, email}
+            FILTER .id = <uuid>$user_id
+            """,
+            user_id=user_id,
         )
 
         if not result:

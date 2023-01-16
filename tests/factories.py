@@ -1,4 +1,3 @@
-import json
 from random import choice
 from typing import Any, TypeVar
 
@@ -54,16 +53,20 @@ class Sample:
 
     def user(self, **kwargs: Any) -> User:
         user_factory = UserFactory.build(**kwargs)
-        result = json.loads(
-            self.client.query_single_json(
-                "INSERT User {username := <str>$username, hashed_password := <str>$password, email := <str>$email}",
-                username=user_factory.username,
-                password=user_factory.hashed_password,
-                email=user_factory.email,
-            )
-        )
         user = self.client.query_single_json(
-            "SELECT User {id, username, email} FILTER .id = <uuid>$user_id", user_id=result["id"]
+            """
+            WITH user := (
+                INSERT User {
+                    username := <str>$username,
+                    hashed_password := <str>$password,
+                    email := <str>$email
+                }
+            )
+            SELECT user {id, username, email}
+            """,
+            username=user_factory.username,
+            password=user_factory.hashed_password,
+            email=user_factory.email,
         )
         return User.parse_raw(user)
 
@@ -72,21 +75,20 @@ class Sample:
 
     def workout(self, user: User | None = None, **kwargs: Any) -> Workout:
         workout_factory = WorkoutFactory.build(**kwargs)
-        result = json.loads(
-            self.client.query_single_json(
-                """
-                    INSERT Workout {
+        workout = self.client.query_single_json(
+            """
+            WITH workout := (
+                INSERT Workout {
                     name := <str>$name,
                     date := <cal::local_date>$date,
                     user := (SELECT User FILTER .id = <uuid>$user_id)
-                }""",
-                name=workout_factory.name,
-                date=workout_factory.date,
-                user_id=user.id if user else self.test_user.id,
+                }
             )
-        )
-        workout = self.client.query_single_json(
-            "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=result["id"]
+            SELECT workout {id, name, date}
+            """,
+            name=workout_factory.name,
+            date=workout_factory.date,
+            user_id=(user or self.test_user).id,
         )
         return Workout.parse_raw(workout)
 
@@ -95,19 +97,18 @@ class Sample:
 
     def exercise(self, user: User | None = None, **kwargs: Any) -> Exercise:
         exercise_factory = ExerciseFactory.build(**kwargs)
-        result = json.loads(
-            self.client.query_single_json(
-                """
-            INSERT Exercise {
-                name := <str>$name,
-                user := (SELECT User FILTER .id = <uuid>$user_id)
-            }""",
-                name=exercise_factory.name,
-                user_id=user.id if user else self.test_user.id,
-            )
-        )
         exercise = self.client.query_single_json(
-            "SELECT Exercise {id, name} FILTER .id = <uuid>$exercise_id", exercise_id=result["id"]
+            """
+            WITH exercise := (
+                INSERT Exercise {
+                    name := <str>$name,
+                    user := (SELECT User FILTER .id = <uuid>$user_id)
+                }
+            )
+            SELECT exercise {id, name}
+            """,
+            name=exercise_factory.name,
+            user_id=(user or self.test_user).id,
         )
         return Exercise.parse_raw(exercise)
 
@@ -116,31 +117,28 @@ class Sample:
 
     def set(self, workout: Workout | None = None, exercise: Exercise | None = None, **kwargs: Any) -> Set:
         set_factory = SetFactory.build(**kwargs)
-        result = json.loads(
-            self.client.query_single_json(
-                """
-            INSERT ExerciseSet {
-                weight := <int64>$weight,
-                rep_count := <int64>$rep_count,
-                workout := (SELECT Workout FILTER .id = <uuid>$workout_id),
-                exercise := (SELECT Exercise FILTER .id = <uuid>$exercise_id),
-            }""",
-                weight=set_factory.weight,
-                rep_count=set_factory.rep_count,
-                workout_id=workout.id if workout else self.workout().id,
-                exercise_id=exercise.id if exercise else self.exercise().id,
-            )
-        )
         set = self.client.query_single_json(
-            """SELECT ExerciseSet {
+            """
+            WITH exercise_set := (
+                INSERT ExerciseSet {
+                    weight := <int64>$weight,
+                    rep_count := <int64>$rep_count,
+                    workout := (SELECT Workout FILTER .id = <uuid>$workout_id),
+                    exercise := (SELECT Exercise FILTER .id = <uuid>$exercise_id),
+                }
+            )
+            SELECT exercise_set {
                 id,
                 weight,
                 rep_count,
                 exercise: {id, name},
                 workout: {id, name, date}
-            } FILTER .id = <uuid>$set_id
+            }
             """,
-            set_id=result["id"],
+            weight=set_factory.weight,
+            rep_count=set_factory.rep_count,
+            workout_id=(workout or self.workout()).id,
+            exercise_id=(exercise or self.exercise()).id,
         )
         return Set.parse_raw(set)
 
