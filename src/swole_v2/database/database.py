@@ -1,8 +1,7 @@
-from sqlalchemy.future import Engine
-from sqlmodel import create_engine
+from edgedb import Client, create_client
 
 from ..settings import get_settings
 
 
-def get_engine() -> Engine:
-    return create_engine(get_settings().DB_CONNECTION, echo=True)
+def get_client() -> Client:
+    return create_client(dsn=get_settings().EDGEDB_DSN)

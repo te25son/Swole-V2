@@ -1,13 +1,13 @@
+from edgedb import Client
 from fastapi import Depends
-from sqlalchemy.future import Engine
 
-from ..database import get_engine
+from ..database import get_client
 
 
 class BaseRepository:
-    def __init__(self, database: Engine) -> None:
-        self.database = database
+    def __init__(self, client: Client) -> None:
+        self.client = client
 
     @classmethod
-    def as_dependency(cls, database: Engine = Depends(get_engine)) -> "BaseRepository":
-        return cls(database)
+    def as_dependency(cls, client: Client = Depends(get_client)) -> "BaseRepository":
+        return cls(client)

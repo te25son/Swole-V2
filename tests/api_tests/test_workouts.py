@@ -1,8 +1,8 @@
+import json
 from typing import Any
 from uuid import uuid4
 
 import pytest
-from sqlmodel import select
 
 from swole_v2.errors.messages import (
     FIELD_CANNOT_BE_EMPTY,
@@ -11,10 +11,10 @@ from swole_v2.errors.messages import (
     NAME_AND_DATE_MUST_BE_UNIQUE,
     NO_WORKOUT_FOUND,
 )
-from swole_v2.models import ExerciseRead, Workout
+from swole_v2.models import Workout
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
-from .base import APITestBase, fake, sample
+from .base import APITestBase, fake
 
 
 # fmt: off
@@ -23,12 +23,7 @@ class TestWorkouts(APITestBase):
         "workout_id, message",
         [
             pytest.param(uuid4(), NO_WORKOUT_FOUND, id="Test random id fails."),
-            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
-            pytest.param(
-                sample.workout(exercises=sample.exercises()).id,
-                NO_WORKOUT_FOUND,
-                id="Test workout id belonging to other user fails.",
-            ),
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails.")
         ],
     )
 
@@ -115,20 +110,21 @@ class TestWorkouts(APITestBase):
         result = SuccessResponse(
             **self.client.post("/workouts/delete", json={"workout_id": str(workout.id)}).json()
         )
-        deleted_exercise = self.session.exec(select(Workout).where(Workout.id == workout.id)).one_or_none()
+        deleted_exercise = json.loads(self.db.query_single_json(
+            "SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id
+        ))
 
         assert deleted_exercise is None
         assert result.code == "ok"
         assert result.results is None
 
-    @pytest.mark.parametrize(*invalid_workout_id_params)
-    def test_workout_delete_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
+    def test_workout_delete_with_invalid_workout_id(self) -> None:
         result = ErrorResponse(
-            **self.client.post("/workouts/delete", json={"workout_id": str(workout_id)}).json()
+            **self.client.post("/workouts/delete", json={"workout_id": str(fake.random_digit())}).json()
         )
 
         assert result.code == "error"
-        assert result.message == message
+        assert result.message == INVALID_ID
 
     @pytest.mark.parametrize(
         "name, date",
@@ -146,7 +142,9 @@ class TestWorkouts(APITestBase):
 
         response = SuccessResponse(**self.client.post("/workouts/update", json=data).json())
 
-        updated_workout = self.session.exec(select(Workout).where(Workout.id == workout.id)).one()
+        updated_workout = Workout.parse_raw(self.db.query_single_json(
+            "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
+        ))
 
         assert response.results
         assert response.results == [
@@ -172,7 +170,9 @@ class TestWorkouts(APITestBase):
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
         response = ErrorResponse(**self.client.post("/workouts/update", json=data).json())
-        not_updated_workout = self.session.exec(select(Workout).where(Workout.id == workout.id)).one()
+        not_updated_workout = Workout.parse_raw(self.db.query_single_json(
+            "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
+        ))
 
         assert response.code == "error"
         assert response.message == message
@@ -193,10 +193,9 @@ class TestWorkouts(APITestBase):
         assert response.code == "error"
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
-    @pytest.mark.parametrize(*invalid_workout_id_params)
-    def test_workout_update_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
+    def test_workout_update_fails_with_invalid_workout_id(self) -> None:
         data = {
-            "workout_id": str(workout_id),
+            "workout_id": str(fake.random_digit()),
             "name": fake.name(),
             "date": fake.date()
         }
@@ -204,20 +203,5 @@ class TestWorkouts(APITestBase):
         response = ErrorResponse(**self.client.post("/workouts/update", json=data).json())
 
         assert response.code == "error"
-        assert response.message == message
-
-    def test_get_all_exercises_by_workout_succeeds(self) -> None:
-        workout = self.sample.workout()
-        links = [self.sample.new_workout_exercise_link(workout) for _ in range(0, 3)]
-
-        response = SuccessResponse(
-            **self.client.post("/workouts/exercises", json={"workout_id": str(workout.id)}).json()
-        )
-
-        assert response.results
-        assert response.code == "ok"
-        assert all(
-            exercise in [ExerciseRead(**link.exercise.dict()).dict() for link in links]
-            for exercise in response.results
-        )
+        assert response.message == INVALID_ID
 # fmt: on

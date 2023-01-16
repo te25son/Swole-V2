@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
+from functools import lru_cache
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from sqlmodel import Session, select
 
-from .database.database import get_engine
+from .database.database import get_client
 from .helpers import verify_password
 from .models import TokenData, User
 from .settings import get_settings
@@ -14,16 +14,16 @@ from .settings import get_settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
+@lru_cache()
 def get_user(username: str) -> User | None:
-    query = select(User).where(User.username == username)
-    with Session(get_engine()) as session:
-        return session.exec(query).one_or_none()
+    result = get_client().query_single_json("SELECT User FILTER .username = <str>$username", username=username)
+    return User.parse_raw(result) if result else None
 
 
 def authenticate_user(username: str, password: str) -> User | None:
     if not (user := get_user(username)):
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):  # type: ignore
         return None
     return user
 
@@ -31,8 +31,7 @@ def authenticate_user(username: str, password: str) -> User | None:
 def create_access_token(data: dict[str, Any]) -> str:
     settings = get_settings()
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=settings.TOKEN_EXPIRE)
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": datetime.utcnow() + timedelta(minutes=settings.TOKEN_EXPIRE)})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.HASH_ALGORITHM)
     return encoded_jwt
 

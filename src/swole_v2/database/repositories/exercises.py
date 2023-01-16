@@ -1,17 +1,15 @@
+import json
 from uuid import UUID
 
+from edgedb import ConstraintViolationError
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import (
-    EXERCISE_ALREADY_EXISTS_IN_WORKOUT,
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
     NO_EXERCISE_FOUND,
-    NO_WORKOUT_OR_EXERCISE_FOUND,
 )
-from ...models import Exercise, ExerciseRead, Workout, WorkoutExerciseLink
+from ...models import ExerciseRead
 from ...schemas import (
     ExerciseAddToWorkout,
     ExerciseCreate,
@@ -23,89 +21,91 @@ from .base import BaseRepository
 
 class ExerciseRepository(BaseRepository):
     def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
-        with Session(self.database) as session:
-            return [
-                ExerciseRead(**e.dict())
-                for e in session.exec(select(Exercise).where(Exercise.user_id == user_id)).all()
-            ]
+        results = json.loads(
+            self.client.query_json("SELECT Exercise {name} FILTER .user.id = <uuid>$user_id", user_id=user_id)
+        )
+        return [ExerciseRead(**result) for result in results]
 
     def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
-        with Session(self.database) as session:
-            exercise = (
-                session.exec(select(Exercise).where(Exercise.user_id == user_id).where(Exercise.id == exercise_id))
-            ).one_or_none()
+        result = json.loads(
+            self.client.query_single_json(
+                "SELECT Exercise {name} FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)",
+                exercise_id=exercise_id,
+                user_id=user_id,
+            )
+        )
 
-            if not exercise:
-                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
 
-            return ExerciseRead(**exercise.dict())
+        return ExerciseRead(**result)
 
     def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
-        with Session(self.database) as session:
-            create_data = data.dict()
-            create_data["user_id"] = user_id
-
-            try:
-                exercise = Exercise(**create_data)
-                session.add(exercise)
-                session.commit()
-                session.refresh(exercise)
-
-                return ExerciseRead(**exercise.dict())
-            except IntegrityError:
-                raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
+        try:
+            result = json.loads(
+                self.client.query_single_json(
+                    """
+                INSERT Exercise {
+                    name := <str>$name,
+                    user := (SELECT User FILTER .id = <uuid>$user_id)
+                }""",
+                    name=data.name,
+                    user_id=user_id,
+                )
+            )
+            exercise = self.client.query_single_json(
+                "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=result["id"]
+            )
+            return ExerciseRead.parse_raw(exercise)
+        except ConstraintViolationError:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
     def add_to_workout(self, user_id: UUID | None, data: ExerciseAddToWorkout) -> ExerciseRead:
-        with Session(self.database) as session:
-            result = session.exec(
-                select(Exercise, Workout)
-                .join(Workout, Workout.user_id == Exercise.user_id)
-                .where(Workout.id == data.workout_id)
-                .where(Exercise.id == data.exercise_id)
-            ).all()
+        self.client.query_single_json(
+            """
+            UPDATE Exercise
+            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+            SET {
+                workouts += (SELECT Workout FILTER .id = <uuid>$workout_id)
+            }""",
+            workout_id=data.workout_id,
+            exercise_id=data.exercise_id,
+            user_id=user_id,
+        )
+        result = json.loads(
+            self.client.query_single_json(
+                "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=data.exercise_id
+            )
+        )
 
-            if not result or len(result) > 1:
-                raise HTTPException(status_code=404, detail=NO_WORKOUT_OR_EXERCISE_FOUND)
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
 
-            exercise = result[0][0]
-            workout = result[0][1]
-
-            if exercise in [l.exercise for l in workout.exercise_links]:
-                raise BusinessError(EXERCISE_ALREADY_EXISTS_IN_WORKOUT)
-
-            session.add(WorkoutExerciseLink(workout=workout, exercise=exercise))
-            session.commit()
-            session.refresh(exercise)
-
-            return ExerciseRead(**exercise.dict())
+        return ExerciseRead(**result)
 
     def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
-        with Session(self.database) as session:
-            exercise = session.exec(
-                select(Exercise).where(Exercise.user_id == user_id).where(Exercise.id == data.exercise_id)
-            ).one_or_none()
-
-            if not exercise:
-                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-
-            exercise.name = data.name
-
-            try:
-                session.add(exercise)
-                session.commit()
-                session.refresh(exercise)
-                return ExerciseRead(**exercise.dict())
-            except IntegrityError:
-                raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
+        try:
+            self.client.query_single_json(
+                """
+                UPDATE Exercise
+                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                SET {
+                    name := <str>$name ?? .name,
+                }""",
+                exercise_id=data.exercise_id,
+                user_id=user_id,
+                name=data.name,
+            )
+            result = self.client.query_single_json(
+                "SELECT Exercise FILTER .id = <uuid>$exercise_id", exercise_id=data.exercise_id
+            )
+            return ExerciseRead.parse_raw(result)
+        except ConstraintViolationError:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
     def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
-        with Session(self.database) as session:
-            exercise = session.exec(
-                select(Exercise).where(Exercise.user_id == user_id).where(Exercise.id == data.exercise_id)
-            ).one_or_none()
-
-            if not exercise:
-                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-
-            session.delete(exercise)
-            session.commit()
+        self.client.query_single_json(
+            "DELETE Exercise FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)",
+            exercise_id=data.exercise_id,
+            user_id=user_id,
+        )

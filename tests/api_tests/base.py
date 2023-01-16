@@ -1,7 +1,7 @@
+from edgedb import Client as EdgeDB
 from faker import Faker
 from fastapi.testclient import TestClient
 import pytest
-from sqlmodel import Session
 
 from swole_v2.app import SwoleApp
 from swole_v2.models import User
@@ -16,11 +16,11 @@ sample = Sample()
 class APITestBase:
     @pytest.fixture(autouse=True)
     def common_fixtures(
-        self, test_app: SwoleApp, test_user: User, test_client: TestClient, test_session: Session, test_sample: Sample
+        self, test_app: SwoleApp, test_user: User, test_client: TestClient, test_database: EdgeDB, test_sample: Sample
     ) -> None:
         self.user = test_user
         self.client = test_client
-        self.session = test_session
+        self.db = test_database
         self.app = test_app
         self.sample = test_sample
 

@@ -1,83 +1,78 @@
+import json
 from uuid import UUID
 
-from fastapi import HTTPException
-from sqlalchemy import and_
-from sqlmodel import Session, select
+from edgedb import MissingRequiredError
 
-from ...errors.messages import NO_SET_FOUND, NO_WORKOUT_AND_EXERCISE_LINK_FOUND
-from ...models import Set, SetRead, WorkoutExerciseLink
+from ...errors.exceptions import BusinessError
+from ...errors.messages import SET_ADD_FAILED
+from ...models import SetRead
 from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .base import BaseRepository
 
 
 class SetRepository(BaseRepository):
     def get_all(self, user_id: UUID | None, data: SetGetAll) -> list[SetRead]:
-        with Session(self.database) as session:
-            link = session.exec(
-                select(WorkoutExerciseLink)
-                .where(WorkoutExerciseLink.workout_user_id == user_id)
-                .where(WorkoutExerciseLink.workout_id == data.workout_id)
-                .where(WorkoutExerciseLink.exercise_user_id == user_id)
-                .where(WorkoutExerciseLink.exercise_id == data.exercise_id)
-            ).one_or_none()
+        results = json.loads(
+            self.client.query_json(
+                """
+            SELECT ExerciseSet {weight, rep_count}
+            FILTER (
+                .exercise.id = <uuid>$exercise_id and
+                .workout.id = <uuid>$workout_id and
+                .exercise.user.id = <uuid>$user_id and
+                .workout.user.id = <uuid>$user_id
+            )
+            """,
+                workout_id=data.workout_id,
+                exercise_id=data.exercise_id,
+                user_id=user_id,
+            )
+        )
 
-            if not link:
-                raise HTTPException(status_code=404, detail=NO_WORKOUT_AND_EXERCISE_LINK_FOUND)
-
-            return [SetRead(**s.dict()) for s in link.sets]
+        return [SetRead(**result) for result in results]
 
     def add(self, user_id: UUID | None, data: SetAdd) -> SetRead:
-        with Session(self.database) as session:
-            link = session.exec(
-                select(WorkoutExerciseLink)
-                .where(WorkoutExerciseLink.workout_user_id == user_id)
-                .where(WorkoutExerciseLink.workout_id == data.workout_id)
-                .where(WorkoutExerciseLink.exercise_user_id == user_id)
-                .where(WorkoutExerciseLink.exercise_id == data.exercise_id)
-            ).one_or_none()
-
-            if not link:
-                raise HTTPException(status_code=404, detail=NO_WORKOUT_AND_EXERCISE_LINK_FOUND)
-
-            set = Set(rep_count=data.rep_count, weight=data.weight, workout_exercise_link=link)
-            session.add(set)
-            session.commit()
-            session.refresh(set)
-
-            return SetRead(**set.dict())
+        try:
+            result = json.loads(
+                self.client.query_single_json(
+                    """
+                INSERT ExerciseSet {
+                    weight := <int64>$weight,
+                    rep_count := <int64>$rep_count,
+                    workout := (SELECT Workout FILTER .id = <uuid>$workout_id and .user.id = <uuid>$user_id),
+                    exercise := (SELECT Exercise FILTER .id = <uuid>$exercise_id and .user.id = <uuid>$user_id),
+                }""",
+                    weight=data.weight,
+                    rep_count=data.rep_count,
+                    workout_id=data.workout_id,
+                    exercise_id=data.exercise_id,
+                    user_id=user_id,
+                )
+            )
+            result = self.client.query_single_json(
+                "SELECT ExerciseSet {weight, rep_count} FILTER .id = <uuid>$set_id", set_id=result["id"]
+            )
+            return SetRead.parse_raw(result)
+        except MissingRequiredError:
+            raise BusinessError(SET_ADD_FAILED)
 
     def delete(self, user_id: UUID | None, data: SetDelete) -> None:
-        with Session(self.database) as session:
-            set = session.exec(
-                select(Set)
-                .where(Set.id == data.set_id)
-                .where(Set.exercise_id == data.exercise_id)
-                .where(Set.workout_id == data.workout_id)
-            ).one_or_none()
-
-            if not set:
-                raise HTTPException(status_code=404, detail=NO_SET_FOUND)
-
-            session.delete(set)
-            session.commit()
+        self.client.query_single_json("DELETE ExerciseSet FILTER .id = <uuid>$set_id", set_id=data.set_id)
 
     def update(self, user_id: UUID | None, data: SetUpdate) -> SetRead:
-        with Session(self.database) as session:
-            set = session.exec(
-                select(Set)
-                .where(Set.id == data.set_id)
-                .where(and_(Set.exercise_id == data.exercise_id))
-                .where(and_(Set.workout_id == data.workout_id))
-            ).one_or_none()
-
-            if not set:
-                raise HTTPException(status_code=404, detail=NO_SET_FOUND)
-
-            set.rep_count = data.rep_count or set.rep_count
-            set.weight = data.weight or set.weight
-
-            session.add(set)
-            session.commit()
-            session.refresh(set)
-
-            return SetRead(**set.dict())
+        self.client.query_single_json(
+            """
+            UPDATE ExerciseSet
+            FILTER .id = <uuid>$set_id
+            SET {
+                weight := <optional int64>$weight ?? .weight,
+                rep_count := <optional int64>$rep_count ?? .rep_count
+            }""",
+            set_id=data.set_id,
+            weight=data.weight,
+            rep_count=data.rep_count,
+        )
+        result = self.client.query_single_json(
+            "SELECT ExerciseSet {weight, rep_count} FILTER .id = <uuid>$set_id", set_id=data.set_id
+        )
+        return SetRead.parse_raw(result)

@@ -1,54 +1,22 @@
+import json
 from random import choice
 from typing import Any, TypeVar
 
-from pydantic_factories import (
-    Ignore,
-    ModelFactory,
-    SyncPersistenceProtocol,
-    Use,
-)
-from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
+from edgedb import create_client
+from pydantic import BaseModel
+from pydantic_factories import Ignore, ModelFactory, Use
 
-from swole_v2.models import Exercise, Set, User, Workout, WorkoutExerciseLink
+from swole_v2.models import Exercise, Set, User, Workout
 from swole_v2.settings import get_settings
 
-T = TypeVar("T", bound=SQLModel)
-
-
-# ============ PERSISTENCE HANDLERS =============
-
-
-class SqlModelSyncPersistenceHandler(SyncPersistenceProtocol[T]):
-    def __init__(self) -> None:
-        # copied from engine creation in conftest
-        self.database = create_engine(
-            url=get_settings().DB_CONNECTION,
-            connect_args={"check_same_thread": False},
-            poolclass=StaticPool,
-            echo=True,
-        )
-
-    def save(self, data: T) -> T:
-        with Session(self.database, expire_on_commit=False) as session:
-            session.add(data)
-            session.commit()
-
-            return data
-
-    def save_many(self, data: list[T]) -> list[T]:
-        with Session(self.database, expire_on_commit=False) as session:
-            session.add_all(data)
-            session.commit()
-
-            return data
+T = TypeVar("T", bound=BaseModel)
 
 
 # ================== FACTORIES ==================
 
 
 class BaseFactory(ModelFactory[T]):
-    __sync_persistence__ = SqlModelSyncPersistenceHandler  # type: ignore
+    __allow_none_optionals__ = False
 
     id = Ignore()
 
@@ -64,9 +32,7 @@ class ExerciseFactory(BaseFactory[Exercise]):
 class WorkoutFactory(BaseFactory[Workout]):
     __model__ = Workout
 
-
-class WorkoutExerciseLinkFactory(BaseFactory[WorkoutExerciseLink]):
-    __model__ = WorkoutExerciseLink
+    exercises = Ignore()
 
 
 class SetFactory(BaseFactory[Set]):
@@ -74,6 +40,8 @@ class SetFactory(BaseFactory[Set]):
 
     rep_count = Use(choice, [*range(1, 501)])
     weight = Use(choice, [*range(1, 10001)])
+    workout = Ignore()
+    exercise = Ignore()
 
 
 # =================== SAMPLE ===================
@@ -81,42 +49,102 @@ class SetFactory(BaseFactory[Set]):
 
 class Sample:
     def __init__(self, user: User | None = None):
+        self.client = create_client(dsn=get_settings().EDGEDB_DSN)
         self.test_user = user or self.user()
 
     def user(self, **kwargs: Any) -> User:
-        return UserFactory.create_sync(**kwargs)
+        user_factory = UserFactory.build(**kwargs)
+        result = json.loads(
+            self.client.query_single_json(
+                "INSERT User {username := <str>$username, hashed_password := <str>$password, email := <str>$email}",
+                username=user_factory.username,
+                password=user_factory.hashed_password,
+                email=user_factory.email,
+            )
+        )
+        user = self.client.query_single_json(
+            "SELECT User {id, username, email} FILTER .id = <uuid>$user_id", user_id=result["id"]
+        )
+        return User.parse_raw(user)
 
     def users(self, size: int = 5, **kwargs: Any) -> list[User]:
-        return UserFactory.create_batch_sync(size=size, **kwargs)
+        return [self.user(**kwargs) for _ in range(0, size)]
 
     def workout(self, user: User | None = None, **kwargs: Any) -> Workout:
-        return WorkoutFactory.create_sync(user=user or self.test_user, **kwargs)
+        workout_factory = WorkoutFactory.build(**kwargs)
+        result = json.loads(
+            self.client.query_single_json(
+                """
+                    INSERT Workout {
+                    name := <str>$name,
+                    date := <cal::local_date>$date,
+                    user := (SELECT User FILTER .id = <uuid>$user_id)
+                }""",
+                name=workout_factory.name,
+                date=workout_factory.date,
+                user_id=user.id if user else self.test_user.id,
+            )
+        )
+        workout = self.client.query_single_json(
+            "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=result["id"]
+        )
+        return Workout.parse_raw(workout)
 
     def workouts(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Workout]:
-        return WorkoutFactory.create_batch_sync(size=size, user=user or self.test_user, **kwargs)
+        return [self.workout(user, **kwargs) for _ in range(0, size)]
 
     def exercise(self, user: User | None = None, **kwargs: Any) -> Exercise:
-        return ExerciseFactory.create_sync(user=user or self.test_user, **kwargs)
+        exercise_factory = ExerciseFactory.build(**kwargs)
+        result = json.loads(
+            self.client.query_single_json(
+                """
+            INSERT Exercise {
+                name := <str>$name,
+                user := (SELECT User FILTER .id = <uuid>$user_id)
+            }""",
+                name=exercise_factory.name,
+                user_id=user.id if user else self.test_user.id,
+            )
+        )
+        exercise = self.client.query_single_json(
+            "SELECT Exercise {id, name} FILTER .id = <uuid>$exercise_id", exercise_id=result["id"]
+        )
+        return Exercise.parse_raw(exercise)
 
     def exercises(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Exercise]:
-        return ExerciseFactory.create_batch_sync(size=size, user=user or self.test_user, **kwargs)
+        return [self.exercise(user, **kwargs) for _ in range(0, size)]
 
-    def workout_exercise_link(self, user: User | None = None, **kwargs: Any) -> WorkoutExerciseLink:
-        return WorkoutExerciseLinkFactory.create_sync(
-            workout=self.workout(user or self.test_user), exercise=self.exercise(user or self.test_user), **kwargs
+    def set(self, workout: Workout | None = None, exercise: Exercise | None = None, **kwargs: Any) -> Set:
+        set_factory = SetFactory.build(**kwargs)
+        result = json.loads(
+            self.client.query_single_json(
+                """
+            INSERT ExerciseSet {
+                weight := <int64>$weight,
+                rep_count := <int64>$rep_count,
+                workout := (SELECT Workout FILTER .id = <uuid>$workout_id),
+                exercise := (SELECT Exercise FILTER .id = <uuid>$exercise_id),
+            }""",
+                weight=set_factory.weight,
+                rep_count=set_factory.rep_count,
+                workout_id=workout.id if workout else self.workout().id,
+                exercise_id=exercise.id if exercise else self.exercise().id,
+            )
         )
-
-    def new_workout_exercise_link(
-        self, workout: Workout | None = None, exercise: Exercise | None = None, **kwargs: Any
-    ) -> WorkoutExerciseLink:
-        return WorkoutExerciseLinkFactory.create_sync(
-            workout=workout or self.workout(), exercise=exercise or self.exercise(), **kwargs
+        set = self.client.query_single_json(
+            """SELECT ExerciseSet {
+                id,
+                weight,
+                rep_count,
+                exercise: {id, name},
+                workout: {id, name, date}
+            } FILTER .id = <uuid>$set_id
+            """,
+            set_id=result["id"],
         )
+        return Set.parse_raw(set)
 
-    def set(self, link: WorkoutExerciseLink | None = None, **kwargs: Any) -> Set:
-        return SetFactory.create_sync(workout_exercise_link=link or self.workout_exercise_link(), **kwargs)
-
-    def sets(self, link: WorkoutExerciseLink | None = None, size: int = 5, **kwargs: Any) -> list[Set]:
-        return SetFactory.create_batch_sync(
-            size=size, workout_exercise_link=link or self.workout_exercise_link(), **kwargs
-        )
+    def sets(
+        self, workout: Workout | None = None, exercise: Exercise | None = None, size: int = 5, **kwargs: Any
+    ) -> list[Set]:
+        return [self.set(workout=workout, exercise=exercise, **kwargs) for _ in range(0, size)]

@@ -77,10 +77,6 @@ def create_instances(settings: Settings, session: Session) -> None:
         sample.workouts(user=user, size=choice(range(0, 10)))
         # Create some exercises without workouts
         sample.exercises(user=user, size=choice(range(0, 10)))
-        # Create some workout and exercise links without sets
-        links = [sample.workout_exercise_link(user=user) for _ in range(1, 10)]
-        # Add some sets to the existing workout and exercise links
-        sample.sets(link=choice(links), size=choice(range(0, 10)))
 
 
 def random_chunk(sequence: list[T]) -> list[list[T]]:
