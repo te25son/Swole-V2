@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-from functools import lru_cache
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
-from .database.database import get_client
+from .database.database import get_async_client
 from .helpers import verify_password
 from .models import TokenData, User
 from .settings import get_settings
@@ -14,9 +13,9 @@ from .settings import get_settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
-@lru_cache()
-def get_user(username: str) -> User | None:
-    result = get_client().query_single_json(
+async def get_user(username: str) -> User | None:
+    client = get_async_client()
+    result = await client.query_single_json(
         """
         SELECT User {id, username, hashed_password, email, disabled}
         FILTER .username = <str>$username
@@ -26,15 +25,15 @@ def get_user(username: str) -> User | None:
     return User.parse_raw(result) if result else None
 
 
-def authenticate_user(username: str, password: str) -> User | None:
-    if not (user := get_user(username)):
+async def authenticate_user(username: str, password: str) -> User | None:
+    if not (user := await get_user(username)):
         return None
-    if not verify_password(password, user.hashed_password):  # type: ignore
+    if not await verify_password(password, user.hashed_password):  # type: ignore
         return None
     return user
 
 
-def create_access_token(data: dict[str, Any]) -> str:
+async def create_access_token(data: dict[str, Any]) -> str:
     settings = get_settings()
     to_encode = data.copy()
     to_encode.update({"exp": datetime.utcnow() + timedelta(minutes=settings.TOKEN_EXPIRE)})
@@ -42,7 +41,7 @@ def create_access_token(data: dict[str, Any]) -> str:
     return encoded_jwt
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     settings = get_settings()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,13 +56,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(token_data.username)
+    user = await get_user(token_data.username)
     if user is None:
         raise credentials_exception
     return user
 
 
-def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

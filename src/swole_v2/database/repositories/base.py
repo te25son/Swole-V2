@@ -1,13 +1,13 @@
-from edgedb import Client
+from edgedb import AsyncIOClient
 from fastapi import Depends
 
-from ..database import get_client
+from ..database import get_async_client
 
 
 class BaseRepository:
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: AsyncIOClient) -> None:
         self.client = client
 
     @classmethod
-    def as_dependency(cls, client: Client = Depends(get_client)) -> "BaseRepository":
+    async def as_dependency(cls, client: AsyncIOClient = Depends(get_async_client)) -> "BaseRepository":
         return cls(client)

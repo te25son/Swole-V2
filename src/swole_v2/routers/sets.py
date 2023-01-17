@@ -9,37 +9,37 @@ router = APIRouter(prefix="/sets", tags=["sets"])
 
 
 @router.post("/all", response_model=SuccessResponse)
-def get_all_by_workout_and_exercise(
+async def get_all_by_workout_and_exercise(
     data: SetGetAll,
     current_user: User = Depends(get_current_active_user),
     respository: SetRepository = Depends(SetRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=respository.get_all(current_user.id, data))
+    return SuccessResponse(results=await respository.get_all(current_user.id, data))
 
 
 @router.post("/add", response_model=SuccessResponse)
-def add_to_workout_and_exercise(
+async def add_to_workout_and_exercise(
     data: SetAdd,
     current_user: User = Depends(get_current_active_user),
     respository: SetRepository = Depends(SetRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[respository.add(current_user.id, data)])
+    return SuccessResponse(results=[await respository.add(current_user.id, data)])
 
 
 @router.post("/delete", response_model=SuccessResponse)
-def delete(
+async def delete(
     data: SetDelete,
     current_user: User = Depends(get_current_active_user),
     respository: SetRepository = Depends(SetRepository.as_dependency),
 ) -> SuccessResponse:
-    respository.delete(current_user.id, data)
+    await respository.delete(current_user.id, data)
     return SuccessResponse()
 
 
 @router.post("/update", response_model=SuccessResponse)
-def update(
+async def update(
     data: SetUpdate,
     current_user: User = Depends(get_current_active_user),
     respository: SetRepository = Depends(SetRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[respository.update(current_user.id, data)])
+    return SuccessResponse(results=[await respository.update(current_user.id, data)])

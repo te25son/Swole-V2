@@ -20,9 +20,9 @@ from .base import BaseRepository
 
 
 class ExerciseRepository(BaseRepository):
-    def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
+    async def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
         results = json.loads(
-            self.client.query_json(
+            await self.client.query_json(
                 """
                 SELECT Exercise {name}
                 FILTER .user.id = <uuid>$user_id
@@ -32,9 +32,9 @@ class ExerciseRepository(BaseRepository):
         )
         return [ExerciseRead(**result) for result in results]
 
-    def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
+    async def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
         result = json.loads(
-            self.client.query_single_json(
+            await self.client.query_single_json(
                 """
                 SELECT Exercise {name}
                 FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
@@ -49,9 +49,9 @@ class ExerciseRepository(BaseRepository):
 
         return ExerciseRead(**result)
 
-    def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
+    async def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
         try:
-            exercise = self.client.query_single_json(
+            exercise = await self.client.query_single_json(
                 """
                 WITH exercise := (
                     INSERT Exercise {
@@ -68,9 +68,9 @@ class ExerciseRepository(BaseRepository):
         except ConstraintViolationError:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
-    def add_to_workout(self, user_id: UUID | None, data: ExerciseAddToWorkout) -> ExerciseRead:
+    async def add_to_workout(self, user_id: UUID | None, data: ExerciseAddToWorkout) -> ExerciseRead:
         result = json.loads(
-            self.client.query_single_json(
+            await self.client.query_single_json(
                 """
                 WITH exercise := (
                     UPDATE Exercise
@@ -92,9 +92,9 @@ class ExerciseRepository(BaseRepository):
 
         return ExerciseRead(**result)
 
-    def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
+    async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:
-            result = self.client.query_single_json(
+            result = await self.client.query_single_json(
                 """
                 WITH exercise := (
                     UPDATE Exercise
@@ -113,8 +113,8 @@ class ExerciseRepository(BaseRepository):
         except ConstraintViolationError:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
-    def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
-        self.client.query_single_json(
+    async def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
+        await self.client.query_single_json(
             """
             DELETE Exercise
             FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)

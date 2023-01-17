@@ -38,6 +38,8 @@ click = "^8.1.3"
 pydantic-factories = "^1.17.0"
 pytest-dotenv = "^0.5.2"
 hypothesis = "^6.61.0"
+pytest-asyncio = "^0.20.3"
+uvloop = "^0.17.0"
 
 
 [tool.poetry.group.stubs.dependencies]
@@ -71,11 +73,15 @@ module = [
     "sqlalchemy_utils.*",
     "hypothesis.*",
     "faker.*",
-    "edgedb.*"
+    "edgedb.*",
+    "httpx.*",
+    "uvloop.*",
+    "pytest_asyncio.*"
 ]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 env_override_existing_values = 1
 env_files = "test.env"
 

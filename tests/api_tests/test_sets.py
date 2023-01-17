@@ -65,31 +65,35 @@ class TestSets(APITestBase):
         ],
     )
 
-    def test_set_get_all(self) -> None:
-        workout = self.sample.workout()
-        exercise = self.sample.exercise()
-        sets = self.sample.sets(workout=workout, exercise=exercise)
+    async def test_set_get_all(self) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        sets = await self.sample.sets(workout=workout, exercise=exercise)
 
-        response = self._post_success("/all", data={"workout_id": str(workout.id), "exercise_id": str(exercise.id)})
+        response = await self._post_success(
+            "/all", data={"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+        )
 
         assert response.results
         assert response.results == [SetRead(**s.dict()).dict() for s in sets]
 
-    def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
-        user = self.sample.user()
-        workout = self.sample.workout(user)
-        exercise = self.sample.exercise(user)
-        self.sample.sets(workout=workout, exercise=exercise)
+    async def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
+        user = await self.sample.user()
+        workout = await self.sample.workout(user)
+        exercise = await self.sample.exercise(user)
+        await self.sample.sets(workout=workout, exercise=exercise)
 
-        response = self._post_success("/all", data={"workout_id": str(workout.id), "exercise_id": str(exercise.id)})
+        response = await self._post_success(
+            "/all", data={"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
+        )
 
         assert response.results == []
 
-    def test_set_add_succeeds(self) -> None:
+    async def test_set_add_succeeds(self) -> None:
         rep_count = fake.random_digit_not_null()
         weight = fake.random_digit_not_null()
-        workout = self.sample.workout()
-        exercise = self.sample.exercise()
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
         data = dict(
             workout_id=str(workout.id),
             exercise_id=str(exercise.id),
@@ -97,16 +101,16 @@ class TestSets(APITestBase):
             weight=weight,
         )
 
-        response = self._post_success("/add", data)
+        response = await self._post_success("/add", data)
 
         assert response.results
         assert response.results == [{"rep_count": rep_count, "weight": weight}]
 
-    def test_set_add_fails_with_exercise_belonging_to_other_user(self) -> None:
+    async def test_set_add_fails_with_exercise_belonging_to_other_user(self) -> None:
         rep_count = fake.random_digit_not_null()
         weight = fake.random_digit_not_null()
-        workout = self.sample.workout()
-        exercise = self.sample.exercise(user=self.sample.user())
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise(user=await self.sample.user())
         data = {
             "workout_id": str(workout.id),
             "exercise_id": str(exercise.id),
@@ -114,13 +118,13 @@ class TestSets(APITestBase):
             "weight": weight,
         }
 
-        response = self._post_error("/add", data)
+        response = await self._post_error("/add", data)
 
         assert response.message == SET_ADD_FAILED
 
-    def test_set_add_fails_with_workout_belonging_to_other_user(self) -> None:
-        workout = self.sample.workout(user=self.sample.user())
-        exercise = self.sample.exercise()
+    async def test_set_add_fails_with_workout_belonging_to_other_user(self) -> None:
+        workout = await self.sample.workout(user=await self.sample.user())
+        exercise = await self.sample.exercise()
         data = {
             "workout_id": str(workout.id),
             "exercise_id": str(exercise.id),
@@ -128,7 +132,7 @@ class TestSets(APITestBase):
             "weight": fake.random_digit_not_null(),
         }
 
-        response = self._post_error("/add", data)
+        response = await self._post_error("/add", data)
 
         assert response.message == SET_ADD_FAILED
 
@@ -147,9 +151,9 @@ class TestSets(APITestBase):
             ),
         ],
     )
-    def test_set_add_fails_with_invalid_data(self, rep_count: Any, weight: Any, message: str) -> None:
-        workout = self.sample.workout()
-        exercise = self.sample.exercise()
+    async def test_set_add_fails_with_invalid_data(self, rep_count: Any, weight: Any, message: str) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
         data = {
             "workout_id": str(workout.id),
             "exercise_id": str(exercise.id),
@@ -157,7 +161,7 @@ class TestSets(APITestBase):
             "weight": weight,
         }
 
-        response = self._post_error("/add", data)
+        response = await self._post_error("/add", data)
 
         assert response.message == message
 
@@ -167,7 +171,7 @@ class TestSets(APITestBase):
             pytest.param(fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails."),
         ],
     )
-    def test_set_add_fails_with_invalid_ids(self, workout_id: Any, exercise_id: Any, message: str) -> None:
+    async def test_set_add_fails_with_invalid_ids(self, workout_id: Any, exercise_id: Any, message: str) -> None:
         data = {
             "workout_id": str(workout_id),
             "exercise_id": str(exercise_id),
@@ -175,54 +179,56 @@ class TestSets(APITestBase):
             "weight": fake.random_digit_not_null(),
         }
 
-        response = self._post_error("/add", data)
+        response = await self._post_error("/add", data)
 
         assert response.message == message
 
-    def test_set_delete_succeeds(self) -> None:
-        set = self.sample.set()
+    async def test_set_delete_succeeds(self) -> None:
+        set = await self.sample.set()
         data = {
             "set_id": str(set.id),
             "workout_id": str(set.workout.id),  # type: ignore
             "exercise_id": str(set.exercise.id),  # type: ignore
         }
 
-        response = self._post_success("/delete", data)
+        response = await self._post_success("/delete", data)
 
-        post_set = json.loads(self.db.query_single_json("SELECT ExerciseSet FILTER .id = <uuid>$set_id", set_id=set.id))
+        post_set = json.loads(
+            await self.db.query_single_json("SELECT ExerciseSet FILTER .id = <uuid>$set_id", set_id=set.id)
+        )
 
         assert post_set is None
         assert response.results == None
 
     @pytest.mark.parametrize(*invalid_set_id_params)
-    def test_set_delete_fails(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
+    async def test_set_delete_fails(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
         data = {
             "set_id": str(set_id),
             "workout_id": str(workout_id),
             "exercise_id": str(exercise_id),
         }
 
-        response = self._post_error("/delete", data)
+        response = await self._post_error("/delete", data)
 
         assert response.message == message
 
     @pytest.mark.skip(
         "This should not pass. We don't want to allow users to delete other users data if they have the id."
     )
-    def test_cannot_delete_set_belonging_to_other_user(self) -> None:
-        user = self.sample.user()
-        workout = self.sample.workout(user)
-        exercise = self.sample.exercise(user)
-        set = self.sample.set(workout, exercise)
+    async def test_cannot_delete_set_belonging_to_other_user(self) -> None:
+        user = await self.sample.user()
+        workout = await self.sample.workout(user)
+        exercise = await self.sample.exercise(user)
+        set = await self.sample.set(workout, exercise)
         data = {
             "set_id": str(set.id),
             "workout_id": str(workout.id),
             "exercise_id": str(exercise.id),
         }
 
-        response = self._post_success("/delete", data)
+        response = await self._post_success("/delete", data)
 
-        self.db.query_required_single_json("SELECT ExerciseSet FILTER .id = <uuid>$set_id", set_id=set.id)
+        await self.db.query_required_single_json("SELECT ExerciseSet FILTER .id = <uuid>$set_id", set_id=set.id)
         assert response.results is None
 
     @pytest.mark.parametrize(
@@ -237,8 +243,8 @@ class TestSets(APITestBase):
             ),
         ],
     )
-    def test_set_update_succeeds(self, rep_count: int | None, weight: int | None) -> None:
-        set = self.sample.set()
+    async def test_set_update_succeeds(self, rep_count: int | None, weight: int | None) -> None:
+        set = await self.sample.set()
         data = {
             "rep_count": rep_count,
             "weight": weight,
@@ -247,14 +253,14 @@ class TestSets(APITestBase):
             "exercise_id": str(set.exercise.id),  # type: ignore
         }
 
-        response = self._post_success("/update", data)
+        response = await self._post_success("/update", data)
 
         assert response.results
         assert response.results == [{"rep_count": rep_count or set.rep_count, "weight": weight or set.weight}]
 
     @pytest.mark.parametrize("rep_count, weight, message", invalid_set_data_params)
-    def test_set_update_fails(self, rep_count: int | None, weight: int | None, message: str) -> None:
-        set = self.sample.set()
+    async def test_set_update_fails(self, rep_count: int | None, weight: int | None, message: str) -> None:
+        set = await self.sample.set()
         data = {
             "rep_count": rep_count,
             "weight": weight,
@@ -263,12 +269,12 @@ class TestSets(APITestBase):
             "exercise_id": str(set.exercise.id),  # type: ignore
         }
 
-        response = self._post_error("/update", data)
+        response = await self._post_error("/update", data)
 
         assert response.message == message
 
     @pytest.mark.parametrize(*invalid_set_id_params)
-    def test_set_update_fails_with_invalid_ids(
+    async def test_set_update_fails_with_invalid_ids(
         self, set_id: Any, workout_id: Any, exercise_id: Any, message: str
     ) -> None:
         data = dict(
@@ -279,16 +285,16 @@ class TestSets(APITestBase):
             exercise_id=str(exercise_id),
         )
 
-        response = self._post_error("/update", data)
+        response = await self._post_error("/update", data)
 
         assert response.message == message
 
-    def _post_success(self, endpoint: str, data: dict[str, Any]) -> SuccessResponse:
-        response = SuccessResponse(**self.client.post(f"/sets{endpoint}", json=data).json())
+    async def _post_success(self, endpoint: str, data: dict[str, Any]) -> SuccessResponse:
+        response = SuccessResponse(**(await self.client.post(f"/sets{endpoint}", json=data)).json())
         assert response.code == "ok"
         return response
 
-    def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
-        response = ErrorResponse(**self.client.post(f"/sets{endpoint}", json=data).json())
+    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+        response = ErrorResponse(**(await self.client.post(f"/sets{endpoint}", json=data)).json())
         assert response.code == "error"
         return response

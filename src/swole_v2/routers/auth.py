@@ -8,13 +8,13 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=Token)
-def login(login_creds: UserLogin) -> Token:
-    if not (user := authenticate_user(login_creds.username, login_creds.password)):
+async def login(login_creds: UserLogin) -> Token:
+    if not (user := await authenticate_user(login_creds.username, login_creds.password)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"username": user.username})
+    access_token = await create_access_token(data={"username": user.username})
 
     return Token(access_token=access_token)

@@ -11,9 +11,9 @@ from .base import BaseRepository
 
 
 class SetRepository(BaseRepository):
-    def get_all(self, user_id: UUID | None, data: SetGetAll) -> list[SetRead]:
+    async def get_all(self, user_id: UUID | None, data: SetGetAll) -> list[SetRead]:
         results = json.loads(
-            self.client.query_json(
+            await self.client.query_json(
                 """
                 SELECT ExerciseSet {weight, rep_count}
                 FILTER (
@@ -31,9 +31,9 @@ class SetRepository(BaseRepository):
 
         return [SetRead(**result) for result in results]
 
-    def add(self, user_id: UUID | None, data: SetAdd) -> SetRead:
+    async def add(self, user_id: UUID | None, data: SetAdd) -> SetRead:
         try:
-            result = self.client.query_single_json(
+            result = await self.client.query_single_json(
                 """
                 WITH exercise_set := (
                     INSERT ExerciseSet {
@@ -61,8 +61,8 @@ class SetRepository(BaseRepository):
         except MissingRequiredError:
             raise BusinessError(SET_ADD_FAILED)
 
-    def delete(self, user_id: UUID | None, data: SetDelete) -> None:
-        self.client.query_single_json(
+    async def delete(self, user_id: UUID | None, data: SetDelete) -> None:
+        await self.client.query_single_json(
             """
             DELETE ExerciseSet
             FILTER .id = <uuid>$set_id
@@ -70,8 +70,8 @@ class SetRepository(BaseRepository):
             set_id=data.set_id,
         )
 
-    def update(self, user_id: UUID | None, data: SetUpdate) -> SetRead:
-        result = self.client.query_single_json(
+    async def update(self, user_id: UUID | None, data: SetUpdate) -> SetRead:
+        result = await self.client.query_single_json(
             """
             WITH exercise_set := (
                 UPDATE ExerciseSet

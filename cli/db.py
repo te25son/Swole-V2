@@ -1,3 +1,4 @@
+import asyncio
 from random import choice
 from typing import TypeVar
 
@@ -46,27 +47,27 @@ def seed(context: CliContext) -> None:
         raise click.ClickException("Cannot seed production environment.")
 
     try:
-        create_instances(context.settings)
+        asyncio.run(create_instances(context.settings))
     except Exception as e:
         click.secho(f"Exception when adding instances to database: {str(e)}", fg="red")
 
 
-def create_instances(settings: Settings) -> None:
+async def create_instances(settings: Settings) -> None:
     sample = Sample()
     # Create admin user
-    sample.user(
+    await sample.user(
         username=settings.DUMMY_USERNAME,
         hashed_password=hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
     )
     # Create other users
-    users = sample.users(size=10)
+    users = await sample.users(size=10)
 
     # Create workout and exercise instances
     for _ in range(20):
         user = choice(users)
 
         # Create some workouts without exercises
-        sample.workouts(user=user, size=choice(range(0, 10)))
+        await sample.workouts(user=user, size=choice(range(0, 10)))
         # Create some exercises without workouts
-        sample.exercises(user=user, size=choice(range(0, 10)))
+        await sample.exercises(user=user, size=choice(range(0, 10)))

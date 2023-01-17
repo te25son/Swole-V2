@@ -12,9 +12,9 @@ from .base import BaseRepository
 
 
 class WorkoutRepository(BaseRepository):
-    def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
+    async def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
         results = json.loads(
-            self.client.query_json(
+            await self.client.query_json(
                 """
                 SELECT Workout {name, date}
                 FILTER .user.id = <uuid>$user_id
@@ -24,9 +24,9 @@ class WorkoutRepository(BaseRepository):
         )
         return [WorkoutRead(**result) for result in results]
 
-    def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
+    async def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
         result = json.loads(
-            self.client.query_single_json(
+            await self.client.query_single_json(
                 """
                 SELECT Workout {name, date, exercises: {name}}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
@@ -43,9 +43,9 @@ class WorkoutRepository(BaseRepository):
             return []
         return [ExerciseRead(**e.dict()) for e in exercises]
 
-    def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
+    async def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
         result = json.loads(
-            self.client.query_single_json(
+            await self.client.query_single_json(
                 """
                 SELECT Workout {name, date}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
@@ -60,9 +60,9 @@ class WorkoutRepository(BaseRepository):
 
         return WorkoutRead(**result)
 
-    def create(self, user_id: UUID | None, data: WorkoutCreate) -> WorkoutRead:
+    async def create(self, user_id: UUID | None, data: WorkoutCreate) -> WorkoutRead:
         try:
-            workout = self.client.query_single_json(
+            workout = await self.client.query_single_json(
                 """
                 WITH workout := (
                     INSERT Workout {
@@ -84,8 +84,8 @@ class WorkoutRepository(BaseRepository):
         except ConstraintViolationError:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE)
 
-    def delete(self, user_id: UUID | None, workout_id: UUID) -> None:
-        self.client.query_single_json(
+    async def delete(self, user_id: UUID | None, workout_id: UUID) -> None:
+        await self.client.query_single_json(
             """
             DELETE Workout
             FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
@@ -94,9 +94,9 @@ class WorkoutRepository(BaseRepository):
             user_id=user_id,
         )
 
-    def update(self, user_id: UUID | None, data: WorkoutUpdate) -> WorkoutRead:
+    async def update(self, user_id: UUID | None, data: WorkoutUpdate) -> WorkoutRead:
         try:
-            result = self.client.query_single_json(
+            result = await self.client.query_single_json(
                 """
                 WITH workout := (
                     UPDATE Workout

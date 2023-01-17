@@ -1,7 +1,11 @@
-from edgedb import Client as EdgeDB
-from edgedb import create_client
-from fastapi.testclient import TestClient
+import asyncio
+from asyncio import AbstractEventLoop
+
+from edgedb import AsyncIOClient, create_async_client
+from httpx import AsyncClient
 import pytest
+import pytest_asyncio
+import uvloop
 
 from swole_v2.app import SwoleApp
 from swole_v2.models import User
@@ -11,25 +15,33 @@ from .factories import Sample
 
 
 @pytest.fixture(scope="session")
-def test_app() -> SwoleApp:
+async def test_app() -> SwoleApp:
     return SwoleApp()
 
 
 @pytest.fixture(scope="session")
-def test_client(test_app: SwoleApp) -> TestClient:
-    return TestClient(test_app.app)
+async def test_client(test_app: SwoleApp) -> AsyncClient:
+    return AsyncClient(app=test_app.app, base_url="http://localhost:8000/")
 
 
 @pytest.fixture(scope="session", autouse=True)
-def test_database() -> EdgeDB:
-    return create_client(dsn=get_settings().EDGEDB_DSN)
+async def test_database() -> AsyncIOClient:
+    return create_async_client(dsn=get_settings().EDGEDB_DSN)
 
 
 @pytest.fixture(scope="function")
-def test_user() -> User:
-    return Sample().user()
+async def test_user() -> User:
+    return await Sample().user()
 
 
 @pytest.fixture(scope="function")
-def test_sample(test_user: User) -> Sample:
+async def test_sample(test_user: User) -> Sample:
     return Sample(test_user)
+
+
+@pytest_asyncio.fixture(scope="session")
+def event_loop() -> AbstractEventLoop:  # type: ignore
+    uvloop.install()
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
