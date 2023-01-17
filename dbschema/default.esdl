@@ -6,35 +6,40 @@ module default {
     }
 
     type User {
-        required property username -> str {
-            constraint exclusive;
-        }
+        required property username -> str;
+        required property cleaned_username := clean(.username);
+
         required property hashed_password -> str;
         property email -> str;
         property disabled -> bool;
 
         multi link workouts := .<user[is Workout];
         multi link exercises := .<user[is Exercise];
+
+        constraint exclusive on (.cleaned_username);
     }
 
     type Workout extending Owned {
         required property name -> str;
+        required property cleaned_name := clean(.name);
+
         required property date -> cal::local_date;
 
         multi link exercises := .<workouts[is Exercise];
 
-        constraint exclusive on ((.name, .date, .user));
+        constraint exclusive on ((.cleaned_name, .date, .user));
     }
 
     type Exercise extending Owned {
         required property name -> str;
+        required property cleaned_name := clean(.name);
 
         multi link workouts -> Workout {
             on target delete allow;
         }
         multi link sets := .<exercise[is ExerciseSet];
 
-        constraint exclusive on ((.name, .user));
+        constraint exclusive on ((.cleaned_name, .user));
     }
 
     type ExerciseSet {
@@ -57,4 +62,8 @@ module default {
     scalar type positive_int extending int64 {
         constraint min_ex_value(0);
     }
+
+    # Custom Functions
+    function clean(value: str) -> str
+        using (str_trim(str_lower(value)));
 }
