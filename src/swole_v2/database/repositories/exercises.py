@@ -103,7 +103,7 @@ class ExerciseRepository(BaseRepository):
                         name := <str>$name ?? .name,
                     }
                 )
-                SELECT exercise
+                SELECT exercise {name}
                 """,
                 exercise_id=data.exercise_id,
                 user_id=user_id,

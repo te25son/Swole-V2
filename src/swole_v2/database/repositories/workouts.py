@@ -28,7 +28,7 @@ class WorkoutRepository(BaseRepository):
         result = json.loads(
             self.client.query_single_json(
                 """
-                SELECT Workout {exercises: {name}}
+                SELECT Workout {name, date, exercises: {name}}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
                 """,
                 workout_id=data.workout_id,
@@ -39,7 +39,9 @@ class WorkoutRepository(BaseRepository):
         if result is None:
             raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
-        return Workout(**result).exercises or []
+        if (exercises := Workout(**result).exercises) is None:
+            return []
+        return [ExerciseRead(**e.dict()) for e in exercises]
 
     def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
         result = json.loads(

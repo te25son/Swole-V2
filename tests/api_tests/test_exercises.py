@@ -147,7 +147,7 @@ class TestExercises(APITestBase):
             **self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": new_name}).json()
         )
         updated_exercise = self.db.query_required_single_json(
-            "SELECT Exercise FILTER .id = <uuid>$exercise_id", exercise_id=exercise.id
+            "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=exercise.id
         )
 
         assert response.results

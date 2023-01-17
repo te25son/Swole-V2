@@ -16,7 +16,13 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 @lru_cache()
 def get_user(username: str) -> User | None:
-    result = get_client().query_single_json("SELECT User FILTER .username = <str>$username", username=username)
+    result = get_client().query_single_json(
+        """
+        SELECT User {id, username, hashed_password, email, disabled}
+        FILTER .username = <str>$username
+        """,
+        username=username,
+    )
     return User.parse_raw(result) if result else None
 
 
