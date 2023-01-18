@@ -10,14 +10,3 @@ clean:
 
 .PHONY: clean/check
 clean/check: clean check
-
-.PHONY: run/dev run/test
-run/dev:
-	@app dev run
-
-.PHONY: dbtest dbdev
-dbtest:	
-	@db test init && db test seed
-
-dbdev:
-	@db dev init && db dev seed

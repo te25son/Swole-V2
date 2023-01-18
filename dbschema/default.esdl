@@ -6,7 +6,9 @@ module default {
     }
 
     type User {
-        required property username -> str;
+        required property username -> str {
+            constraint exclusive;
+        };
         required property cleaned_username := clean(.username);
 
         required property hashed_password -> str;

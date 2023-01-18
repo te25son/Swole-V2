@@ -1,5 +1,6 @@
 import asyncio
 from random import choice
+import subprocess
 from typing import TypeVar
 
 import click
@@ -12,6 +13,7 @@ from tests.factories import Sample
 from . import CliContext, Environments, load_environment_variables
 
 T = TypeVar("T")
+EDGE_COMMAND = "edgedb"
 
 
 @click.group()
@@ -34,22 +36,60 @@ def init(context: CliContext) -> None:
     """
     Initializes the database if not initialized already.
     """
-    pass
+    cmd = [EDGE_COMMAND, "instance", "create", context.settings.EDGEDB_INSTANCE]
+    echo_command(cmd)
+    subprocess.call(cmd)
+
+
+@db.command()
+@click.pass_obj
+def ui(context: CliContext) -> None:
+    """
+    Opens the EdgeDB UI for the givin environment.
+    """
+    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "ui"]
+    echo_command(cmd)
+    subprocess.call(cmd)
+
+
+@db.command()
+@click.pass_obj
+def make_migration(context: CliContext) -> None:
+    """
+    Make a migration for the database.
+    """
+    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "migration", "create"]
+    echo_command(cmd)
+    subprocess.call(cmd)
+
+
+@db.command()
+@click.pass_obj
+def migrate(context: CliContext) -> None:
+    """
+    Migrate the database.
+    """
+    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "migrate"]
+    echo_command(cmd)
+    subprocess.call(cmd)
 
 
 @db.command()
 @click.pass_obj
 def seed(context: CliContext) -> None:
     """
-    Seeds the database if not PROD
+    Seeds the database.
     """
-    if context.environment == Environments.PROD:
-        raise click.ClickException("Cannot seed production environment.")
-
     try:
+        click.secho(f"Seeding {context.settings.EDGEDB_INSTANCE} instance...", fg="blue", bold=True)
         asyncio.run(create_instances(context.settings))
+        click.secho("Seeding complete.", fg="green", bold=True)
     except Exception as e:
         click.secho(f"Exception when adding instances to database: {str(e)}", fg="red")
+
+
+def echo_command(command: list[str]) -> None:
+    click.secho(f"Invoking: {' '.join(command)}", fg="blue", bold=True)
 
 
 async def create_instances(settings: Settings) -> None:
@@ -57,7 +97,7 @@ async def create_instances(settings: Settings) -> None:
     # Create admin user
     await sample.user(
         username=settings.DUMMY_USERNAME,
-        hashed_password=hash_password(settings.DUMMY_PASSWORD),
+        hashed_password=await hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
     )
     # Create other users

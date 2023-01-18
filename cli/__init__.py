@@ -11,7 +11,6 @@ ROOT_PATH = Path(__file__).resolve().parents[1]
 
 
 class Environments(Enum):
-    PROD = "prod"
     DEV = "dev"
     TEST = "test"
 
@@ -30,8 +29,6 @@ class CliContext(BaseModel):
 
 def load_environment_variables(environment: Environments) -> None:
     match environment:
-        case Environments.PROD:
-            click.ClickException("Prod not implemented")
         case Environments.DEV:
             env_file = ".env"
         case Environments.TEST:

@@ -4,8 +4,8 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    DB_CONNECTION: str
     SECRET_KEY: str
+    EDGEDB_INSTANCE: str
     EDGEDB_DSN: str
     DUMMY_USERNAME: str = "username"
     DUMMY_PASSWORD: str = "password"
