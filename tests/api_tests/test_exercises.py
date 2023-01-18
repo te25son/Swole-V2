@@ -58,7 +58,7 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert response.code == "ok"
-        assert response.results == [ExerciseRead(**exercise.dict()).dict()]
+        assert response.results == [{"name": exercise.name, "notes": exercise.notes}]
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
@@ -71,7 +71,8 @@ class TestExercises(APITestBase):
 
     async def test_exercise_create_succeeds(self) -> None:
         name = fake.text()
-        data = {"name": name}
+        notes = fake.paragraph()
+        data = {"name": name, "notes": notes}
         # Excercise with name exists but belongs to other user
         await self.sample.exercise(user=await self.sample.user(), name=name)
 
@@ -79,7 +80,7 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert response.code == "ok"
-        assert response.results == [ExerciseRead(**data).dict()]
+        assert response.results == [data]
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_create_with_invalid_name_fails(self, name: Any, message: str) -> None:
@@ -141,17 +142,19 @@ class TestExercises(APITestBase):
 
     async def test_exercise_update_succeeds(self) -> None:
         new_name = fake.text()
+        new_notes = fake.paragraph()
         # Existing exercise with the new name but different user should work
         await self.sample.exercise(user=await self.sample.user(), name=new_name)
         exercise = await self.sample.exercise()
+        data = {"exercise_id": str(exercise.id), "name": new_name, "notes": new_notes}
 
-        response = SuccessResponse(
-            **(
-                await self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": new_name})
-            ).json()
-        )
+        response = SuccessResponse(**(await self.client.post("/exercises/update", json=data)).json())
         updated_exercise = await self.db.query_required_single_json(
-            "SELECT Exercise {name} FILTER .id = <uuid>$exercise_id", exercise_id=exercise.id
+            """
+            SELECT Exercise {name, notes}
+            FILTER .id = <uuid>$exercise_id
+            """,
+            exercise_id=exercise.id,
         )
 
         assert response.results

@@ -36,6 +36,8 @@ module default {
         required property name -> str;
         required property cleaned_name := clean(.name);
 
+        property notes -> str;
+
         multi link workouts -> Workout {
             on target delete allow;
         }

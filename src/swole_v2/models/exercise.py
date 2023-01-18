@@ -4,9 +4,11 @@ from pydantic import BaseModel
 
 
 class Exercise(BaseModel):
-    id: UUID | None
     name: str
+    id: UUID | None
+    notes: str | None
 
 
 class ExerciseRead(BaseModel):
     name: str | None
+    notes: str | None

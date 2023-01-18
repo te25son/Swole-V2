@@ -36,7 +36,7 @@ class ExerciseRepository(BaseRepository):
         result = json.loads(
             await self.client.query_single_json(
                 """
-                SELECT Exercise {name}
+                SELECT Exercise {name, notes}
                 FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
                 """,
                 exercise_id=exercise_id,
@@ -56,12 +56,14 @@ class ExerciseRepository(BaseRepository):
                 WITH exercise := (
                     INSERT Exercise {
                         name := <str>$name,
+                        notes := <optional str>$notes,
                         user := (SELECT User FILTER .id = <uuid>$user_id)
                     }
                 )
-                SELECT exercise {name}
+                SELECT exercise {name, notes}
                 """,
                 name=data.name,
+                notes=data.notes,
                 user_id=user_id,
             )
             return ExerciseRead.parse_raw(exercise)
@@ -100,14 +102,16 @@ class ExerciseRepository(BaseRepository):
                     UPDATE Exercise
                     FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
                     SET {
-                        name := <str>$name ?? .name,
+                        name := <optional str>$name ?? .name,
+                        notes := <optional str>$notes ?? .notes
                     }
                 )
-                SELECT exercise {name}
+                SELECT exercise {name, notes}
                 """,
                 exercise_id=data.exercise_id,
                 user_id=user_id,
                 name=data.name,
+                notes=data.notes,
             )
             return ExerciseRead.parse_raw(result)
         except ConstraintViolationError:
