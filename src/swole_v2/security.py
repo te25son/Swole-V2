@@ -10,7 +10,7 @@ from .helpers import verify_password
 from .models import TokenData, User
 from .settings import get_settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/login")
 
 
 async def get_user(username: str) -> User | None:

@@ -290,11 +290,11 @@ class TestSets(APITestBase):
         assert response.message == message
 
     async def _post_success(self, endpoint: str, data: dict[str, Any]) -> SuccessResponse:
-        response = SuccessResponse(**(await self.client.post(f"/sets{endpoint}", json=data)).json())
+        response = SuccessResponse(**(await self.client.post(f"/api/v2/sets{endpoint}", json=data)).json())
         assert response.code == "ok"
         return response
 
     async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
-        response = ErrorResponse(**(await self.client.post(f"/sets{endpoint}", json=data)).json())
+        response = ErrorResponse(**(await self.client.post(f"/api/v2/sets{endpoint}", json=data)).json())
         assert response.code == "error"
         return response

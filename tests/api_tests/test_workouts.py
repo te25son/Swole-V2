@@ -29,68 +29,52 @@ class TestWorkouts(APITestBase):
 
     async def test_workout_get_all(self) -> None:
         workouts = await self.sample.workouts()
-        response = SuccessResponse(**(await self.client.post("/workouts/all")).json())
+        response = await self._post_success("/all")
 
         assert response.results
-        assert response.code == "ok"
         assert len(response.results) == len(workouts)
 
     async def test_workout_detail_succeeds(self) -> None:
         workout = await self.sample.workout()
 
-        response = SuccessResponse(
-            **(await self.client.post("/workouts/detail", json={"workout_id": str(workout.id)})).json()
-        )
+        response = await self._post_success("/detail", data={"workout_id": str(workout.id)})
 
         assert response.results
-        assert response.code == "ok"
         assert response.results == [
             {"name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}
         ]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_detail_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
-        response = ErrorResponse(**(await self.client.post("/workouts/detail", json={"workout_id": str(workout_id)})).json())
+        response = await self._post_error("/detail", data={"workout_id": str(workout_id)})
 
-        assert response.code == "error"
         assert response.message == message
 
     @pytest.mark.parametrize(
-        "name, date, should_succeed, error_message",
+        "name, date, message",
         [
-            pytest.param("", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty string fails",),
-            pytest.param("   ", fake.date(), False, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank string fails",),
-            pytest.param(fake.text(), "12345", False, INCORRECT_DATE_FORMAT, id="Test invalid date fails",),
-            pytest.param(fake.text(), "2022/01/12", False, INCORRECT_DATE_FORMAT, id="Test incorrectly formatted date fails",),
-            pytest.param(fake.text(), fake.date(), True, None, id="Test succeeds"),
+            pytest.param("", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty string fails",),
+            pytest.param("   ", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank string fails",),
+            pytest.param(fake.text(), "12345", INCORRECT_DATE_FORMAT, id="Test invalid date fails",),
+            pytest.param(fake.text(), "2022/01/12", INCORRECT_DATE_FORMAT, id="Test incorrectly formatted date fails",),
         ],
     )
-    async def test_workout_create(self, name: str, date: str, should_succeed: bool, error_message: str | None) -> None:
-        data = {"name": name, "date": date}
-        response = await self.client.post("/workouts/create", json=data)
+    async def test_workout_create_fails(self, name: str, date: str, message: str) -> None:
+        response = await self._post_error("/create", data={"name": name, "date": date})
 
-        if should_succeed:
-            success_response = SuccessResponse(**response.json())
+        assert response.message == message
 
-            assert success_response.code == "ok"
-            assert success_response.results
-            assert success_response.results == [data]
-        else:
-            error_response = ErrorResponse(**response.json())
-
-            assert error_response.code == "error"
-            assert error_response.message == error_message
-
-    async def test_workout_create_succeeds_when_creating_workout_with_same_name_and_date_as_workout_owned_by_different_user(self) -> None:
+    async def test_workout_create_succeeds(self) -> None:
         name = fake.text()
         date = fake.date()
-        await self.sample.workout(user=await self.sample.user(), name=name, date=date)
+        data = dict(name=name, date=date)
+        # Should pass if other workout exists with same name and date but different user
+        await self.sample.workout(name=name, date=date, user=await self.sample.user())
 
-        response = SuccessResponse(**(await self.client.post("/workouts/create", json={"name": name, "date": date})).json())
+        response = await self._post_success("/create", data=data)
 
         assert response.results
-        assert response.code == "ok"
-        assert response.results == [{"name": name, "date": date}]
+        assert response.results == [data]
 
     async def test_workout_create_fails_with_unique_constraint(self) -> None:
         # Add first workout
@@ -99,31 +83,24 @@ class TestWorkouts(APITestBase):
         await self.sample.workout(name=name, date=date)
 
         # Create second workout with same name and date
-        response = ErrorResponse(**(await self.client.post("/workouts/create", json={"name": name, "date": date})).json())
+        response = await self._post_error("/create", data={"name": name, "date": date})
 
-        assert response.code == "error"
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     async def test_workout_delete_with_valid_id(self) -> None:
         workout = await self.sample.workout()
 
-        result = SuccessResponse(
-            **(await self.client.post("/workouts/delete", json={"workout_id": str(workout.id)})).json()
-        )
+        result = await self._post_success("/delete", data={"workout_id": str(workout.id)})
         deleted_exercise = json.loads(await self.db.query_single_json(
             "SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id
         ))
 
         assert deleted_exercise is None
-        assert result.code == "ok"
         assert result.results is None
 
     async def test_workout_delete_with_invalid_workout_id(self) -> None:
-        result = ErrorResponse(
-            **(await self.client.post("/workouts/delete", json={"workout_id": str(fake.random_digit())})).json()
-        )
+        result = await self._post_error("/delete", data={"workout_id": str(fake.random_digit())})
 
-        assert result.code == "error"
         assert result.message == INVALID_ID
 
     @pytest.mark.parametrize(
@@ -140,7 +117,7 @@ class TestWorkouts(APITestBase):
         original_workout_date = workout.date.strftime("%Y-%m-%d")
         original_workout_name = workout.name
 
-        response = SuccessResponse(**(await self.client.post("/workouts/update", json=data)).json())
+        response = await self._post_success("/update", data=data)
 
         updated_workout = Workout.parse_raw(await self.db.query_single_json(
             "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
@@ -169,12 +146,11 @@ class TestWorkouts(APITestBase):
         workout = await self.sample.workout()
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
-        response = ErrorResponse(**(await self.client.post("/workouts/update", json=data)).json())
+        response = await self._post_error("/update", data=data)
         not_updated_workout = Workout.parse_raw(await self.db.query_single_json(
             "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
         ))
 
-        assert response.code == "error"
         assert response.message == message
         assert not_updated_workout.name == workout.name
         assert not_updated_workout.date == workout.date
@@ -188,9 +164,8 @@ class TestWorkouts(APITestBase):
             "date": workout_one.date.strftime("%Y-%m-%d"),
         }
 
-        response = ErrorResponse(**(await self.client.post("/workouts/update", json=data)).json())
+        response = await self._post_error("/update", data=data)
 
-        assert response.code == "error"
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     async def test_workout_update_fails_with_invalid_workout_id(self) -> None:
@@ -200,9 +175,8 @@ class TestWorkouts(APITestBase):
             "date": fake.date()
         }
 
-        response = ErrorResponse(**(await self.client.post("/workouts/update", json=data)).json())
+        response = await self._post_error("/update", data=data)
 
-        assert response.code == "error"
         assert response.message == INVALID_ID
 
     async def test_add_exercise_succeeds(self) -> None:
@@ -213,7 +187,7 @@ class TestWorkouts(APITestBase):
             "exercise_id": str(exercise.id)
         }
 
-        response = SuccessResponse(**(await self.client.post("/workouts/add-exercise", json=data)).json())
+        response = await self._post_success("/add-exercise", data=data)
         updated_workout = Workout.parse_raw(
             await self.db.query_single_json(
                 """
@@ -226,7 +200,6 @@ class TestWorkouts(APITestBase):
         exercises = updated_workout.exercises
 
         assert response.results
-        assert response.code == "ok"
         assert exercises
         assert len(exercises) == 1
         assert exercise.name in [e.name for e in exercises]
@@ -243,9 +216,8 @@ class TestWorkouts(APITestBase):
             "workout_id": str(workout_id),
             "exercise_id": str(exercise_id)
         }
-        response = ErrorResponse(**(await self.client.post("/workouts/add-exercise", json=data)).json())
+        response = await self._post_error("/add-exercise", data=data)
 
-        assert response.code == "error"
         assert response.message == message
 
 
@@ -261,21 +233,26 @@ class TestWorkouts(APITestBase):
         # add half of the exercises since the result should only return those owned by the workout
         workout = await self.sample.workout(exercises=[] if no_exercises else exercises[:5])
 
-        response = SuccessResponse(
-            **(await self.client.post("/workouts/exercises", json={"workout_id": str(workout.id)})).json()
-        )
+        response = await self._post_success("/exercises", data={"workout_id": str(workout.id)})
 
         if no_exercises:
             assert response.results == []
-        assert response.code == "ok"
         assert response.results == [{"name": e.name, "notes": e.notes} for e in workout.exercises]  # type: ignore
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:
-        response = ErrorResponse(
-            **(await self.client.post("/workouts/exercises", json={"workout_id": str(workout_id)})).json()
-        )
+        response = await self._post_error("/exercises", data={"workout_id": str(workout_id)})
 
         assert response.code == "error"
         assert response.message == message
+
+    async def _post_success(self, endpoint: str, data: dict[str, Any] = {}) -> SuccessResponse:
+        response = SuccessResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data)).json())
+        assert response.code == "ok"
+        return response
+
+    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+        response = ErrorResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data)).json())
+        assert response.code == "error"
+        return response
 # fmt: on

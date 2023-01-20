@@ -33,39 +33,30 @@ class TestExercises(APITestBase):
     async def test_exercise_get_all_succeeds(self) -> None:
         exercises = await self.sample.exercises()
 
-        response = SuccessResponse(**(await self.client.post("/exercises/all")).json())
+        response = await self._post_success("/all")
 
         assert response.results
-        assert response.code == "ok"
         assert len(response.results) == len(exercises)
         assert all(result in response.results for result in [ExerciseRead(**e.dict()).dict() for e in exercises])
 
     async def test_exercise_get_all_returns_only_exercises_owned_by_logged_in_user(self) -> None:
         await self.sample.exercises(user=await self.sample.user())
 
-        response = SuccessResponse(**(await self.client.post("/exercises/all")).json())
+        response = await self._post_success("/all")
 
-        assert response.code == "ok"
         assert response.results == []
 
     async def test_exercise_detail_succeeds(self) -> None:
         exercise = await self.sample.exercise()
 
-        response = SuccessResponse(
-            **(await self.client.post("/exercises/detail", json={"exercise_id": str(exercise.id)})).json()
-        )
+        response = await self._post_success("/detail", data={"exercise_id": str(exercise.id)})
 
         assert response.results
-        assert response.code == "ok"
         assert response.results == [{"name": exercise.name, "notes": exercise.notes}]
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = ErrorResponse(
-            **(await self.client.post("/exercises/detail", json={"exercise_id": str(exercise_id)})).json()
-        )
-
-        assert response.code == "error"
+        response = await self._post_error("/detail", data={"exercise_id": str(exercise_id)})
         assert response.message == message
 
     async def test_exercise_create_succeeds(self) -> None:
@@ -75,25 +66,21 @@ class TestExercises(APITestBase):
         # Excercise with name exists but belongs to other user
         await self.sample.exercise(user=await self.sample.user(), name=name)
 
-        response = SuccessResponse(**(await self.client.post("/exercises/create", json=data)).json())
+        response = await self._post_success("/create", data=data)
 
         assert response.results
-        assert response.code == "ok"
         assert response.results == [data]
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_create_with_invalid_name_fails(self, name: Any, message: str) -> None:
-        response = ErrorResponse(**(await self.client.post("/exercises/create", json={"name": name})).json())
+        response = await self._post_error("/create", data={"name": name})
 
-        assert response.code == "error"
         assert response.message == message
 
     async def test_exercise_create_with_existing_name_fails(self) -> None:
         exercise = await self.sample.exercise()
+        response = await self._post_error("/create", data={"name": exercise.name})
 
-        response = ErrorResponse(**(await self.client.post("/exercises/create", json={"name": exercise.name})).json())
-
-        assert response.code == "error"
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 
     @pytest.mark.parametrize(
@@ -111,7 +98,7 @@ class TestExercises(APITestBase):
         exercise = await self.sample.exercise()
         data = {"exercise_id": str(exercise.id), "name": name, "notes": notes}
 
-        response = SuccessResponse(**(await self.client.post("/exercises/update", json=data)).json())
+        response = await self._post_success("/update", data=data)
         updated_exercise = await self.db.query_required_single_json(
             """
             SELECT Exercise {name, notes}
@@ -121,61 +108,53 @@ class TestExercises(APITestBase):
         )
 
         assert response.results
-        assert response.code == "ok"
         assert response.results == [ExerciseRead.parse_raw(updated_exercise).dict()]
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_update_fails_with_invalid_name(self, name: Any, message: str) -> None:
         exercise = await self.sample.exercise()
 
-        response = ErrorResponse(
-            **(await self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": name})).json()
-        )
+        response = await self._post_error("/update", data={"exercise_id": str(exercise.id), "name": name})
 
-        assert response.code == "error"
         assert response.message == message
 
     async def test_exercise_update_fails_with_existing_name_and_same_user(self) -> None:
         name = (await self.sample.exercise()).name
         exercise = await self.sample.exercise()
 
-        response = ErrorResponse(
-            **(await self.client.post("/exercises/update", json={"exercise_id": str(exercise.id), "name": name})).json()
-        )
+        response = await self._post_error("/update", data={"exercise_id": str(exercise.id), "name": name})
 
-        assert response.code == "error"
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_update_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = ErrorResponse(
-            **(
-                await self.client.post("/exercises/update", json={"exercise_id": str(exercise_id), "name": fake.text()})
-            ).json()
-        )
+        response = await self._post_error("/update", data={"exercise_id": str(exercise_id), "name": fake.text()})
 
-        assert response.code == "error"
         assert response.message == message
 
     async def test_exercise_delete_succeeds(self) -> None:
         exercise = await self.sample.exercise()
 
-        response = SuccessResponse(
-            **(await self.client.post("exercises/delete", json={"exercise_id": str(exercise.id)})).json()
-        )
+        response = await self._post_success("/delete", data={"exercise_id": str(exercise.id)})
         deleted_exercise = json.loads(
             await self.db.query_single_json("SELECT Exercise FILTER .id = <uuid>$exercise_id", exercise_id=exercise.id)
         )
 
         assert deleted_exercise is None
-        assert response.code == "ok"
         assert response.results is None
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_delete_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = ErrorResponse(
-            **(await self.client.post("/exercises/delete", json={"exercise_id": str(exercise_id)})).json()
-        )
+        response = await self._post_error("/delete", data={"exercise_id": str(exercise_id)})
 
-        assert response.code == "error"
         assert response.message == message
+
+    async def _post_success(self, endpoint: str, data: dict[str, Any] = {}) -> SuccessResponse:
+        response = SuccessResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data)).json())
+        assert response.code == "ok"
+        return response
+
+    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+        response = ErrorResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data)).json())
+        assert response.code == "error"
+        return response
