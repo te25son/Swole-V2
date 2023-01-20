@@ -10,12 +10,7 @@ from ...errors.messages import (
     NO_EXERCISE_FOUND,
 )
 from ...models import ExerciseRead
-from ...schemas import (
-    ExerciseAddToWorkout,
-    ExerciseCreate,
-    ExerciseDelete,
-    ExerciseUpdate,
-)
+from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseUpdate
 from .base import BaseRepository
 
 
@@ -69,30 +64,6 @@ class ExerciseRepository(BaseRepository):
             return ExerciseRead.parse_raw(exercise)
         except ConstraintViolationError:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
-
-    async def add_to_workout(self, user_id: UUID | None, data: ExerciseAddToWorkout) -> ExerciseRead:
-        result = json.loads(
-            await self.client.query_single_json(
-                """
-                WITH exercise := (
-                    UPDATE Exercise
-                    FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                    SET {
-                        workouts += (SELECT Workout FILTER .id = <uuid>$workout_id)
-                    }
-                )
-                SELECT exercise {name, notes}
-                """,
-                workout_id=data.workout_id,
-                exercise_id=data.exercise_id,
-                user_id=user_id,
-            )
-        )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-
-        return ExerciseRead(**result)
 
     async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:

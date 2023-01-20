@@ -41,6 +41,13 @@ class WorkoutDelete(BaseModel):
     _check_id = schema_validator("workout_id")(check_is_uuid)
 
 
+class WorkoutAddExercise(BaseModel):
+    workout_id: UUID
+    exercise_id: UUID
+
+    _check_id = schema_validator("workout_id", "exercise_id")(check_is_uuid)
+
+
 class WorkoutGetAllExercises(BaseModel):
     workout_id: UUID
 

@@ -1,5 +1,4 @@
 from .exercises import (
-    ExerciseAddToWorkout,
     ExerciseCreate,
     ExerciseDelete,
     ExerciseDetail,
@@ -9,6 +8,7 @@ from .responses import ErrorResponse, SuccessResponse
 from .sets import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .users import UserLogin
 from .workouts import (
+    WorkoutAddExercise,
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
@@ -19,13 +19,13 @@ from .workouts import (
 __all__ = [
     "ExerciseCreate",
     "ExerciseDetail",
-    "ExerciseAddToWorkout",
     "ExerciseUpdate",
     "ExerciseDelete",
     "WorkoutCreate",
     "WorkoutUpdate",
     "WorkoutDetail",
     "WorkoutDelete",
+    "WorkoutAddExercise",
     "WorkoutGetAllExercises",
     "SuccessResponse",
     "ErrorResponse",

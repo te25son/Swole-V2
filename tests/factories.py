@@ -95,29 +95,35 @@ class Sample:
     async def users(self, size: int = 5, **kwargs: Any) -> list[User]:
         return [await self.user(**kwargs) for _ in range(0, size)]
 
-    async def workout(self, user: User | None = None, **kwargs: Any) -> Workout:
+    async def workout(self, user: User | None = None, exercises: list[Exercise] = [], **kwargs: Any) -> Workout:
         workout_factory = WorkoutFactory.build(**kwargs)
         workout = await self.client.query_single_json(
             """
-            WITH workout := (
-                INSERT Workout {
-                    name := <str>$name,
-                    date := <cal::local_date>$date,
-                    user := (SELECT User FILTER .id = <uuid>$user_id)
-                }
-            )
-            SELECT workout {id, name, date}
+            WITH
+                exercises := (for id in array_unpack(<array<uuid>>$exercise_ids) union (
+                    SELECT Exercise FILTER .id = <uuid>id
+                )),
+                workout := (
+                    INSERT Workout {
+                        name := <str>$name,
+                        date := <cal::local_date>$date,
+                        user := (SELECT User FILTER .id = <uuid>$user_id),
+                        exercises := assert_distinct(exercises)
+                    }
+                )
+            SELECT workout {id, name, date, exercises: {id, name, notes}}
             """,
             name=workout_factory.name,
             date=workout_factory.date,
             user_id=(user or self.test_user).id,
+            exercise_ids=[e.id for e in exercises],
         )
         return Workout.parse_raw(workout)
 
     async def workouts(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Workout]:
         return [await self.workout(user, **kwargs) for _ in range(0, size)]
 
-    async def exercise(self, user: User | None = None, **kwargs: Any) -> Exercise:
+    async def exercise(self, user: User | None = None, workouts: list[Workout] = [], **kwargs: Any) -> Exercise:
         exercise_factory = ExerciseFactory.build(**kwargs)
         exercise = await self.client.query_single_json(
             """

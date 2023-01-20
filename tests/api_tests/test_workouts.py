@@ -204,4 +204,78 @@ class TestWorkouts(APITestBase):
 
         assert response.code == "error"
         assert response.message == INVALID_ID
+
+    async def test_add_exercise_succeeds(self) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        data = {
+            "workout_id": str(workout.id),
+            "exercise_id": str(exercise.id)
+        }
+
+        response = SuccessResponse(**(await self.client.post("/workouts/add-exercise", json=data)).json())
+        updated_workout = Workout.parse_raw(
+            await self.db.query_single_json(
+                """
+                SELECT Workout {name, date, exercises: {name}}
+                FILTER .id = <uuid>$workout_id
+                """,
+                workout_id=workout.id
+            )
+        )
+        exercises = updated_workout.exercises
+
+        assert response.results
+        assert response.code == "ok"
+        assert exercises
+        assert len(exercises) == 1
+        assert exercise.name in [e.name for e in exercises]
+
+    @pytest.mark.parametrize(
+        "workout_id, exercise_id, message",
+        [
+            pytest.param(fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails"),
+            pytest.param(uuid4(), uuid4(), NO_WORKOUT_FOUND, id="Test random uuid fails"),
+        ]
+    )
+    async def test_add_exercise_fails_with_invalid_id(self, workout_id: Any, exercise_id: Any, message: str) -> None:
+        data = {
+            "workout_id": str(workout_id),
+            "exercise_id": str(exercise_id)
+        }
+        response = ErrorResponse(**(await self.client.post("/workouts/add-exercise", json=data)).json())
+
+        assert response.code == "error"
+        assert response.message == message
+
+
+    @pytest.mark.parametrize(
+        "no_exercises",
+        [
+            pytest.param(True, id="Test get all exercises returns empty list when workout has no exercises"),
+            pytest.param(False, id="Test get all exercises returns all exercises belonging to workout"),
+        ]
+    )
+    async def test_get_all_exercises_succeeds(self, no_exercises: bool) -> None:
+        exercises = await self.sample.exercises(size=10)
+        # add half of the exercises since the result should only return those owned by the workout
+        workout = await self.sample.workout(exercises=[] if no_exercises else exercises[:5])
+
+        response = SuccessResponse(
+            **(await self.client.post("/workouts/exercises", json={"workout_id": str(workout.id)})).json()
+        )
+
+        if no_exercises:
+            assert response.results == []
+        assert response.code == "ok"
+        assert response.results == [{"name": e.name, "notes": e.notes} for e in workout.exercises]  # type: ignore
+
+    @pytest.mark.parametrize(*invalid_workout_id_params)
+    async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:
+        response = ErrorResponse(
+            **(await self.client.post("/workouts/exercises", json={"workout_id": str(workout_id)})).json()
+        )
+
+        assert response.code == "error"
+        assert response.message == message
 # fmt: on

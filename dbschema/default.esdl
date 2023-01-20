@@ -27,7 +27,9 @@ module default {
 
         required property date -> cal::local_date;
 
-        multi link exercises := .<workouts[is Exercise];
+        multi link exercises -> Exercise {
+            on target delete allow;
+        }
 
         constraint exclusive on ((.cleaned_name, .date, .user));
     }
@@ -38,9 +40,7 @@ module default {
 
         property notes -> str;
 
-        multi link workouts -> Workout {
-            on target delete allow;
-        }
+        multi link workouts := .<exercises[is Workout];
         multi link sets := .<exercise[is ExerciseSet];
 
         constraint exclusive on ((.cleaned_name, .user));

@@ -7,7 +7,12 @@ from fastapi import HTTPException
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
 from ...models import ExerciseRead, Workout, WorkoutRead
-from ...schemas import WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
+from ...schemas import (
+    WorkoutAddExercise,
+    WorkoutCreate,
+    WorkoutGetAllExercises,
+    WorkoutUpdate,
+)
 from .base import BaseRepository
 
 
@@ -23,6 +28,30 @@ class WorkoutRepository(BaseRepository):
             )
         )
         return [WorkoutRead(**result) for result in results]
+
+    async def add_exercise(self, user_id: UUID | None, data: WorkoutAddExercise) -> WorkoutRead:
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                WITH workout := (
+                    UPDATE Workout
+                    FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+                    SET {
+                        exercises += (SELECT Exercise FILTER .id = <uuid>$exercise_id)
+                    }
+                )
+                SELECT workout {name, date}
+                """,
+                workout_id=data.workout_id,
+                exercise_id=data.exercise_id,
+                user_id=user_id,
+            )
+        )
+
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+
+        return WorkoutRead(**result)
 
     async def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
         result = json.loads(

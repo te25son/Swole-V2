@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends
 from ..database.repositories import ExerciseRepository
 from ..models import User
 from ..schemas import (
-    ExerciseAddToWorkout,
     ExerciseCreate,
     ExerciseDelete,
     ExerciseDetail,
@@ -39,15 +38,6 @@ async def create(
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=[await respository.create(current_user.id, data)])
-
-
-@router.post("/add", response_model=SuccessResponse)
-async def add_to_workout(
-    data: ExerciseAddToWorkout,
-    current_user: User = Depends(get_current_active_user),
-    respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
-) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.add_to_workout(current_user.id, data)])
 
 
 @router.post("/update", response_model=SuccessResponse)

@@ -4,6 +4,7 @@ from ..database.repositories import WorkoutRepository
 from ..models import User
 from ..schemas import (
     SuccessResponse,
+    WorkoutAddExercise,
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
@@ -58,6 +59,15 @@ async def update(
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=[await respository.update(current_user.id, data)])
+
+
+@router.post("/add-exercise", response_model=SuccessResponse)
+async def add_exercise(
+    data: WorkoutAddExercise,
+    current_user: User = Depends(get_current_active_user),
+    respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=[await respository.add_exercise(current_user.id, data)])
 
 
 @router.post("/exercises", response_model=SuccessResponse)

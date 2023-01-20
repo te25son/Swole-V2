@@ -96,49 +96,6 @@ class TestExercises(APITestBase):
         assert response.code == "error"
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 
-    async def test_exercise_add_succeeds(self) -> None:
-        workout = await self.sample.workout()
-        exercise = await self.sample.exercise()
-        data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
-
-        response = SuccessResponse(**(await self.client.post("/exercises/add", json=data)).json())
-
-        assert response.results
-        assert response.code == "ok"
-        assert response.results == [ExerciseRead(**exercise.dict()).dict()]
-
-    @pytest.mark.parametrize(
-        "workout_id, message",
-        [pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails.")],
-    )
-    async def test_exercise_add_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
-        # Ensure the user has workouts but none matching the given id
-        await self.sample.workouts()
-        exercise = await self.sample.exercise()
-        data = {"workout_id": str(workout_id), "exercise_id": str(exercise.id)}
-
-        response = ErrorResponse(**(await self.client.post("/exercises/add", json=data)).json())
-
-        assert response.code == "error"
-        assert response.message == message
-
-    @pytest.mark.parametrize(
-        "exercise_id, message",
-        [
-            pytest.param(fake.random_digit(), INVALID_ID, id="Test random digit fails."),
-        ],
-    )
-    async def test_exercise_add_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        # Ensure the user has exercises but none matching the given id
-        await self.sample.exercises()
-        workout = await self.sample.workout()
-        data = {"workout_id": str(workout.id), "exercise_id": str(exercise_id)}
-
-        response = ErrorResponse(**(await self.client.post("/exercises/add", json=data)).json())
-
-        assert response.code == "error"
-        assert response.message == message
-
     @pytest.mark.parametrize(
         "name, notes",
         [
