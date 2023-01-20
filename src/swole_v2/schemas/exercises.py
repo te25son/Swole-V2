@@ -31,7 +31,7 @@ class ExerciseUpdate(BaseModel):
     notes: str | None
 
     _check_ids = schema_validator("exercise_id")(check_is_uuid)
-    _check_empty_name = schema_validator("name")(check_empty_string("name"))
+    _check_empty_name = schema_validator("name")(check_empty_string("name", allow_none=True))
 
 
 class ExerciseDelete(BaseModel):

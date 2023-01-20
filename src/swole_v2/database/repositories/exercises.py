@@ -24,7 +24,7 @@ class ExerciseRepository(BaseRepository):
         results = json.loads(
             await self.client.query_json(
                 """
-                SELECT Exercise {name}
+                SELECT Exercise {name, notes}
                 FILTER .user.id = <uuid>$user_id
                 """,
                 user_id=user_id,
@@ -81,7 +81,7 @@ class ExerciseRepository(BaseRepository):
                         workouts += (SELECT Workout FILTER .id = <uuid>$workout_id)
                     }
                 )
-                SELECT exercise {name}
+                SELECT exercise {name, notes}
                 """,
                 workout_id=data.workout_id,
                 exercise_id=data.exercise_id,

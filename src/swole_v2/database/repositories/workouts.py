@@ -28,7 +28,7 @@ class WorkoutRepository(BaseRepository):
         result = json.loads(
             await self.client.query_single_json(
                 """
-                SELECT Workout {name, date, exercises: {name}}
+                SELECT Workout {name, date, exercises: {name, notes}}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
                 """,
                 workout_id=data.workout_id,

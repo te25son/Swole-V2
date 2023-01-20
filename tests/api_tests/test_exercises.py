@@ -27,7 +27,6 @@ class TestExercises(APITestBase):
         [
             pytest.param("", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty name fails."),
             pytest.param("   ", FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank name fails."),
-            pytest.param(None, FIELD_CANNOT_BE_EMPTY.format("name"), id="Test none name fails."),
         ],
     )
 
@@ -140,13 +139,20 @@ class TestExercises(APITestBase):
         assert response.code == "error"
         assert response.message == message
 
-    async def test_exercise_update_succeeds(self) -> None:
-        new_name = fake.text()
-        new_notes = fake.paragraph()
+    @pytest.mark.parametrize(
+        "name, notes",
+        [
+            pytest.param(fake.text(), fake.paragraph(), id="Test updating name and notes succeeds"),
+            pytest.param(None, fake.paragraph(), id="Test updating only notes succeeds"),
+            pytest.param(fake.text(), None, id="Test updating only name succeeds"),
+            pytest.param(None, None, id="Test updating neither name nor notes succeeds"),
+        ],
+    )
+    async def test_exercise_update_succeeds(self, name: str | None, notes: str | None) -> None:
         # Existing exercise with the new name but different user should work
-        await self.sample.exercise(user=await self.sample.user(), name=new_name)
+        await self.sample.exercise(user=await self.sample.user(), name=name or fake.text())
         exercise = await self.sample.exercise()
-        data = {"exercise_id": str(exercise.id), "name": new_name, "notes": new_notes}
+        data = {"exercise_id": str(exercise.id), "name": name, "notes": notes}
 
         response = SuccessResponse(**(await self.client.post("/exercises/update", json=data)).json())
         updated_exercise = await self.db.query_required_single_json(
