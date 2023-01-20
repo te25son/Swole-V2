@@ -10,7 +10,6 @@ from swole_v2.security import get_current_active_user
 from ..factories import Sample
 
 fake = Faker()
-sample = Sample()
 
 
 class APITestBase:

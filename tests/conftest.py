@@ -30,13 +30,13 @@ async def test_database() -> AsyncIOClient:
 
 
 @pytest.fixture(scope="function")
-async def test_user() -> User:
-    return await Sample().user()
+async def test_sample() -> Sample:
+    return await Sample().initialize()
 
 
 @pytest.fixture(scope="function")
-async def test_sample(test_user: User) -> Sample:
-    return Sample(test_user)
+async def test_user(test_sample: Sample) -> User:
+    return test_sample.test_user
 
 
 @pytest_asyncio.fixture(scope="session")
