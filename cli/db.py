@@ -95,7 +95,7 @@ def echo_command(command: list[str]) -> None:
 async def create_instances(settings: Settings) -> None:
     sample = Sample()
     # Create admin user
-    await sample.user(
+    admin = await sample.user(
         username=settings.DUMMY_USERNAME,
         hashed_password=await hash_password(settings.DUMMY_PASSWORD),
         disabled=False,
@@ -105,9 +105,12 @@ async def create_instances(settings: Settings) -> None:
 
     # Create workout and exercise instances
     for _ in range(20):
-        user = choice(users)
+        user = choice(users + [admin])
 
         # Create some workouts without exercises
-        await sample.workouts(user=user, size=choice(range(0, 10)))
+        workouts = await sample.workouts(user=user, size=choice(range(10, 20)))
         # Create some exercises without workouts
-        await sample.exercises(user=user, size=choice(range(0, 10)))
+        exercises = await sample.exercises(user=user, size=choice(range(10, 20)))
+        # Add some sets to the exercises
+        for _ in range(5):
+            await sample.sets(workout=choice(workouts), exercise=choice(exercises), size=choice(range(0, 10)))
