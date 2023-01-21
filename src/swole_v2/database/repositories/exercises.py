@@ -67,33 +67,42 @@ class ExerciseRepository(BaseRepository):
 
     async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:
-            result = await self.client.query_single_json(
-                """
-                WITH exercise := (
-                    UPDATE Exercise
-                    FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                    SET {
-                        name := <optional str>$name ?? .name,
-                        notes := <optional str>$notes ?? .notes
-                    }
+            result = json.loads(
+                await self.client.query_single_json(
+                    """
+                    WITH exercise := (
+                        UPDATE Exercise
+                        FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                        SET {
+                            name := <optional str>$name ?? .name,
+                            notes := <optional str>$notes ?? .notes
+                        }
+                    )
+                    SELECT exercise {name, notes}
+                    """,
+                    exercise_id=data.exercise_id,
+                    user_id=user_id,
+                    name=data.name,
+                    notes=data.notes,
                 )
-                SELECT exercise {name, notes}
-                """,
-                exercise_id=data.exercise_id,
-                user_id=user_id,
-                name=data.name,
-                notes=data.notes,
             )
-            return ExerciseRead.parse_raw(result)
+            if result is None:
+                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+
+            return ExerciseRead(**result)
         except ConstraintViolationError:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
 
     async def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
-        await self.client.query_single_json(
-            """
-            DELETE Exercise
-            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-            """,
-            exercise_id=data.exercise_id,
-            user_id=user_id,
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                DELETE Exercise
+                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                """,
+                exercise_id=data.exercise_id,
+                user_id=user_id,
+            )
         )
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)

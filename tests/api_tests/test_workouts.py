@@ -98,10 +98,11 @@ class TestWorkouts(APITestBase):
         assert deleted_exercise is None
         assert result.results is None
 
-    async def test_workout_delete_with_invalid_workout_id(self) -> None:
-        result = await self._post_error("/delete", data={"workout_id": str(fake.random_digit())})
+    @pytest.mark.parametrize(*invalid_workout_id_params)
+    async def test_workout_delete_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
+        result = await self._post_error("/delete", data={"workout_id": str(workout_id)})
 
-        assert result.message == INVALID_ID
+        assert result.message == message
 
     @pytest.mark.parametrize(
         "name, date",
@@ -168,16 +169,17 @@ class TestWorkouts(APITestBase):
 
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
-    async def test_workout_update_fails_with_invalid_workout_id(self) -> None:
+    @pytest.mark.parametrize(*invalid_workout_id_params)
+    async def test_workout_update_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
         data = {
-            "workout_id": str(fake.random_digit()),
+            "workout_id": str(workout_id),
             "name": fake.name(),
             "date": fake.date()
         }
 
         response = await self._post_error("/update", data=data)
 
-        assert response.message == INVALID_ID
+        assert response.message == message
 
     async def test_add_exercise_succeeds(self) -> None:
         workout = await self.sample.workout()

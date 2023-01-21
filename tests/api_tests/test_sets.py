@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from uuid import uuid4
 
 import pytest
 
@@ -8,6 +9,7 @@ from swole_v2.errors.messages import (
     MUST_BE_A_NON_NEGATIVE_NUMBER,
     MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
     MUST_BE_LESS_THAN,
+    NO_SET_FOUND,
     SET_ADD_FAILED,
 )
 from swole_v2.models import SetRead
@@ -57,11 +59,10 @@ class TestSets(APITestBase):
     ]
 
     invalid_set_id_params = (
-        "workout_id, exercise_id, set_id, message",
+        "set_id, message",
         [
-            pytest.param(
-                fake.random_digit(), fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails."
-            )
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid fails"),
+            pytest.param(uuid4(), NO_SET_FOUND, id="Test random uuid fails"),
         ],
     )
 
@@ -201,14 +202,8 @@ class TestSets(APITestBase):
         assert response.results == None
 
     @pytest.mark.parametrize(*invalid_set_id_params)
-    async def test_set_delete_fails(self, set_id: Any, workout_id: Any, exercise_id: Any, message: str) -> None:
-        data = {
-            "set_id": str(set_id),
-            "workout_id": str(workout_id),
-            "exercise_id": str(exercise_id),
-        }
-
-        response = await self._post_error("/delete", data)
+    async def test_set_delete_fails_with_invalid_id(self, set_id: Any, message: str) -> None:
+        response = await self._post_error("/delete", data={"set_id": str(set_id)})
 
         assert response.message == message
 
@@ -274,16 +269,8 @@ class TestSets(APITestBase):
         assert response.message == message
 
     @pytest.mark.parametrize(*invalid_set_id_params)
-    async def test_set_update_fails_with_invalid_ids(
-        self, set_id: Any, workout_id: Any, exercise_id: Any, message: str
-    ) -> None:
-        data = dict(
-            rep_count=fake.random_digit_not_null(),
-            weight=fake.random_digit_not_null(),
-            set_id=str(set_id),
-            workout_id=str(workout_id),
-            exercise_id=str(exercise_id),
-        )
+    async def test_set_update_fails_with_invalid_id(self, set_id: Any, message: str) -> None:
+        data = dict(rep_count=fake.random_digit_not_null(), weight=fake.random_digit_not_null(), set_id=str(set_id))
 
         response = await self._post_error("/update", data)
 

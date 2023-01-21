@@ -2,9 +2,10 @@ import json
 from uuid import UUID
 
 from edgedb import MissingRequiredError
+from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
-from ...errors.messages import SET_ADD_FAILED
+from ...errors.messages import NO_SET_FOUND, SET_ADD_FAILED
 from ...models import SetRead
 from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .base import BaseRepository
@@ -41,12 +42,12 @@ class SetRepository(BaseRepository):
                         rep_count := <int64>$rep_count,
                         workout := (
                             SELECT Workout
-                            FILTER .id = <uuid>$workout_id and .user.id = <uuid>$user_id
+                            FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
                         ),
                         exercise := (
                             SELECT Exercise
-                            FILTER .id = <uuid>$exercise_id and .user.id = <uuid>$user_id
-                        ),
+                            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                        )
                     }
                 )
                 SELECT exercise_set {weight, rep_count}
@@ -62,29 +63,37 @@ class SetRepository(BaseRepository):
             raise BusinessError(SET_ADD_FAILED)
 
     async def delete(self, user_id: UUID | None, data: SetDelete) -> None:
-        await self.client.query_single_json(
-            """
-            DELETE ExerciseSet
-            FILTER .id = <uuid>$set_id
-            """,
-            set_id=data.set_id,
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                DELETE ExerciseSet
+                FILTER .id = <uuid>$set_id
+                """,
+                set_id=data.set_id,
+            )
         )
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_SET_FOUND)
 
     async def update(self, user_id: UUID | None, data: SetUpdate) -> SetRead:
-        result = await self.client.query_single_json(
-            """
-            WITH exercise_set := (
-                UPDATE ExerciseSet
-                FILTER .id = <uuid>$set_id
-                SET {
-                    weight := <optional int64>$weight ?? .weight,
-                    rep_count := <optional int64>$rep_count ?? .rep_count
-                }
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                WITH exercise_set := (
+                    UPDATE ExerciseSet
+                    FILTER .id = <uuid>$set_id
+                    SET {
+                        weight := <optional int64>$weight ?? .weight,
+                        rep_count := <optional int64>$rep_count ?? .rep_count
+                    }
+                )
+                SELECT exercise_set {weight, rep_count}
+                """,
+                set_id=data.set_id,
+                weight=data.weight,
+                rep_count=data.rep_count,
             )
-            SELECT exercise_set {weight, rep_count}
-            """,
-            set_id=data.set_id,
-            weight=data.weight,
-            rep_count=data.rep_count,
         )
-        return SetRead.parse_raw(result)
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_SET_FOUND)
+        return SetRead(**result)

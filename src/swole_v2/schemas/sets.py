@@ -44,20 +44,16 @@ class SetAdd(BaseModel):
 
 class SetDelete(BaseModel):
     set_id: UUID
-    workout_id: UUID
-    exercise_id: UUID
 
-    _check_ids = schema_validator("set_id", "workout_id", "exercise_id")(check_is_uuid)
+    _check_ids = schema_validator("set_id")(check_is_uuid)
 
 
 class SetUpdate(BaseModel):
     set_id: UUID
-    workout_id: UUID
-    exercise_id: UUID
     rep_count: int | None = Field(default=None, gt=0, le=500)
     weight: int | None = Field(default=None, gt=0, le=10000)
 
-    _check_ids = schema_validator("set_id", "workout_id", "exercise_id")(check_is_uuid)
+    _check_ids = schema_validator("set_id")(check_is_uuid)
     _check_rep_count_less_than = schema_validator("rep_count")(check_is_less_than(501, allow_none=True))
     _check_weight_less_than = schema_validator("weight")(check_is_less_than(10001, allow_none=True))
 

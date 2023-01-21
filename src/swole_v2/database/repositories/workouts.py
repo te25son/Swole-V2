@@ -114,34 +114,42 @@ class WorkoutRepository(BaseRepository):
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE)
 
     async def delete(self, user_id: UUID | None, workout_id: UUID) -> None:
-        await self.client.query_single_json(
-            """
-            DELETE Workout
-            FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
-            """,
-            workout_id=workout_id,
-            user_id=user_id,
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                DELETE Workout
+                FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+                """,
+                workout_id=workout_id,
+                user_id=user_id,
+            )
         )
+        if result is None:
+            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
     async def update(self, user_id: UUID | None, data: WorkoutUpdate) -> WorkoutRead:
         try:
-            result = await self.client.query_single_json(
-                """
-                WITH workout := (
-                    UPDATE Workout
-                    FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
-                    SET {
-                        name := <optional str>$name ?? .name,
-                        date := <optional cal::local_date>$date ?? .date
-                    }
+            result = json.loads(
+                await self.client.query_single_json(
+                    """
+                    WITH workout := (
+                        UPDATE Workout
+                        FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+                        SET {
+                            name := <optional str>$name ?? .name,
+                            date := <optional cal::local_date>$date ?? .date
+                        }
+                    )
+                    SELECT workout {name, date}
+                    """,
+                    workout_id=data.workout_id,
+                    user_id=user_id,
+                    name=data.name,
+                    date=data.date,
                 )
-                SELECT workout {name, date}
-                """,
-                workout_id=data.workout_id,
-                user_id=user_id,
-                name=data.name,
-                date=data.date,
             )
-            return WorkoutRead.parse_raw(result)
+            if result is None:
+                raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+            return WorkoutRead(**result)
         except ConstraintViolationError:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE)

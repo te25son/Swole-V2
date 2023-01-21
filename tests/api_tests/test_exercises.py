@@ -1,5 +1,6 @@
 import json
 from typing import Any
+from uuid import uuid4
 
 import pytest
 
@@ -7,6 +8,7 @@ from swole_v2.errors.messages import (
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
     FIELD_CANNOT_BE_EMPTY,
     INVALID_ID,
+    NO_EXERCISE_FOUND,
 )
 from swole_v2.models import ExerciseRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
@@ -19,6 +21,7 @@ class TestExercises(APITestBase):
         "exercise_id, message",
         [
             pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
+            pytest.param(uuid4(), NO_EXERCISE_FOUND, id="Test random uuid id fails."),
         ],
     )
 
