@@ -88,14 +88,15 @@ class TestWorkouts(APITestBase):
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     async def test_workout_delete_with_valid_id(self) -> None:
-        workout = await self.sample.workout()
+        # Make sure that we can delete a workout that has linked exercises
+        workout = await self.sample.workout(exercises=await self.sample.exercises())
 
         result = await self._post_success("/delete", data={"workout_id": str(workout.id)})
-        deleted_exercise = json.loads(await self.db.query_single_json(
+        deleted_workout = json.loads(await self.db.query_single_json(
             "SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id
         ))
 
-        assert deleted_exercise is None
+        assert deleted_workout is None
         assert result.results is None
 
     @pytest.mark.parametrize(*invalid_workout_id_params)

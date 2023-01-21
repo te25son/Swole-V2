@@ -137,6 +137,8 @@ class TestExercises(APITestBase):
 
     async def test_exercise_delete_succeeds(self) -> None:
         exercise = await self.sample.exercise()
+        # Make sure we can delete an exercise that belongs to a workout
+        await self.sample.workout(exercises=[exercise])
 
         response = await self._post_success("/delete", data={"exercise_id": str(exercise.id)})
         deleted_exercise = json.loads(
