@@ -2,6 +2,7 @@ from .exercises import (
     ExerciseCreate,
     ExerciseDelete,
     ExerciseDetail,
+    ExerciseProgress,
     ExerciseUpdate,
 )
 from .responses import ErrorResponse, SuccessResponse
@@ -21,6 +22,7 @@ __all__ = [
     "ExerciseDetail",
     "ExerciseUpdate",
     "ExerciseDelete",
+    "ExerciseProgress",
     "WorkoutCreate",
     "WorkoutUpdate",
     "WorkoutDetail",

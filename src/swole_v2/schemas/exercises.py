@@ -31,3 +31,9 @@ class ExerciseDelete(BaseModel):
     exercise_id: UUID
 
     _check_ids = schema_validator("exercise_id")(check_is_uuid)
+
+
+class ExerciseProgress(BaseModel):
+    exercise_id: UUID
+
+    _check_ids = schema_validator("exercise_id")(check_is_uuid)

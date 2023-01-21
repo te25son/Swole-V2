@@ -6,6 +6,7 @@ from ..schemas import (
     ExerciseCreate,
     ExerciseDelete,
     ExerciseDetail,
+    ExerciseProgress,
     ExerciseUpdate,
     SuccessResponse,
 )
@@ -57,3 +58,12 @@ async def delete(
 ) -> SuccessResponse:
     await respository.delete(current_user.id, data)
     return SuccessResponse()
+
+
+@router.post("/progress", response_model=SuccessResponse)
+async def progress(
+    data: ExerciseProgress,
+    current_user: User = Depends(get_current_active_user),
+    respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=await respository.progress(current_user.id, data))

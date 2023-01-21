@@ -9,8 +9,13 @@ from ...errors.messages import (
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
     NO_EXERCISE_FOUND,
 )
-from ...models import ExerciseRead
-from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseUpdate
+from ...models import ExerciseProgressRead, ExerciseRead
+from ...schemas import (
+    ExerciseCreate,
+    ExerciseDelete,
+    ExerciseProgress,
+    ExerciseUpdate,
+)
 from .base import BaseRepository
 
 
@@ -106,3 +111,34 @@ class ExerciseRepository(BaseRepository):
         )
         if result is None:
             raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+
+    async def progress(self, user_id: UUID | None, data: ExerciseProgress) -> list[ExerciseProgressRead]:
+        results = json.loads(
+            await self.client.query_json(
+                """
+                WITH
+                    exercise_sets := (
+                        SELECT ExerciseSet {
+                            weight,
+                            rep_count,
+                        } FILTER .exercise.id = <uuid>$exercise_id
+                    ),
+                    groups := (
+                        GROUP exercise_sets BY (.workout, .exercise)
+                    )
+                SELECT groups {
+                    name := .key.exercise.name,
+                    date := .key.workout.date,
+                    avg_rep_count := math::mean(.elements.rep_count),
+                    avg_weight := math::mean(.elements.weight),
+                    max_weight := max(.elements.weight)
+                }
+                """,
+                exercise_id=data.exercise_id,
+            )
+        )
+        if results is None:
+            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+        if results is []:
+            return []
+        return [ExerciseProgressRead(**r) for r in results]

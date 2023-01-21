@@ -1,4 +1,6 @@
 import json
+import random
+from statistics import mean
 from typing import Any
 from uuid import uuid4
 
@@ -153,6 +155,50 @@ class TestExercises(APITestBase):
         response = await self._post_error("/delete", data={"exercise_id": str(exercise_id)})
 
         assert response.message == message
+
+    async def test_exercise_progress_succeeds(self) -> None:
+        exercise = await self.sample.exercise()
+        set_group_1 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
+        set_group_2 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
+        set_group_3 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
+        # Should not calculate other sets in same workout but different exercise
+        await self.sample.sets(workout=set_group_1[0].workout)
+
+        response = await self._post_success("/progress", data={"exercise_id": str(exercise.id)})
+
+        assert response.results
+        assert len(response.results) == 3
+        assert response.results[0]["avg_rep_count"] == mean([g.rep_count for g in set_group_1])
+        assert response.results[1]["avg_rep_count"] == mean([g.rep_count for g in set_group_2])
+        assert response.results[2]["avg_rep_count"] == mean([g.rep_count for g in set_group_3])
+        assert response.results[0]["avg_weight"] == mean([g.weight for g in set_group_1])
+        assert response.results[1]["avg_weight"] == mean([g.weight for g in set_group_2])
+        assert response.results[2]["avg_weight"] == mean([g.weight for g in set_group_3])
+        assert response.results[0]["max_weight"] == max([g.weight for g in set_group_1])
+        assert response.results[1]["max_weight"] == max([g.weight for g in set_group_2])
+        assert response.results[2]["max_weight"] == max([g.weight for g in set_group_3])
+        assert response.results[0]["name"] == exercise.name
+        assert response.results[1]["name"] == exercise.name
+        assert response.results[2]["name"] == exercise.name
+        assert response.results[0]["date"] == set_group_1[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+        assert response.results[1]["date"] == set_group_2[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+        assert response.results[2]["date"] == set_group_3[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+
+    async def test_exercise_progress_fails_with_invalid_id(self) -> None:
+        response = await self._post_error("/progress", data={"exercise_id": str(fake.random_digit())})
+
+        assert response.message == INVALID_ID
+
+    async def test_exercise_progress_returns_empty_list_with_random_id(self) -> None:
+        response = await self._post_success("/progress", data={"exercise_id": str(uuid4())})
+
+        assert response.results == []
+
+    async def test_exercise_progress_returns_empty_list_when_exercise_has_no_sets(self) -> None:
+        exercise = await self.sample.exercise()
+        response = await self._post_success("/progress", data={"exercise_id": str(exercise.id)})
+
+        assert response.results == []
 
     async def _post_success(self, endpoint: str, data: dict[str, Any] = {}) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data)).json())
