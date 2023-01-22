@@ -7,7 +7,7 @@ locations = ("src", "tests", "cli", "noxfile.py")
 
 @nox.session(python=python_versions)
 def test(session: Session) -> None:
-    args = session.posargs or ["--cov"]
+    args = session.posargs or ["-n", "2", "--cov"]
     # Poetry is not a part of the environment created by Nox, so we specify external
     # to avoid warnings about external commands leaking into the isolated test environments.
     session.run("poetry", "install", "--without", "stubs", external=True)
