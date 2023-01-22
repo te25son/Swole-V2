@@ -85,7 +85,7 @@ def seed(context: CliContext) -> None:
         asyncio.run(create_instances(context.settings))
         click.secho("Seeding complete.", fg="green", bold=True)
     except Exception as e:
-        click.secho(f"Exception when adding instances to database: {str(e)}", fg="red")
+        click.secho(f"Exception when adding instances to database:\n\n {str(e)}", fg="red")
 
 
 def echo_command(command: list[str]) -> None:
