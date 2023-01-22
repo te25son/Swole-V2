@@ -22,7 +22,7 @@ def business_error_handler(request: Request, exception: BusinessError) -> JSONRe
 
 def request_validation_error_handler(request: Request, exception: RequestValidationError) -> JSONResponse:
     error = exception.errors()[0]
-    message = f"{error['msg'].title()}. Hint ({error['loc'][1]})"
+    message = f"{error['msg'].title()}. Hint {error['loc']}"
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=ErrorResponse(message=message).dict(),  # Only dsiplays the first error

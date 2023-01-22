@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
 from .database.database import get_async_client
+from .errors.messages import INACTIVE_USER
 from .helpers import verify_password
 from .models import TokenData, User
 from .settings import get_settings
@@ -64,5 +65,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail=INACTIVE_USER)
     return current_user
