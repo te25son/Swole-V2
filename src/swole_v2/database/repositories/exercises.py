@@ -137,8 +137,4 @@ class ExerciseRepository(BaseRepository):
                 exercise_id=data.exercise_id,
             )
         )
-        if results is None:
-            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-        if results is []:
-            return []
         return [ExerciseProgressRead(**r) for r in results]

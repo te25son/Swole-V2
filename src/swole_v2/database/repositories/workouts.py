@@ -68,9 +68,7 @@ class WorkoutRepository(BaseRepository):
         if result is None:
             raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
 
-        if (exercises := Workout(**result).exercises) is None:
-            return []
-        return [ExerciseRead(**e.dict()) for e in exercises]
+        return [ExerciseRead(**e.dict()) for e in Workout(**result).exercises]
 
     async def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
         result = json.loads(
