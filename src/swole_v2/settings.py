@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DUMMY_USERNAME: str = "username"
     DUMMY_PASSWORD: str = "password"
     HASH_ALGORITHM: str = "HS256"
-    TOKEN_EXPIRE: int = 30
+    TOKEN_EXPIRE: int = 1440  # Default is one day in minutes
 
 
 @lru_cache()
