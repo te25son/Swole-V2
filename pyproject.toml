@@ -91,7 +91,7 @@ source = ["src", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["swole_v2"]
+source = ["src"]
 
 [tool.coverage.report]
 show_missing = true
