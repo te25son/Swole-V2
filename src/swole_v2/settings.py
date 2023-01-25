@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from pydantic import BaseSettings
 
 
@@ -11,8 +9,3 @@ class Settings(BaseSettings):
     DUMMY_PASSWORD: str = "password"
     HASH_ALGORITHM: str = "HS256"
     TOKEN_EXPIRE: int = 1440  # Default is one day in minutes
-
-
-@lru_cache()
-def get_settings() -> Settings:
-    return Settings()

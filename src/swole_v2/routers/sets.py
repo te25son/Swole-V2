@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 
 from ..database.repositories import SetRepository
+from ..dependencies.auth import get_current_active_user
 from ..models import User
 from ..schemas import SetAdd, SetDelete, SetGetAll, SetUpdate, SuccessResponse
-from ..security import get_current_active_user
 
 router = APIRouter(prefix="/sets", tags=["sets"])
 

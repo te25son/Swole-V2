@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 
+from ..dependencies.auth import get_current_active_user
 from ..models import User, UserRead
 from ..schemas import SuccessResponse
-from ..security import get_current_active_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 

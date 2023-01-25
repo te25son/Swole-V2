@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from ..database.repositories import ExerciseRepository
+from ..dependencies.auth import get_current_active_user
 from ..models import User
 from ..schemas import (
     ExerciseCreate,
@@ -10,7 +11,6 @@ from ..schemas import (
     ExerciseUpdate,
     SuccessResponse,
 )
-from ..security import get_current_active_user
 
 router = APIRouter(prefix="/exercises", tags=["exercises"])
 

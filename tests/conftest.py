@@ -8,8 +8,8 @@ import pytest_asyncio
 import uvloop
 
 from swole_v2.app import SwoleApp
+from swole_v2.dependencies.settings import get_settings
 from swole_v2.models import User
-from swole_v2.settings import get_settings
 
 from .factories import Sample
 

@@ -4,8 +4,8 @@ from httpx import AsyncClient
 import pytest
 
 from swole_v2.app import SwoleApp
+from swole_v2.dependencies.auth import get_current_active_user
 from swole_v2.models import User
-from swole_v2.security import get_current_active_user
 
 from ..factories import Sample
 

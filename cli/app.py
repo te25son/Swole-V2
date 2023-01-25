@@ -2,7 +2,7 @@ import click
 from click.core import Context
 import uvicorn
 
-from swole_v2.settings import get_settings
+from swole_v2.dependencies.settings import get_settings
 
 from . import CliContext, Environments, load_environment_variables
 

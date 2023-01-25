@@ -6,8 +6,9 @@ from typing import TypeVar
 import click
 from click import Context
 
-from swole_v2.helpers import hash_password
-from swole_v2.settings import Settings, get_settings
+from swole_v2.dependencies.passwords import hash_password
+from swole_v2.dependencies.settings import get_settings
+from swole_v2.settings import Settings
 from tests.factories import Sample
 
 from . import CliContext, Environments, load_environment_variables

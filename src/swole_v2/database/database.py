@@ -1,6 +1,6 @@
 from edgedb import AsyncIOClient, create_async_client
 
-from ..settings import get_settings
+from ..dependencies.settings import get_settings
 
 
 def get_async_client() -> AsyncIOClient:

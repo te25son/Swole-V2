@@ -6,8 +6,8 @@ from edgedb import create_async_client
 from pydantic import BaseModel
 from pydantic_factories import Ignore, ModelFactory, Use
 
+from swole_v2.dependencies.settings import get_settings
 from swole_v2.models import Exercise, Set, User, Workout
-from swole_v2.settings import get_settings
 
 T = TypeVar("T", bound=BaseModel)
 
