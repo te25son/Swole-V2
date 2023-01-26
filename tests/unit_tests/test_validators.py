@@ -1,8 +1,8 @@
 from uuid import UUID
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-import pytest
 
 from swole_v2.errors.exceptions import BusinessError
 from swole_v2.errors.messages import INCORRECT_DATE_FORMAT, INVALID_ID

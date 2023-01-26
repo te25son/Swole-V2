@@ -31,7 +31,6 @@ mypy = "^0.991"
 nox = "^2022.11.21"
 black = "^22.12.0"
 pytest-cov = "^4.0.0"
-isort = "^5.11.2"
 click = "^8.1.3"
 pydantic-factories = "^1.17.0"
 pytest-dotenv = "^0.5.2"
@@ -105,7 +104,7 @@ line-length = 120
 select = [
     "C",
     "F",
-    #"I", # Ignore isort for now
+    "I", # Isort
     "W",
 ]
 
@@ -113,12 +112,10 @@ select = [
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
 max-complexity = 5
 
+[tool.ruff.isort]
+order-by-type = true
+force-single-line = false
+known-first-party = ["swole_v2", "cli"]
+
 [tool.black]
 line-length = 120
-
-[tool.isort]
-profile = "google"
-order_by_type = true
-force_single_line = false
-multi_line_output = 3
-include_trailing_comma = true

@@ -1,7 +1,7 @@
+import pytest
 from edgedb import AsyncIOClient
 from faker import Faker
 from httpx import AsyncClient
-import pytest
 
 from swole_v2.app import SwoleApp
 from swole_v2.dependencies.auth import get_current_active_user

@@ -3,11 +3,7 @@ from fastapi.exceptions import RequestValidationError
 
 from .dependencies.settings import get_settings
 from .errors.exceptions import BusinessError
-from .errors.handlers import (
-    business_error_handler,
-    http_exception_handler,
-    request_validation_error_handler,
-)
+from .errors.handlers import business_error_handler, http_exception_handler, request_validation_error_handler
 from .routers import router as api_router
 from .schemas import ErrorResponse
 from .settings import Settings

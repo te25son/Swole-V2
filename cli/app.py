@@ -1,6 +1,6 @@
 import click
-from click.core import Context
 import uvicorn
+from click.core import Context
 
 from swole_v2.dependencies.settings import get_settings
 

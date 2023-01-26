@@ -8,10 +8,7 @@ from jose import JWTError, jwt
 from ...database.database import get_async_client
 from ...dependencies.passwords import verify_password
 from ...dependencies.settings import get_settings
-from ...errors.messages import (
-    COULD_NOT_VALIDATE_CREDENTIALS,
-    INCORRECT_USERNAME_OR_PASSWORD,
-)
+from ...errors.messages import COULD_NOT_VALIDATE_CREDENTIALS, INCORRECT_USERNAME_OR_PASSWORD
 from ...models import Token, TokenData, User
 from ...settings import Settings
 

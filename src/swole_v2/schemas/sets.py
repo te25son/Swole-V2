@@ -3,10 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, validator
 
 from ..errors.exceptions import BusinessError
-from ..errors.messages import (
-    MUST_BE_A_NON_NEGATIVE_NUMBER,
-    MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
-)
+from ..errors.messages import MUST_BE_A_NON_NEGATIVE_NUMBER, MUST_BE_A_VALID_NON_NEGATIVE_NUMBER
 from .validators import check_is_less_than, check_is_uuid, schema_validator
 
 

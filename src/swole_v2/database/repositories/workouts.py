@@ -7,12 +7,7 @@ from fastapi import HTTPException
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
 from ...models import ExerciseRead, Workout, WorkoutRead
-from ...schemas import (
-    WorkoutAddExercise,
-    WorkoutCreate,
-    WorkoutGetAllExercises,
-    WorkoutUpdate,
-)
+from ...schemas import WorkoutAddExercise, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
 from .base import BaseRepository
 
 

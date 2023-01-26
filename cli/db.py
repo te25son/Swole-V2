@@ -1,7 +1,6 @@
 import asyncio
-from random import choice
 import subprocess
-from typing import TypeVar
+from random import choice
 
 import click
 from click import Context
@@ -13,7 +12,6 @@ from tests.factories import Sample
 
 from . import CliContext, Environments, load_environment_variables
 
-T = TypeVar("T")
 EDGE_COMMAND = "edgedb"
 
 

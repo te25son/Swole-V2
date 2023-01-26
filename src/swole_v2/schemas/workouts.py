@@ -3,12 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
-from .validators import (
-    check_date_format,
-    check_empty_string,
-    check_is_uuid,
-    schema_validator,
-)
+from .validators import check_date_format, check_empty_string, check_is_uuid, schema_validator
 
 
 class WorkoutDetail(BaseModel):

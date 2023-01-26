@@ -23,13 +23,6 @@ def mypy(session: Session) -> None:
 
 
 @nox.session(python=python_versions[0], tags=["clean"])
-def isort(session: Session) -> None:
-    args = session.posargs or locations
-    session.install("isort")
-    session.run("isort", *args)
-
-
-@nox.session(python=python_versions[0], tags=["clean"])
 def black(session: Session) -> None:
     args = session.posargs or locations
     session.install("black")

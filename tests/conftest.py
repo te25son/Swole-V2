@@ -1,11 +1,11 @@
 import asyncio
 from asyncio import AbstractEventLoop
 
-from edgedb import AsyncIOClient, create_async_client
-from httpx import AsyncClient
 import pytest
 import pytest_asyncio
 import uvloop
+from edgedb import AsyncIOClient, create_async_client
+from httpx import AsyncClient
 
 from swole_v2.app import SwoleApp
 from swole_v2.dependencies.settings import get_settings

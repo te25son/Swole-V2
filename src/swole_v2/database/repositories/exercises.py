@@ -5,17 +5,9 @@ from edgedb import ConstraintViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
-from ...errors.messages import (
-    EXERCISE_WITH_NAME_ALREADY_EXISTS,
-    NO_EXERCISE_FOUND,
-)
+from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, NO_EXERCISE_FOUND
 from ...models import ExerciseProgressRead, ExerciseRead
-from ...schemas import (
-    ExerciseCreate,
-    ExerciseDelete,
-    ExerciseProgress,
-    ExerciseUpdate,
-)
+from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseProgress, ExerciseUpdate
 from .base import BaseRepository
 
 
