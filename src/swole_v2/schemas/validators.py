@@ -45,7 +45,7 @@ def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[s
     return wrapper
 
 
-def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:
+def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:  # noqa[C901]
     def wrapper(value: Any) -> int | None:
         if allow_none and value is None:
             return value
@@ -61,7 +61,7 @@ def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | Non
     return wrapper
 
 
-def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:
+def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:  # noqa[C901]
     def wrapper(value: Any) -> int | None:
         if allow_none and value is None:
             return value
