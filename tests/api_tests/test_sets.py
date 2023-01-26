@@ -95,12 +95,12 @@ class TestSets(APITestBase):
         weight = fake.random_digit_not_null()
         workout = await self.sample.workout()
         exercise = await self.sample.exercise()
-        data = dict(
-            workout_id=str(workout.id),
-            exercise_id=str(exercise.id),
-            rep_count=rep_count,
-            weight=weight,
-        )
+        data = {
+            "workout_id": str(workout.id),
+            "exercise_id": str(exercise.id),
+            "rep_count": rep_count,
+            "weight": weight,
+        }
 
         response = await self._post_success("/add", data)
 
@@ -270,7 +270,11 @@ class TestSets(APITestBase):
 
     @pytest.mark.parametrize(*invalid_set_id_params)
     async def test_set_update_fails_with_invalid_id(self, set_id: Any, message: str) -> None:
-        data = dict(rep_count=fake.random_digit_not_null(), weight=fake.random_digit_not_null(), set_id=str(set_id))
+        data = {
+            "rep_count": fake.random_digit_not_null(),
+            "weight": fake.random_digit_not_null(),
+            "set_id": str(set_id),
+        }
 
         response = await self._post_error("/update", data)
 

@@ -12,7 +12,7 @@ class TestUsers(APITestBase):
     async def test_login_succeeds(self) -> None:
         password = fake.word()
         user = await self.sample.user(hashed_password=await hash_password(password))
-        response = await self.client.post("/api/v2/auth/token", json=dict(username=user.username, password=password))
+        response = await self.client.post("/api/v2/auth/token", json={"username": user.username, "password": password})
         token = Token(**response.json())
 
         assert token.token_type == "bearer"
@@ -21,7 +21,7 @@ class TestUsers(APITestBase):
     async def test_login_with_invalid_creds_fails(self) -> None:
         password = fake.word()
         user = await self.sample.user(hashed_password=await hash_password(fake.word()))
-        response = await self._post_error("auth/token", data=dict(username=user.username, password=password))
+        response = await self._post_error("auth/token", data={"username": user.username, "password": password})
 
         assert response.message == INCORRECT_USERNAME_OR_PASSWORD
 

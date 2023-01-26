@@ -67,7 +67,7 @@ class TestWorkouts(APITestBase):
     async def test_workout_create_succeeds(self) -> None:
         name = fake.text()
         date = fake.date()
-        data = dict(name=name, date=date)
+        data = {"name": name, "date": date}
         # Should pass if other workout exists with same name and date but different user
         await self.sample.workout(name=name, date=date, user=await self.sample.user())
 

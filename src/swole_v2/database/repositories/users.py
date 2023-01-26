@@ -33,7 +33,7 @@ class UserRepository:
         if (user := await self.authenticate_user(username, password)) is None:
             raise HTTPException(status_code=401, detail=INCORRECT_USERNAME_OR_PASSWORD)
 
-        access_token = await self.create_access_token(dict(username=user.username))
+        access_token = await self.create_access_token({"username": user.username})
         return Token(access_token=access_token)
 
     async def get_current_user(self, token: str) -> User:
@@ -69,6 +69,6 @@ class UserRepository:
 
     async def create_access_token(self, data: dict[str, Any]) -> str:
         to_encode = data.copy()
-        to_encode.update(dict(exp=datetime.utcnow() + timedelta(minutes=self.settings.TOKEN_EXPIRE)))
+        to_encode.update({"exp": datetime.utcnow() + timedelta(minutes=self.settings.TOKEN_EXPIRE)})
         encoded_jwt = jwt.encode(to_encode, self.settings.SECRET_KEY, algorithm=self.settings.HASH_ALGORITHM)
         return encoded_jwt

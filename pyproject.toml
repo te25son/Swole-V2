@@ -29,11 +29,9 @@ edgedb = "^1.2.0"
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.991"
 nox = "^2022.11.21"
-flake8 = "^6.0.0"
 black = "^22.12.0"
 pytest-cov = "^4.0.0"
 isort = "^5.11.2"
-flake8-pyproject = "^1.2.2"
 click = "^8.1.3"
 pydantic-factories = "^1.17.0"
 pytest-dotenv = "^0.5.2"
@@ -41,6 +39,7 @@ hypothesis = "^6.61.0"
 pytest-asyncio = "^0.20.3"
 uvloop = "^0.17.0"
 pytest-xdist = "^3.1.0"
+ruff = "^0.0.235"
 
 
 [tool.poetry.group.stubs.dependencies]
@@ -98,14 +97,17 @@ show_missing = true
 fail_under = 100
 exclude_lines = ["if TYPE_CHECKING:"]
 
-[tool.flake8]
-max-line-length = 120
-select = ["BLK","C","F","W","I"]
-# E203,W503 don't play well with black (BLK)
-ignore = ["E203","W503","E731","I100","I101","I202"]
-exclude = "__init__.py"
-application-import-names = ["swole_v2","tests"]
-import-order-style = "google"
+[tool.ruff]
+exclude = ["__init__.py"]
+fix = true
+ignore = ["E731"]
+line-length = 120
+select = [
+    "C",
+    "F",
+    #"I", # Ignore isort for now
+    "W",
+]
 
 [tool.black]
 line-length = 120

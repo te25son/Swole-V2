@@ -15,13 +15,6 @@ def test(session: Session) -> None:
 
 
 @nox.session(python=python_versions[0], tags=["check"])
-def lint(session: Session) -> None:
-    args = session.posargs or locations
-    session.install("flake8", "Flake8-pyproject", "flake8-black", "flake8-import-order")
-    session.run("flake8", *args)
-
-
-@nox.session(python=python_versions[0], tags=["check"])
 def mypy(session: Session) -> None:
     args = session.posargs or locations
     session.run("poetry", "install", "--only", "stubs", external=True)
@@ -41,3 +34,10 @@ def black(session: Session) -> None:
     args = session.posargs or locations
     session.install("black")
     session.run("black", *args)
+
+
+@nox.session(python=python_versions[0], tags=["clean"])
+def ruff(session: Session) -> None:
+    args = session.posargs or locations
+    session.install("ruff")
+    session.run("ruff", *args)
