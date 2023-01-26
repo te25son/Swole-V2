@@ -9,3 +9,4 @@ __pycache__/
 *.db
 migrations/
 .DS_Store
+.ruff_cache/
