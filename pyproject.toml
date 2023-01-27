@@ -115,7 +115,7 @@ max-complexity = 5
 [tool.ruff.isort]
 order-by-type = true
 force-single-line = false
-known-first-party = ["swole_v2", "cli"]
+known-first-party = ["swole_v2", "cli", "tests"]
 
 [tool.black]
 line-length = 120
