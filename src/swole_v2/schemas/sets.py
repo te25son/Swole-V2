@@ -35,8 +35,8 @@ class SetAdd(BaseModel):
             if value_as_int > 0:
                 return value_as_int
             raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
-        except (TypeError, ValueError):
-            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER)
+        except (TypeError, ValueError) as exc:
+            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
 
 
 class SetDelete(BaseModel):

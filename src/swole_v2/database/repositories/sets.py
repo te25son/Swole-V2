@@ -59,8 +59,8 @@ class SetRepository(BaseRepository):
                 user_id=user_id,
             )
             return SetRead.parse_raw(result)
-        except MissingRequiredError:
-            raise BusinessError(SET_ADD_FAILED)
+        except MissingRequiredError as exc:
+            raise BusinessError(SET_ADD_FAILED) from exc
 
     async def delete(self, user_id: UUID | None, data: SetDelete) -> None:
         result = json.loads(

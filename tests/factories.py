@@ -94,7 +94,9 @@ class Sample:
         )
         return [User(**u) for u in json.loads(users)]
 
-    async def workout(self, user: User | None = None, exercises: list[Exercise] = [], **kwargs: Any) -> Workout:
+    async def workout(
+        self, user: User | None = None, exercises: list[Exercise] | None = None, **kwargs: Any
+    ) -> Workout:
         workout_factory = WorkoutFactory.build(**kwargs)
         workout = await self.client.query_single_json(
             """
@@ -117,7 +119,7 @@ class Sample:
             name=workout_factory.name,
             date=workout_factory.date,
             user_id=(user or self.test_user).id,
-            exercise_ids=[e.id for e in exercises],
+            exercise_ids=[e.id for e in exercises or []],
         )
         return Workout.parse_raw(workout)
 
@@ -141,7 +143,7 @@ class Sample:
         )
         return [Workout(**w) for w in json.loads(workouts)]
 
-    async def exercise(self, user: User | None = None, workouts: list[Workout] = [], **kwargs: Any) -> Exercise:
+    async def exercise(self, user: User | None = None, **kwargs: Any) -> Exercise:
         exercise_factory = ExerciseFactory.build(**kwargs)
         exercise = await self.client.query_single_json(
             """

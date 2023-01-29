@@ -31,12 +31,12 @@ class TestUsers(APITestBase):
         assert response.results
         assert response.results == [UserRead(**response.results[0]).dict()]
 
-    async def _post_success(self, endpoint: str, data: dict[str, Any] = {}) -> SuccessResponse:
-        response = SuccessResponse(**(await self.client.post(f"/api/v2/{endpoint}", json=data)).json())
+    async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
+        response = SuccessResponse(**(await self.client.post(f"/api/v2/{endpoint}", json=data or {})).json())
         assert response.code == "ok"
         return response
 
-    async def _post_error(self, endpoint: str, data: dict[str, Any] = {}) -> ErrorResponse:
-        response = ErrorResponse(**(await self.client.post(f"/api/v2/{endpoint}", json=data)).json())
+    async def _post_error(self, endpoint: str, data: dict[str, Any] | None = None) -> ErrorResponse:
+        response = ErrorResponse(**(await self.client.post(f"/api/v2/{endpoint}", json=data or {})).json())
         assert response.code == "error"
         return response

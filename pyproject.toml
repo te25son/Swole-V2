@@ -99,13 +99,14 @@ exclude_lines = ["if TYPE_CHECKING:"]
 [tool.ruff]
 exclude = ["__init__.py"]
 fix = true
-ignore = ["E731"]
+ignore = ["E731", "B008"]
 line-length = 120
 select = [
     "C",
-    "F",
+    "F", # Pyflakes
     "I", # Isort
-    "W",
+    "W", # Warning
+    "B", # Flake8-Bugbear
 ]
 
 [tool.ruff.mccabe]

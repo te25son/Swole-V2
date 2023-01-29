@@ -249,8 +249,8 @@ class TestWorkouts(APITestBase):
         assert response.code == "error"
         assert response.message == message
 
-    async def _post_success(self, endpoint: str, data: dict[str, Any] = {}) -> SuccessResponse:
-        response = SuccessResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data)).json())
+    async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
+        response = SuccessResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data or {})).json())
         assert response.code == "ok"
         return response
 

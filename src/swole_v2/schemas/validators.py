@@ -26,8 +26,8 @@ def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "An
 def check_is_uuid(id: str) -> UUID:
     try:
         return UUID(id)
-    except (ValueError, AttributeError):
-        raise BusinessError(INVALID_ID)
+    except (ValueError, AttributeError) as exc:
+        raise BusinessError(INVALID_ID) from exc
 
 
 def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[str], str | None]:
@@ -55,8 +55,8 @@ def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | Non
                 if value_as_int > 0:
                     return value_as_int
                 raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
-            except (TypeError, ValueError):
-                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER)
+            except (TypeError, ValueError) as exc:
+                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
 
     return wrapper
 
@@ -71,8 +71,8 @@ def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int],
                 if value_as_int < number:
                     return value_as_int
                 raise BusinessError(MUST_BE_LESS_THAN.format(number))
-            except (TypeError, ValueError):
-                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER)
+            except (TypeError, ValueError) as exc:
+                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
 
     return wrapper
 
@@ -84,7 +84,7 @@ def check_date_format(allow_none: bool = False) -> Callable[[bool], date | None]
             return value
         try:
             return datetime.strptime(value, "%Y-%m-%d").date()
-        except (ValueError, TypeError):
-            raise BusinessError(INCORRECT_DATE_FORMAT)
+        except (ValueError, TypeError) as exc:
+            raise BusinessError(INCORRECT_DATE_FORMAT) from exc
 
     return wrapper

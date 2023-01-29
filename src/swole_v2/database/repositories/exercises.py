@@ -59,8 +59,8 @@ class ExerciseRepository(BaseRepository):
                 user_id=user_id,
             )
             return ExerciseRead.parse_raw(exercise)
-        except ConstraintViolationError:
-            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
+        except ConstraintViolationError as exc:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from exc
 
     async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:
@@ -87,8 +87,8 @@ class ExerciseRepository(BaseRepository):
                 raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
 
             return ExerciseRead(**result)
-        except ConstraintViolationError:
-            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS)
+        except ConstraintViolationError as exc:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from exc
 
     async def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
         result = json.loads(

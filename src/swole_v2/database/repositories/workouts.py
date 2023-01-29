@@ -103,8 +103,8 @@ class WorkoutRepository(BaseRepository):
                 user_id=user_id,
             )
             return WorkoutRead.parse_raw(workout)
-        except ConstraintViolationError:
-            raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE)
+        except ConstraintViolationError as exc:
+            raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc
 
     async def delete(self, user_id: UUID | None, workout_id: UUID) -> None:
         result = json.loads(
@@ -144,5 +144,5 @@ class WorkoutRepository(BaseRepository):
             if result is None:
                 raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
             return WorkoutRead(**result)
-        except ConstraintViolationError:
-            raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE)
+        except ConstraintViolationError as exc:
+            raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc
