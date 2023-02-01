@@ -17,13 +17,12 @@ from swole_v2.schemas import ErrorResponse, SuccessResponse
 from .base import APITestBase, fake
 
 
-# fmt: off
 class TestWorkouts(APITestBase):
     invalid_workout_id_params = (
         "workout_id, message",
         [
             pytest.param(uuid4(), NO_WORKOUT_FOUND, id="Test random id fails."),
-            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails.")
+            pytest.param(fake.random_digit(), INVALID_ID, id="Test non uuid id fails."),
         ],
     )
 
@@ -40,9 +39,7 @@ class TestWorkouts(APITestBase):
         response = await self._post_success("/detail", data={"workout_id": str(workout.id)})
 
         assert response.results
-        assert response.results == [
-            {"name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}
-        ]
+        assert response.results == [{"name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_detail_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
@@ -53,10 +50,30 @@ class TestWorkouts(APITestBase):
     @pytest.mark.parametrize(
         "name, date, message",
         [
-            pytest.param("", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test empty string fails",),
-            pytest.param("   ", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test blank string fails",),
-            pytest.param(fake.text(), "12345", INCORRECT_DATE_FORMAT, id="Test invalid date fails",),
-            pytest.param(fake.text(), "2022/01/12", INCORRECT_DATE_FORMAT, id="Test incorrectly formatted date fails",),
+            pytest.param(
+                "",
+                fake.date(),
+                FIELD_CANNOT_BE_EMPTY.format("name"),
+                id="Test empty string fails",
+            ),
+            pytest.param(
+                "   ",
+                fake.date(),
+                FIELD_CANNOT_BE_EMPTY.format("name"),
+                id="Test blank string fails",
+            ),
+            pytest.param(
+                fake.text(),
+                "12345",
+                INCORRECT_DATE_FORMAT,
+                id="Test invalid date fails",
+            ),
+            pytest.param(
+                fake.text(),
+                "2022/01/12",
+                INCORRECT_DATE_FORMAT,
+                id="Test incorrectly formatted date fails",
+            ),
         ],
     )
     async def test_workout_create_fails(self, name: str, date: str, message: str) -> None:
@@ -92,9 +109,9 @@ class TestWorkouts(APITestBase):
         workout = await self.sample.workout(exercises=await self.sample.exercises())
 
         result = await self._post_success("/delete", data={"workout_id": str(workout.id)})
-        deleted_workout = json.loads(await self.db.query_single_json(
-            "SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id
-        ))
+        deleted_workout = json.loads(
+            await self.db.query_single_json("SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id)
+        )
 
         assert deleted_workout is None
         assert result.results is None
@@ -121,9 +138,11 @@ class TestWorkouts(APITestBase):
 
         response = await self._post_success("/update", data=data)
 
-        updated_workout = Workout.parse_raw(await self.db.query_single_json(
-            "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
-        ))
+        updated_workout = Workout.parse_raw(
+            await self.db.query_single_json(
+                "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
+            )
+        )
 
         assert response.results
         assert response.results == [
@@ -138,10 +157,30 @@ class TestWorkouts(APITestBase):
     @pytest.mark.parametrize(
         "name, date, message",
         [
-            pytest.param("", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test update with empty name fails",),
-            pytest.param("   ", fake.date(), FIELD_CANNOT_BE_EMPTY.format("name"), id="Test update with blank name fails",),
-            pytest.param(fake.text(), fake.text(), INCORRECT_DATE_FORMAT, id="Test update with invalid date fails",),
-            pytest.param(fake.text(), "1980/03/02", INCORRECT_DATE_FORMAT, id="Test update with incorrectly formatted date fails",),
+            pytest.param(
+                "",
+                fake.date(),
+                FIELD_CANNOT_BE_EMPTY.format("name"),
+                id="Test update with empty name fails",
+            ),
+            pytest.param(
+                "   ",
+                fake.date(),
+                FIELD_CANNOT_BE_EMPTY.format("name"),
+                id="Test update with blank name fails",
+            ),
+            pytest.param(
+                fake.text(),
+                fake.text(),
+                INCORRECT_DATE_FORMAT,
+                id="Test update with invalid date fails",
+            ),
+            pytest.param(
+                fake.text(),
+                "1980/03/02",
+                INCORRECT_DATE_FORMAT,
+                id="Test update with incorrectly formatted date fails",
+            ),
         ],
     )
     async def test_workout_update_fails_with_params(self, name: str, date: str, message: str) -> None:
@@ -149,9 +188,11 @@ class TestWorkouts(APITestBase):
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
         response = await self._post_error("/update", data=data)
-        not_updated_workout = Workout.parse_raw(await self.db.query_single_json(
-            "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
-        ))
+        not_updated_workout = Workout.parse_raw(
+            await self.db.query_single_json(
+                "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
+            )
+        )
 
         assert response.message == message
         assert not_updated_workout.name == workout.name
@@ -172,11 +213,7 @@ class TestWorkouts(APITestBase):
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_update_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
-        data = {
-            "workout_id": str(workout_id),
-            "name": fake.name(),
-            "date": fake.date()
-        }
+        data = {"workout_id": str(workout_id), "name": fake.name(), "date": fake.date()}
 
         response = await self._post_error("/update", data=data)
 
@@ -185,10 +222,7 @@ class TestWorkouts(APITestBase):
     async def test_add_exercise_succeeds(self) -> None:
         workout = await self.sample.workout()
         exercise = await self.sample.exercise()
-        data = {
-            "workout_id": str(workout.id),
-            "exercise_id": str(exercise.id)
-        }
+        data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
 
         response = await self._post_success("/add-exercise", data=data)
         updated_workout = Workout.parse_raw(
@@ -197,7 +231,7 @@ class TestWorkouts(APITestBase):
                 SELECT Workout {name, date, exercises: {name}}
                 FILTER .id = <uuid>$workout_id
                 """,
-                workout_id=workout.id
+                workout_id=workout.id,
             )
         )
         exercises = updated_workout.exercises
@@ -212,24 +246,20 @@ class TestWorkouts(APITestBase):
         [
             pytest.param(fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails"),
             pytest.param(uuid4(), uuid4(), NO_WORKOUT_FOUND, id="Test random uuid fails"),
-        ]
+        ],
     )
     async def test_add_exercise_fails_with_invalid_id(self, workout_id: Any, exercise_id: Any, message: str) -> None:
-        data = {
-            "workout_id": str(workout_id),
-            "exercise_id": str(exercise_id)
-        }
+        data = {"workout_id": str(workout_id), "exercise_id": str(exercise_id)}
         response = await self._post_error("/add-exercise", data=data)
 
         assert response.message == message
-
 
     @pytest.mark.parametrize(
         "no_exercises",
         [
             pytest.param(True, id="Test get all exercises returns empty list when workout has no exercises"),
             pytest.param(False, id="Test get all exercises returns all exercises belonging to workout"),
-        ]
+        ],
     )
     async def test_get_all_exercises_succeeds(self, no_exercises: bool) -> None:
         exercises = await self.sample.exercises(size=10)
@@ -313,4 +343,3 @@ class TestWorkouts(APITestBase):
         response = ErrorResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data)).json())
         assert response.code == "error"
         return response
-# fmt: on
