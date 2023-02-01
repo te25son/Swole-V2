@@ -4,6 +4,7 @@ from .sets import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .users import UserLogin
 from .workouts import (
     WorkoutAddExercise,
+    WorkoutCopy,
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
@@ -19,6 +20,7 @@ __all__ = [
     "ExerciseProgress",
     "WorkoutCreate",
     "WorkoutUpdate",
+    "WorkoutCopy",
     "WorkoutDetail",
     "WorkoutDelete",
     "WorkoutAddExercise",

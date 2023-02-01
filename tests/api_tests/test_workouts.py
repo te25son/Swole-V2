@@ -246,8 +246,63 @@ class TestWorkouts(APITestBase):
     async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:
         response = await self._post_error("/exercises", data={"workout_id": str(workout_id)})
 
-        assert response.code == "error"
         assert response.message == message
+
+    async def test_workout_copy_succeeds(self) -> None:
+        exercises = await self.sample.exercises()
+        workout = await self.sample.workout(exercises=exercises)
+        date = fake.date()
+
+        response = await self._post_success("/copy", data={"workout_id": str(workout.id), "date": date})
+
+        workout_results = json.loads(
+            await self.db.query_json(
+                """
+                SELECT Workout {id, name, date, exercises: {id, name, notes}}
+                FILTER .name = <str>$name
+                """,
+                name=workout.name,
+            )
+        )
+        workouts = [Workout(**r) for r in workout_results]
+
+        assert len(workouts) == 2
+        assert all([len(w.exercises) == len(exercises) for w in workouts])
+        assert all([e in exercises for w in workouts for e in w.exercises])
+        assert response.results == [{"name": workout.name, "date": date}]
+
+    @pytest.mark.parametrize(*invalid_workout_id_params)
+    async def test_workout_copy_fails_with_invalid_workout_ids(self, workout_id: Any, message: str) -> None:
+        response = await self._post_error("/copy", data={"workout_id": str(workout_id), "date": fake.date()})
+
+        assert response.message == message
+
+    @pytest.mark.parametrize(
+        "date",
+        [
+            pytest.param("2022/12/15", id="Test invalid date format fails"),
+            pytest.param(None, id="Test no date fails"),
+        ],
+    )
+    async def test_workout_copy_fails_with_improperly_formatted_date(self, date: Any) -> None:
+        workout = await self.sample.workout()
+        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": date})
+
+        assert response.message == INCORRECT_DATE_FORMAT
+
+    async def test_cannot_copy_workout_belonging_to_other_user(self) -> None:
+        workout = await self.sample.workout(user=await self.sample.user())
+        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": fake.date()})
+
+        assert response.message == NO_WORKOUT_FOUND
+
+    async def test_cannot_copy_workout_using_same_name_and_date(self) -> None:
+        date = fake.date()
+        workout = await self.sample.workout(date=date)
+
+        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": date})
+
+        assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data or {})).json())

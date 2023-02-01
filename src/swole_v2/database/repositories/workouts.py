@@ -1,13 +1,13 @@
 import json
 from uuid import UUID
 
-from edgedb import ConstraintViolationError
+from edgedb import CardinalityViolationError, ConstraintViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
 from ...models import ExerciseRead, Workout, WorkoutRead
-from ...schemas import WorkoutAddExercise, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
+from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
 from .base import BaseRepository
 
 
@@ -144,5 +144,33 @@ class WorkoutRepository(BaseRepository):
             if result is None:
                 raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
             return WorkoutRead(**result)
+        except ConstraintViolationError as exc:
+            raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc
+
+    async def copy(self, user_id: UUID | None, data: WorkoutCopy) -> WorkoutRead:
+        try:
+            workout = await self.client.query_single_json(
+                """
+                WITH
+                    existing_workout := assert_exists(
+                        (SELECT Workout FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id))
+                    ),
+                    copied_workout := (
+                        INSERT Workout {
+                            name := existing_workout.name,
+                            date := <cal::local_date>$date,
+                            user := existing_workout.user,
+                            exercises := existing_workout.exercises
+                        }
+                    )
+                SELECT copied_workout {name, date}
+                """,
+                workout_id=data.workout_id,
+                user_id=user_id,
+                date=data.date,
+            )
+            return WorkoutRead.parse_raw(workout)
+        except CardinalityViolationError as exc:
+            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND) from exc
         except ConstraintViolationError as exc:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc

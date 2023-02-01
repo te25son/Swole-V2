@@ -6,6 +6,7 @@ from ..models import User
 from ..schemas import (
     SuccessResponse,
     WorkoutAddExercise,
+    WorkoutCopy,
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
@@ -77,3 +78,12 @@ async def get_all_exercises(
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=await respository.get_all_exercises(current_user.id, data))
+
+
+@router.post("/copy", response_model=SuccessResponse)
+async def copy(
+    data: WorkoutCopy,
+    current_user: User = Depends(get_current_active_user),
+    respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=[await respository.copy(current_user.id, data)])
