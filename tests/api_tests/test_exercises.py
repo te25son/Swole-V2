@@ -1,7 +1,7 @@
 import json
 import random
 from statistics import mean
-from typing import Any
+from typing import Any, Iterable
 from uuid import uuid4
 
 import pytest
@@ -168,12 +168,12 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert len(response.results) == 3
-        assert response.results[0]["avg_rep_count"] == mean([g.rep_count for g in set_group_1])
-        assert response.results[1]["avg_rep_count"] == mean([g.rep_count for g in set_group_2])
-        assert response.results[2]["avg_rep_count"] == mean([g.rep_count for g in set_group_3])
-        assert response.results[0]["avg_weight"] == mean([g.weight for g in set_group_1])
-        assert response.results[1]["avg_weight"] == mean([g.weight for g in set_group_2])
-        assert response.results[2]["avg_weight"] == mean([g.weight for g in set_group_3])
+        assert response.results[0]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_1])
+        assert response.results[1]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_2])
+        assert response.results[2]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_3])
+        assert response.results[0]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_1])
+        assert response.results[1]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_2])
+        assert response.results[2]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_3])
         assert response.results[0]["max_weight"] == max([g.weight for g in set_group_1])
         assert response.results[1]["max_weight"] == max([g.weight for g in set_group_2])
         assert response.results[2]["max_weight"] == max([g.weight for g in set_group_3])
@@ -209,3 +209,6 @@ class TestExercises(APITestBase):
         response = ErrorResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data)).json())
         assert response.code == "error"
         return response
+
+    async def _rounded_mean(self, iterable: Iterable[int], decimal_places: int = 2) -> float:
+        return round(mean(iterable), decimal_places)

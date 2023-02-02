@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class Exercise(BaseModel):
@@ -21,3 +21,7 @@ class ExerciseProgressRead(BaseModel):
     avg_rep_count: float
     avg_weight: float
     max_weight: int
+
+    @validator("avg_rep_count", "avg_weight")
+    def round_averages(cls, value: float) -> float:
+        return round(value, 2)
