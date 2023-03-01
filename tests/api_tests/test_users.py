@@ -25,6 +25,11 @@ class TestUsers(APITestBase):
 
         assert response.message == INCORRECT_USERNAME_OR_PASSWORD
 
+    async def test_login_with_nonexisting_user_fails(self) -> None:
+        response = await self._post_error("auth/token", data={"username": fake.word(), "password": fake.word()})
+
+        assert response.message == INCORRECT_USERNAME_OR_PASSWORD
+
     async def test_user_profile_succeeds(self) -> None:
         response = await self._post_success("users/profile")
 

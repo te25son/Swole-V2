@@ -50,14 +50,16 @@ class UserRepository:
         return user
 
     async def get_user_by_username(self, username: str) -> User | None:
-        result = await self.client.query_single_json(
-            """
-            SELECT User {id, username, hashed_password, email, disabled}
-            FILTER .username = <str>$username
-            """,
-            username=username,
+        result = json.loads(
+            await self.client.query_single_json(
+                """
+                SELECT User {id, username, hashed_password, email, disabled}
+                FILTER .username = <str>$username
+                """,
+                username=username,
+            )
         )
-        return User.parse_raw(result) if result else None
+        return User(**result) if result else None
 
     async def authenticate_user(self, username: str, password: str) -> User | None:
         user = await self.get_user_by_username(username)
