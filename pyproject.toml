@@ -39,12 +39,14 @@ pytest-xdist = "^3.1.0"
 ruff = "^0.0.235"
 pytest-env = "^0.8.1"
 pytest-random-order = "^1.1.0"
+toml = "^0.10.2"
 
 
 [tool.poetry.group.stubs.dependencies]
 types-passlib = "^1.7.7.3"
 types-python-jose = "^3.3.4"
 types-click = "^7.1.8"
+types-toml = "^0.10.8.5"
 
 [build-system]
 requires = ["poetry-core"]

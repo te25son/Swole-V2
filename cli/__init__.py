@@ -1,7 +1,8 @@
+import os
 from enum import Enum
 from pathlib import Path
 
-import click
+import toml
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -30,8 +31,19 @@ class CliContext(BaseModel):
 def load_environment_variables(environment: Environments) -> None:
     match environment:
         case Environments.DEV:
-            env_file = ".env"
+            load_dotenv(dotenv_path=ROOT_PATH.joinpath(".env"), override=True)
         case Environments.TEST:
-            env_file = "test.env"
+            load_test_env()
 
-    load_dotenv(dotenv_path=ROOT_PATH.joinpath(env_file), override=True)
+
+def load_test_env() -> None:
+    pyproject_file = ROOT_PATH.joinpath("pyproject.toml")
+    with open(pyproject_file, "r") as file:
+        data = toml.load(file)
+
+    test_envs: list[str] = data["tool"]["pytest"]["ini_options"]["env"]
+    for env in test_envs:
+        parts = env.partition("=")
+        key = parts[0].strip().upper()
+        value = parts[2].strip()
+        os.environ[key] = value
