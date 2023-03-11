@@ -1,13 +1,18 @@
-default: clean check
+default: fix
 
 locations := "./src ./tests ./cli"
 
 test:
     pytest -n 2 --cov --random-order
 
-clean:
-    black {{locations}}
-    ruff {{locations}}
+fix: (lint) (format) (type)
+check: (lint "true") (format "true") (type)
 
-check:
+lint check="false":
+    ruff {{locations}} {{ if lowercase(check) == "true" { "--exit-non-zero-on-fix" } else { "" } }}
+
+format check="false":
+    black {{locations}} {{ if lowercase(check) == "true" { "--check" } else { "" } }}
+
+type:
     mypy {{locations}}
