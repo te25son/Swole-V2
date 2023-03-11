@@ -2,6 +2,10 @@ default: fix
 
 locations := "./src ./tests ./cli"
 
+alias t := test
+alias f := fix
+alias c := check
+
 test:
     pytest -n 2 --cov --random-order
 
