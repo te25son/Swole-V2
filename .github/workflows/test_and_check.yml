@@ -30,9 +30,8 @@ jobs:
 
       - name: Install EdgeDB
         uses: edgedb/setup-edgedb@v1
-
-      - name: Initialize Test DB
-        run: db test init
+        with:
+          instance-name: test_db
 
       - name: Migrate Test DB
         run: db test migrate
