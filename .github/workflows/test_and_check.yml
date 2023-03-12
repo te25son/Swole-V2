@@ -31,10 +31,11 @@ jobs:
       - name: Install EdgeDB
         uses: edgedb/setup-edgedb@v1
 
-      - name: Setup DB
-        run: |
-          db test init
-          db test migrate
+      - name: Initialize Test DB
+        run: db test init
+
+      - name: Migrate Test DB
+        run: db test migrate
 
       - name: Install Just
         uses: extractions/setup-just@v1
