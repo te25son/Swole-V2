@@ -28,6 +28,11 @@ jobs:
       - name: Install Dev Dependencies
         run: poetry install --no-interaction
 
+      - name: Install EdgeDB
+        uses: edgedb/setup-edgedb@v1
+        with:
+          instance-name: test_db
+
       - name: Install Just
         uses: extractions/setup-just@v1
         with:
