@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/checkout@v3
+
       - name: Check
         run: just check
 
@@ -43,6 +45,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/checkout@v3
+
       - name: Install EdgeDB
         uses: edgedb/setup-edgedb@v1
 
