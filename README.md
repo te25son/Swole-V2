@@ -2,7 +2,7 @@
 
 <p align="center">API for tracking workouts</p>
 
-# Setup
+## Setup
 
 You will need to install four dependencies in order to run the project locally.
 
