@@ -1,5 +1,8 @@
 name: Test and Check
 
+env:
+  EDGEDB_INSTANCE: ${{secrets.EDGEDB_INSTANCE}}
+
 on:
   push:
     branches: [ "main" ]
@@ -46,9 +49,8 @@ jobs:
 
       - name: Setup Test DB
         run: |
-          db test init &&
-          db test make-migration &&
-          db test migrate
+          just init-test-db &&
+          just migrate-test-db
 
       - name: Test
         run: just test
