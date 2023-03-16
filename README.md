@@ -15,4 +15,4 @@ Once installed, clone this repo with `git clone git@github.com:te25son/Swole-V2.
 
 Setup the environment by running `just setup`, and then activate the virtual environment with `poetry shell`.
 
-You should now be able to run all the commands available within the project. Try it out by opening the development database's UI with `db dev ui`.
+You should now be able to run all the commands available within the project. Try it out by opening the development database's UI with `just dev-ui`, running the local development server with `just run`, or running the tests with `just test`.

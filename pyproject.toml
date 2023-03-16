@@ -11,8 +11,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-db = "cli.db:db"
-app = "cli.app:app"
+seed = "cli.db:seed"
 
 [tool.poetry.dependencies]
 python = "^3.10"

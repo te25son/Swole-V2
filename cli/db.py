@@ -1,94 +1,33 @@
 import asyncio
-import subprocess
+import os
+from pathlib import Path
 from random import choice
 
 import click
-from click import Context
+from dotenv import load_dotenv
 
 from swole_v2.dependencies.passwords import hash_password
 from swole_v2.dependencies.settings import get_settings
 from swole_v2.settings import Settings
 from tests.factories import Sample
 
-from . import CliContext, Environments, load_environment_variables
-
-EDGE_COMMAND = "edgedb"
+ROOT_PATH = Path(__file__).resolve().parents[1]
 
 
-@click.group()
-@click.argument("env", type=click.Choice([e.value for e in Environments], case_sensitive=False))
-@click.pass_context
-def db(context: Context, env: str) -> None:
+@click.command()
+def seed() -> None:
     """
-    Base command from which to run database commands.
+    Seeds the development database.
     """
-    context.ensure_object(dict)
-
-    load_environment_variables(environment := Environments.from_string(env))
-
-    context.obj = CliContext(settings=get_settings(), environment=environment)
-
-
-@db.command()
-@click.pass_obj
-def init(context: CliContext) -> None:
-    """
-    Initializes the database if not initialized already.
-    """
-    cmd = [EDGE_COMMAND, "instance", "create", context.settings.EDGEDB_INSTANCE]
-    echo_command(cmd)
-    subprocess.call(cmd)
-
-
-@db.command()
-@click.pass_obj
-def ui(context: CliContext) -> None:
-    """
-    Opens the EdgeDB UI for the givin environment.
-    """
-    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "ui"]
-    echo_command(cmd)
-    subprocess.call(cmd)
-
-
-@db.command()
-@click.pass_obj
-def make_migration(context: CliContext) -> None:
-    """
-    Make a migration for the database.
-    """
-    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "migration", "create"]
-    echo_command(cmd)
-    subprocess.call(cmd)
-
-
-@db.command()
-@click.pass_obj
-def migrate(context: CliContext) -> None:
-    """
-    Migrate the database.
-    """
-    cmd = [EDGE_COMMAND, "--instance", context.settings.EDGEDB_INSTANCE, "migrate"]
-    echo_command(cmd)
-    subprocess.call(cmd)
-
-
-@db.command()
-@click.pass_obj
-def seed(context: CliContext) -> None:
-    """
-    Seeds the database.
-    """
+    if os.getenv("EDGEDB_INSTANCE") is None:
+        load_dotenv(dotenv_path=ROOT_PATH.joinpath(".env"), override=True)
+    settings = get_settings()
     try:
-        click.secho(f"Seeding {context.settings.EDGEDB_INSTANCE} instance...", fg="blue", bold=True)
-        asyncio.run(create_instances(context.settings))
+        click.secho(f"Seeding {settings.EDGEDB_INSTANCE} instance...", fg="blue", bold=True)
+        asyncio.run(create_instances(settings))
         click.secho("Seeding complete.", fg="green", bold=True)
     except Exception as e:
         click.secho(f"Exception when adding instances to database:\n\n {str(e)}", fg="red")
-
-
-def echo_command(command: list[str]) -> None:
-    click.secho(f"Invoking: {' '.join(command)}", fg="blue", bold=True)
 
 
 async def create_instances(settings: Settings) -> None:
