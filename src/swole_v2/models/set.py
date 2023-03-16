@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from . import Exercise, Workout
 
 
-class Set(BaseModel):  # type: ignore
+class Set(BaseModel):
     id: UUID | None
     rep_count: int
     weight: int

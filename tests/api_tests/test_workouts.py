@@ -270,7 +270,7 @@ class TestWorkouts(APITestBase):
 
         if no_exercises:
             assert response.results == []
-        assert response.results == [{"name": e.name, "notes": e.notes} for e in workout.exercises]  # type: ignore
+        assert response.results == [{"name": e.name, "notes": e.notes} for e in workout.exercises]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:

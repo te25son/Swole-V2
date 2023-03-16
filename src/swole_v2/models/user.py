@@ -3,7 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr
 
 
-class User(BaseModel):  # type: ignore
+class User(BaseModel):
     id: UUID | None
     username: str | None
     hashed_password: str | None

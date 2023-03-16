@@ -58,27 +58,7 @@ strict = true
 disallow_untyped_decorators = false
 disallow_subclassing_any = false
 warn_return_any = false
-warn_unused_ignores = false
-
-[[tool.mypy.overrides]]
-module = [
-    "nox.*",
-    "fastapi.*",
-    "pytest.*",
-    "pydantic.*",
-    "sqlmodel.*",
-    "dotenv.*",
-    "pydantic_factories.*",
-    "uvicorn.*",
-    "sqlalchemy_utils.*",
-    "hypothesis.*",
-    "faker.*",
-    "edgedb.*",
-    "httpx.*",
-    "uvloop.*",
-    "pytest_asyncio.*"
-]
-ignore_missing_imports = true
+warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
