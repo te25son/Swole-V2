@@ -9,7 +9,7 @@ class WeightUnit(enum.IntEnum):
     LBS = 1
 
 
-class UserSettings(BaseModel):  # type: ignore
+class UserSettings(BaseModel):
     id: UUID
     weight_unit: WeightUnit
 
