@@ -10,7 +10,8 @@ jobs:
   test_and_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Swole V2 Repo
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
@@ -27,16 +28,21 @@ jobs:
       - name: Install Dev Dependencies
         run: poetry install --no-interaction
 
+      - name: Install EdgeDB
+        uses: edgedb/setup-edgedb@v1
+
       - name: Install Just
         uses: extractions/setup-just@v1
         with:
           just-version: '1.13.0'
 
+      - name: Run Pre-Commit Checks
+        uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --hook-stage manual --all-files
+
       - name: Check
         run: just check
-
-      - name: Install EdgeDB
-        uses: edgedb/setup-edgedb@v1
 
       - name: Setup Test DB
         run: |

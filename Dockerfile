@@ -30,4 +30,3 @@ ENV PYTHONUSERBASE=/opt/venv \
 
 WORKDIR /app
 COPY poetry.lock pyproject.toml app/
-
