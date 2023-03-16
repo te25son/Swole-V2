@@ -125,7 +125,7 @@ _destroy instance:
     edgedb instance destroy --instance {{instance}}
 
 # Destroy the development database
-destory-dev-db: (_destroy "$DEV_DB")
+destroy-dev-db: (_destroy "$DEV_DB")
 
 # Destroy the test database
-destory-test-db: (_destroy "$TEST_DB")
+destroy-test-db: (_destroy "$TEST_DB")
