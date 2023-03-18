@@ -1,21 +1,28 @@
-set dotenv-load
+set dotenv-load := true
 
 export DEV_DB := env_var("EDGEDB_INSTANCE")
 export TEST_DB := "test_db"
 
-_default: fix-all
+_default:
+    just fix "all"
+    just check "all"
 
 locations := "./src ./tests ./cli"
 
+[private]
 alias t := test
+[private]
 alias f := fix
+[private]
 alias c := check
+[private]
 alias h := help
+[private]
 alias o := open-dev-ui
+[private]
 alias p := pre-commit-all
+[private]
 alias m := migrate-dev-db
-alias fa := fix-all
-alias ca := check-all
 
 # Show all available recipes
 help:
@@ -36,33 +43,28 @@ setup:
 test:
     pytest -n 2 --cov --random-order
 
-# Run linter and formatter (no pre-commit)
-fix: (lint) (format)
+# Run linter and formatter (only run pre-commit if argument is "all")
+fix *arg: (lint) (format)
+    {{ if arg == "all" { "just pre-commit-fix" } else { "" } }}
 
-# Run all fixes (including pre-commit)
-fix-all: (lint) (format) (pre-commit "end-of-file-fixer" "trailing-whitespace")
+# Run lint, format, and type checks (only run pre-commit if argument is "all")
+check *arg: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
+    {{ if arg == "all" { "just pre-commit-check" } else { "" } }}
 
-# Run lint, format, and type checks (no pre-commit)
-check: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
-
-# Run all checks (including pre-commit)
-check-all: (lint "--exit-non-zero-on-fix") (format "--check") (type-check) (pre-commit "check-toml" "check-yaml" "check-json")
-
-# Run linter with optional arguments
+# Run linter on locations with optional arguments
 lint *args:
-    ruff {{locations}} {{args}}
+    ruff {{ locations }} {{ args }}
 
-# Run formatter with optional arguments
+# Run formatter on locations with optional arguments
 format *args:
-    black {{locations}} {{args}}
+    black {{ locations }} {{ args }}
 
-# Run type checker
+# Run type checker on locations
 type-check:
-    mypy {{locations}}
+    mypy {{ locations }}
 
-# Run specified pre-commit hooks
-pre-commit +hooks:
-    @for hook in {{hooks}}; do \
+_pre-commit +hooks:
+    @for hook in {{ hooks }}; do \
         pre-commit run $hook --all-files; \
     done;
 
@@ -70,17 +72,23 @@ pre-commit +hooks:
 pre-commit-all:
     pre-commit run --all-files
 
-# Runs the development environment
-run:
-    uvicorn src.swole_v2.main:app --reload --port 5000
+# Run pre-commit fix hooks on all files
+pre-commit-fix: (_pre-commit "end-of-file-fixer" "trailing-whitespace")
+
+# Run pre-commit check hooks on all files
+pre-commit-check: (_pre-commit "check-toml" "check-yaml" "check-json")
+
+# Runs the development environment on given port (defaults to 5000)
+run port="5000":
+    uvicorn src.swole_v2.main:app --reload --port {{ port }}
 
 # Seeds the development database
 seed:
     @poetry run seed
 
 _migrate instance:
-    -edgedb --instance {{instance}} migration create
-    edgedb --instance {{instance}} migrate
+    -edgedb --instance {{ instance }} migration create
+    edgedb --instance {{ instance }} migrate
 
 # Migrate only the development database
 migrate-dev-db: (_migrate "$DEV_DB")
@@ -89,7 +97,7 @@ migrate-dev-db: (_migrate "$DEV_DB")
 migrate-test-db: (_migrate "$TEST_DB")
 
 _init instance:
-    edgedb instance create {{instance}}
+    edgedb instance create {{ instance }}
 
 # Initialize the development database
 init-dev-db: (_init "$DEV_DB")
@@ -98,7 +106,7 @@ init-dev-db: (_init "$DEV_DB")
 init-test-db: (_init "$TEST_DB")
 
 _open_ui instance:
-    edgedb --instance {{instance}} ui
+    edgedb --instance {{ instance }} ui
 
 # Open development database UI
 open-dev-ui: (_open_ui "$DEV_DB")
@@ -107,7 +115,7 @@ open-dev-ui: (_open_ui "$DEV_DB")
 open-test-ui: (_open_ui "$TEST_DB")
 
 _destroy instance:
-    edgedb instance destroy --instance {{instance}}
+    edgedb instance destroy --instance {{ instance }}
 
 # Destroy the development database
 destroy-dev-db: (_destroy "$DEV_DB")
