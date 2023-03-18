@@ -59,9 +59,9 @@ lint *args:
 format *args:
     black {{ locations }} {{ args }}
 
-# Run type checker on locations
-type-check:
-    mypy {{ locations }}
+# Run type checker on locations with optional arguments
+type-check *args:
+    mypy {{ locations }} {{ args }}
 
 _pre-commit +hooks:
     @for hook in {{ hooks }}; do \
