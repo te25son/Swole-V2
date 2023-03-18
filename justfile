@@ -45,11 +45,15 @@ test:
 
 # Run linter and formatter (only run pre-commit if argument is "all")
 fix *arg: (lint) (format)
-    {{ if arg == "all" { "just pre-commit-fix" } else { "" } }}
+    @if [ '{{ arg }}' == 'all' ]; then \
+        just _pre-commit "end-of-file-fixer" "trailing-whitespace"; \
+    fi
 
 # Run lint, format, and type checks (only run pre-commit if argument is "all")
 check *arg: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
-    {{ if arg == "all" { "just pre-commit-check" } else { "" } }}
+    @if [ '{{ arg }}' == 'all' ]; then \
+        just _pre-commit "check-toml" "check-yaml" "check-json"; \
+    fi
 
 # Run linter on locations with optional arguments
 lint *args:
@@ -71,12 +75,6 @@ _pre-commit +hooks:
 # Run all pre-commit hooks on all files
 pre-commit-all:
     pre-commit run --all-files
-
-# Run pre-commit fix hooks on all files
-pre-commit-fix: (_pre-commit "end-of-file-fixer" "trailing-whitespace")
-
-# Run pre-commit check hooks on all files
-pre-commit-check: (_pre-commit "check-toml" "check-yaml" "check-json")
 
 # Runs the development environment on given port (defaults to 5000)
 run port="5000":
