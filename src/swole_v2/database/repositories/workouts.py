@@ -18,6 +18,7 @@ class WorkoutRepository(BaseRepository):
                 """
                 SELECT Workout {name, date}
                 FILTER .user.id = <uuid>$user_id
+                ORDER BY .date DESC
                 """,
                 user_id=user_id,
             )
