@@ -19,6 +19,9 @@ repos:
         stages: [manual, commit]
       - id: trailing-whitespace
         stages: [manual, commit]
+      - id: pretty-format-json
+        stages: [manual, commit]
+        args: ["--autofix", "--indent", "4"]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.0.254
