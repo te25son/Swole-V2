@@ -70,5 +70,4 @@ class UserRepository:
     async def create_access_token(self, data: dict[str, Any]) -> str:
         to_encode = data.copy()
         to_encode.update({"exp": datetime.utcnow() + timedelta(minutes=self.settings.TOKEN_EXPIRE)})
-        encoded_jwt = jwt.encode(to_encode, self.settings.SECRET_KEY, algorithm=self.settings.HASH_ALGORITHM)
-        return encoded_jwt
+        return jwt.encode(to_encode, self.settings.SECRET_KEY, algorithm=self.settings.HASH_ALGORITHM)

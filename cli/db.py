@@ -16,9 +16,7 @@ ROOT_PATH = Path(__file__).resolve().parents[1]
 
 @click.command()
 def seed() -> None:
-    """
-    Seeds the development database.
-    """
+    """Seeds the development database."""
     if os.getenv("EDGEDB_INSTANCE") is None:
         load_dotenv(dotenv_path=ROOT_PATH.joinpath(".env"), override=True)
     settings = get_settings()
@@ -43,7 +41,7 @@ async def create_instances(settings: Settings) -> None:
 
     # Create workout and exercise instances
     for _ in range(20):
-        user = choice(users + [admin])
+        user = choice([*users, admin])
 
         # Create some workouts without exercises
         workouts = await sample.workouts(user=user, size=choice(range(10, 20)))

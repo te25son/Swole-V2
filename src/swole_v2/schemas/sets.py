@@ -62,7 +62,6 @@ class SetUpdate(BaseModel):
     def check_non_negative(cls, value: int | None) -> int | None:
         if value is None:
             return value
-        else:
-            if isinstance(value, int) and value > 0:
-                return value
+        if isinstance(value, int) and value > 0:
+            return value
         raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
