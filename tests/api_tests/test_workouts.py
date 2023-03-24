@@ -297,8 +297,8 @@ class TestWorkouts(APITestBase):
         workouts = [Workout(**r) for r in workout_results]
 
         assert len(workouts) == 2
-        assert all([len(w.exercises) == len(exercises) for w in workouts])
-        assert all([e in exercises for w in workouts for e in w.exercises])
+        assert all(len(w.exercises) == len(exercises) for w in workouts)
+        assert all(e in exercises for w in workouts for e in w.exercises)
         assert response.results == [{"name": workout.name, "date": date}]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)

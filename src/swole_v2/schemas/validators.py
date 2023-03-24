@@ -35,44 +35,41 @@ def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[s
         error = BusinessError(FIELD_CANNOT_BE_EMPTY.format(field_name))
         if allow_none and value is None:
             return value
-        else:
-            if value is None:
-                raise error
-            if isinstance(value, str) and value.strip() == "":
-                raise error
+        if value is None:
+            raise error
+        if isinstance(value, str) and value.strip() == "":
+            raise error
         return value
 
     return wrapper
 
 
-def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:  # noqa[C901]
+def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:
     def wrapper(value: Any) -> int | None:
         if allow_none and value is None:
             return value
-        else:
-            try:
-                value_as_int = int(value)
-                if value_as_int > 0:
-                    return value_as_int
-                raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
-            except (TypeError, ValueError) as exc:
-                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
+        try:
+            value_as_int = int(value)
+            if value_as_int > 0:
+                return value_as_int
+            raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
+        except (TypeError, ValueError) as exc:
+            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
 
     return wrapper
 
 
-def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:  # noqa[C901]
+def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:
     def wrapper(value: Any) -> int | None:
         if allow_none and value is None:
             return value
-        else:
-            try:
-                value_as_int = int(value)
-                if value_as_int < number:
-                    return value_as_int
-                raise BusinessError(MUST_BE_LESS_THAN.format(number))
-            except (TypeError, ValueError) as exc:
-                raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
+        try:
+            value_as_int = int(value)
+            if value_as_int < number:
+                return value_as_int
+            raise BusinessError(MUST_BE_LESS_THAN.format(number))
+        except (TypeError, ValueError) as exc:
+            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
 
     return wrapper
 

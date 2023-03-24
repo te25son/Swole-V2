@@ -93,6 +93,11 @@ select = [
     "I", # Isort
     "W", # Warning
     "B", # Flake8-Bugbear
+    "TCH", # Flake8-Type-Checking
+    "PIE", # Flake8-Pie
+    "T20", # Flake8-Print
+    "RET", # Flake8-Return
+    "RUF", # Ruff-Specfic
 ]
 
 [tool.ruff.mccabe]

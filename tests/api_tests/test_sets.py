@@ -139,13 +139,10 @@ class TestSets(APITestBase):
 
     @pytest.mark.parametrize(
         "rep_count, weight, message",
-        invalid_set_data_params
-        + [
+        [
+            *invalid_set_data_params,
             pytest.param(
-                None,
-                fake.random_digit_not_null(),
-                MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
-                id="Test no rep count fails",
+                None, fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test no rep count fails"
             ),
             pytest.param(
                 fake.random_digit_not_null(), None, MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test no weight fails"
