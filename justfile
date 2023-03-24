@@ -46,7 +46,7 @@ test:
 # Run linter and formatter (only run pre-commit if argument is "all")
 fix *arg: (lint) (format)
     @if [ '{{ arg }}' == 'all' ]; then \
-        just _pre-commit "end-of-file-fixer" "trailing-whitespace"; \
+        just _pre-commit "end-of-file-fixer" "trailing-whitespace" "pretty-format-json"; \
     fi
 
 # Run lint, format, and type checks (only run pre-commit if argument is "all")
