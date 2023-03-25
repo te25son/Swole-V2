@@ -40,8 +40,8 @@ setup:
     @echo "\nSetup finished. Conisider running 'poetry shell' to activate the virtual environment."
 
 # Run all tests
-test:
-    pytest -n 2 --cov --random-order
+test *extra_args:
+    pytest -n 2 --cov --random-order {{ extra_args }}
 
 # Run linter and formatter (only run pre-commit if argument is "all")
 fix *arg: (lint) (format)

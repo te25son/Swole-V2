@@ -64,4 +64,10 @@ jobs:
       - name: Test
         run: |
           source $VENV
-          just test
+          just test --cov-report html
+
+      - name: Upload Coverage Folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: htmlcov/
