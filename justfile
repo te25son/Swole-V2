@@ -1,6 +1,6 @@
 set dotenv-load := true
 
-export DEV_DB := env_var("EDGEDB_INSTANCE")
+export DEV_DB := env_var_or_default("EDGEDB_INSTANCE", "")
 export TEST_DB := "test_db"
 
 _default:
