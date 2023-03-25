@@ -2,6 +2,15 @@
 
 <p align="center">API for tracking workouts</p>
 
+<div align="center">
+  <a href="https://github.com/charliermarsh/ruff">
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json">
+  </a>
+  <a href="https://github.com/te25son/Swole-V2/actions/workflows/test.yml">
+    <img src="https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg">
+  </a>
+</div>
+
 ### Setup
 
 You will need to install four dependencies in order to run the project locally.
