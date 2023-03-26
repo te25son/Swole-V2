@@ -6,6 +6,9 @@
   <a href="https://github.com/charliermarsh/ruff">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json">
   </a>
+  <a href="https://github.com/psf/black">
+    <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+  </a>
   <a href="https://github.com/te25son/Swole-V2/actions/workflows/test.yml">
     <img src="https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg">
   </a>
