@@ -1,5 +1,5 @@
 module.exports = {
-    autodiscover: true,
+    autodiscover: false,
     onboardingConfig: {
         extends: ["config:base"],
     },
@@ -9,5 +9,6 @@ module.exports = {
     enabledManagers: ["poetry"],
     lockFileMaintenance: {
         enabled: true
-    }
+    },
+    repositories: ["te25son/Swole-V2"]
 }
