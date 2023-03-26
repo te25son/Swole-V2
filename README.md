@@ -9,6 +9,9 @@
   <a href="https://github.com/te25son/Swole-V2/actions/workflows/test.yml">
     <img src="https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg">
   </a>
+  <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/te25son/Swole-V2" target="_blank">
+    <img src="https://coverage-badge.samuelcolvin.workers.dev/te25son/Swole-V2.svg" alt="Coverage">
+  </a>
 </div>
 
 ### Setup
