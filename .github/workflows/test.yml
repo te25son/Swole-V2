@@ -5,6 +5,8 @@ env:
   VENV: .venv/bin/activate
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
