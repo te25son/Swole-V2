@@ -6,6 +6,14 @@ repos:
         args: ["--db", "pre_commit_sync.json"]
         stages: [commit]
 
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.4.0
+    hooks:
+      - id: poetry-check
+        stages: [manual, commit]
+      - id: poetry-lock
+        stages: [manual, commit]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
