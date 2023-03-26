@@ -12,6 +12,9 @@
   <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/te25son/Swole-V2" target="_blank">
     <img src="https://coverage-badge.samuelcolvin.workers.dev/te25son/Swole-V2.svg" alt="Coverage">
   </a>
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License">
+  </a>
 </div>
 
 ### Setup
