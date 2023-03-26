@@ -39,6 +39,7 @@ pytest-random-order = "^1.1.0"
 toml = "^0.10.2"
 mypy = "^1.1.1"
 ruff = "^0.0.254"
+smokeshow = "^0.3"
 
 
 [tool.poetry.group.stubs.dependencies]
