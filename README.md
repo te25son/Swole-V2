@@ -2,7 +2,7 @@
 
 <p align="center">API for tracking workouts</p>
 
-<div align="center">
+<p align="center">
   <a href="https://github.com/charliermarsh/ruff">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json">
   </a>
@@ -18,7 +18,7 @@
   <a href="https://opensource.org/licenses/Apache-2.0">
     <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License">
   </a>
-</div>
+<p>
 
 ### Setup
 
