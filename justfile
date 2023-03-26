@@ -1,5 +1,6 @@
 set dotenv-load := true
 
+export SMOKESHOW_AUTH_KEY := env_var_or_default("SMOKESHOW_AUTH_KEY", "")
 export DEV_DB := env_var_or_default("EDGEDB_INSTANCE", "")
 export TEST_DB := "test_db"
 
@@ -42,6 +43,11 @@ setup:
 # Run all tests
 test *extra_args:
     pytest -n 2 --cov --random-order {{ extra_args }}
+
+# Run tests and publish coverage report
+publish-test-report:
+    pytest -n 2 --cov --random-order --cov-report html
+    smokeshow upload htmlcov --auth-key $SMOKESHOW_AUTH_KEY
 
 # Run linter and formatter (only run pre-commit if argument is "all")
 fix *arg: (lint) (format)
