@@ -5,7 +5,7 @@ module.exports = {
     },
     onboarding: true,
     platform: "github",
-    gitAuthor: "RenovateBot <renovatebot@rossum.ai>",
+    gitAuthor: "RenovateBot <renovatebot@swole.com>",
     enabledManagers: ["poetry"],
     lockFileMaintenance: {
         enabled: true
