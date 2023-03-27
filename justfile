@@ -52,7 +52,7 @@ publish-test-report:
 # Run linter and formatter (only run pre-commit if argument is "all")
 fix *arg: (lint) (format)
     @if [ '{{ arg }}' = 'all' ]; then \
-        just _pre-commit "end-of-file-fixer" "trailing-whitespace" "pretty-format-json" "poetry-lock"; \
+        just _pre-commit "end-of-file-fixer" "trailing-whitespace" "pretty-format-json" "poetry-lock" "sync_with_poetry"; \
     fi
 
 # Run lint, format, and type checks (only run pre-commit if argument is "all")
