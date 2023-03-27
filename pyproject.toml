@@ -15,30 +15,30 @@ seed = "cli.db:seed"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.88.0"
+fastapi = "^0.95.0"
 httpx = "^0.23.1"
-python-multipart = "^0.0.5"
-uvicorn = "^0.20.0"
+python-multipart = "^0.0.6"
+uvicorn = "^0.21.0"
 pydantic = {extras = ["email"], version = "^1.10.2"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-python-dotenv = "^0.21.0"
+python-dotenv = "^1.0.0"
 edgedb = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^22.12.0"
+black = "^23.0.0"
 pytest-cov = "^4.0.0"
 click = "^8.1.3"
 pydantic-factories = "^1.17.0"
 hypothesis = "^6.61.0"
-pytest-asyncio = "^0.20.3"
+pytest-asyncio = "^0.21.0"
 uvloop = "^0.17.0"
 pytest-xdist = "^3.1.0"
 pytest-env = "^0.8.1"
 pytest-random-order = "^1.1.0"
 toml = "^0.10.2"
 mypy = "^1.1.1"
-ruff = "^0.0.254"
+ruff = "^0.0.259"
 smokeshow = "^0.3"
 
 
