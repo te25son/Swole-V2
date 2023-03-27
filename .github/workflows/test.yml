@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.local/bin/poetry
-          key: poetry-1.4.0
+          key: poetry-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
