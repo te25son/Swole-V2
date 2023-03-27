@@ -22,7 +22,7 @@ uvicorn = "^0.21.0"
 pydantic = {extras = ["email"], version = "^1.10.2"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-python-dotenv = "^0.21.0"
+python-dotenv = "^1.0.0"
 edgedb = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
