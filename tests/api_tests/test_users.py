@@ -1,5 +1,7 @@
 from typing import Any
 
+import pytest
+
 from swole_v2.dependencies.passwords import hash_password
 from swole_v2.errors.messages import INCORRECT_USERNAME_OR_PASSWORD
 from swole_v2.models import Token, UserRead
@@ -29,6 +31,19 @@ class TestUsers(APITestBase):
         response = await self._post_error("auth/token", data={"username": fake.word(), "password": fake.word()})
 
         assert response.message == INCORRECT_USERNAME_OR_PASSWORD
+
+    @pytest.mark.parametrize(
+        "data, message",
+        [
+            pytest.param({"password": fake.word()}, "Field Required (username).", id="Missing username fails"),
+            pytest.param({"username": fake.word()}, "Field Required (password).", id="Missing password fails"),
+            pytest.param({}, "Field Required (username).", id="Empty json fails"),
+        ],
+    )
+    async def test_login_with_missing_json_fields_fails(self, data: dict[str, Any], message: str) -> None:
+        response = await self._post_error("auth/token", data=data)
+
+        assert response.message == message
 
     async def test_user_profile_succeeds(self) -> None:
         response = await self._post_success("users/profile")

@@ -80,8 +80,9 @@ source = ["src"]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 90
+fail_under = 100
 exclude_lines = ["if TYPE_CHECKING:"]
+omit = ["*/main.py"]
 
 [tool.ruff]
 exclude = ["__init__.py"]

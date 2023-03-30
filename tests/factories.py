@@ -24,6 +24,8 @@ class BaseFactory(ModelFactory[T]):
 class UserFactory(BaseFactory[User]):
     __model__ = User
 
+    disabled = False
+
 
 class ExerciseFactory(BaseFactory[Exercise]):
     __model__ = Exercise
@@ -64,14 +66,16 @@ class Sample:
                 INSERT User {
                     username := <str>$username,
                     hashed_password := <str>$password,
-                    email := <str>$email
+                    email := <str>$email,
+                    disabled := <bool>$disabled
                 }
             )
-            SELECT user {id, username, email}
+            SELECT user {id, username, hashed_password, email, disabled}
             """,
             username=user_factory.username,
             password=user_factory.hashed_password,
             email=user_factory.email,
+            disabled=user_factory.disabled,
         )
         return User.parse_raw(user)
 
@@ -84,11 +88,12 @@ class Sample:
                     INSERT User {
                         username := <str>user['username'],
                         hashed_password := <str>user['hashed_password'],
-                        email := <str>user['email']
+                        email := <str>user['email'],
+                        disabled := <bool>$disabled
                     }
                 )
             )
-            SELECT users {id, username, email}
+            SELECT users {id, username, hashed_password, email, disabled}
             """,
             factories=[u.json() for u in user_factories],
         )

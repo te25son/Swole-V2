@@ -10,7 +10,7 @@ from ...database.database import get_async_client
 from ...dependencies.passwords import verify_password
 from ...dependencies.settings import get_settings
 from ...errors.messages import COULD_NOT_VALIDATE_CREDENTIALS, INCORRECT_USERNAME_OR_PASSWORD
-from ...models import Token, TokenData, User
+from ...models import Token, User
 from ...settings import Settings
 
 
@@ -41,11 +41,10 @@ class UserRepository:
             username = payload.get("username")
             if username is None:
                 raise credentials_exception
-            token_data = TokenData(username=username)
-        except JWTError:
-            raise credentials_exception
+        except JWTError as error:
+            raise credentials_exception from error
 
-        if (user := await self.get_user_by_username(token_data.username)) is None:
+        if (user := await self.get_user_by_username(username)) is None:
             raise credentials_exception
         return user
 
