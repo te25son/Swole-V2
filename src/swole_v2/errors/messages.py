@@ -1,4 +1,3 @@
-EXERCISE_ALREADY_EXISTS_IN_WORKOUT = "Exercise with the given name already exists in this workout"
 EXERCISE_WITH_NAME_ALREADY_EXISTS = "Exercise with the given name already exists"
 FIELD_CANNOT_BE_EMPTY = "Field {} cannot be empty"
 INCORRECT_DATE_FORMAT = "Incorrect date format, should be YYYY-MM-DD"
@@ -9,8 +8,6 @@ MUST_BE_A_VALID_NON_NEGATIVE_NUMBER = "Field must be a valid non-negative number
 NAME_AND_DATE_MUST_BE_UNIQUE = "Another workout already exists with the same name and date"
 NO_EXERCISE_FOUND = "No exercise found"
 NO_WORKOUT_FOUND = "No workout found"
-NO_WORKOUT_OR_EXERCISE_FOUND = "Matching workout and exercise not found"
-NO_USER_FOUND = "No user with given id could be found"
 NO_SET_FOUND = "No set was found with the given ids"
 SET_ADD_FAILED = "Failed to add the set. Make sure that the workout and exercise belong to the same user."
 INCORRECT_USERNAME_OR_PASSWORD = "Incorrect username or password"
