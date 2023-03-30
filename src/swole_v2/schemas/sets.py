@@ -2,9 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 
-from ..errors.exceptions import BusinessError
-from ..errors.messages import MUST_BE_A_NON_NEGATIVE_NUMBER, MUST_BE_A_VALID_NON_NEGATIVE_NUMBER
-from .validators import check_is_less_than, check_is_uuid, schema_validator
+from .validators import check_is_less_than, check_is_non_negative, check_is_uuid, schema_validator
 
 
 class SetGetAll(BaseModel):
@@ -26,17 +24,9 @@ class SetAdd(BaseModel):
 
     # For some reason reusing validators like the ones above does not work when validating
     # the same field more than once.
-    # The code below is repeated in the validators.py file. It is only here so that rep_count
-    # and weight are validated a second time after the validation above.
     @validator("rep_count", "weight", pre=True, always=True)
     def check_non_negative(cls, value: int) -> int:
-        try:
-            value_as_int = int(value)
-            if value_as_int > 0:
-                return value_as_int
-            raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
-        except (TypeError, ValueError) as exc:
-            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
+        return check_is_non_negative(allow_none=False)(value)  # type: ignore[return-value]
 
 
 class SetDelete(BaseModel):
@@ -56,12 +46,6 @@ class SetUpdate(BaseModel):
 
     # For some reason reusing validators like the ones above does not work when validating
     # the same field more than once.
-    # The code below is repeated in the validators.py file. It is only here so that rep_count
-    # and weight are validated a second time after the validation above.
     @validator("rep_count", "weight", pre=True, always=True)
     def check_non_negative(cls, value: int | None) -> int | None:
-        if value is None:
-            return value
-        if isinstance(value, int) and value > 0:
-            return value
-        raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
+        return check_is_non_negative(allow_none=True)(value)  # type: ignore[arg-type]
