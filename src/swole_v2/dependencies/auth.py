@@ -1,9 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from ..database.repositories import UserRepository
 from ..errors.messages import INACTIVE_USER
-from ..models import User
+
+if TYPE_CHECKING:
+    from ..models import User
 
 
 async def get_current_active_user(

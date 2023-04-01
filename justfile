@@ -57,6 +57,7 @@ fix *arg: (lint) (format)
 
 # Run lint, format, and type checks (only run pre-commit if argument is "all")
 check *arg: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
+    flake8 {{ locations }}
     @if [ '{{ arg }}' = 'all' ]; then \
         just _pre-commit "check-toml" "check-yaml" "check-json" "poetry-check"; \
     fi

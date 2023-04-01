@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from edgedb import CardinalityViolationError, ConstraintViolationError
 from fastapi import HTTPException
@@ -7,8 +9,12 @@ from fastapi import HTTPException
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
 from ...models import ExerciseRead, Workout, WorkoutRead
-from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
 from .base import BaseRepository
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
 
 
 class WorkoutRepository(BaseRepository):

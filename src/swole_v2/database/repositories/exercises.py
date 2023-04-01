@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from edgedb import ConstraintViolationError
 from fastapi import HTTPException
@@ -7,8 +9,12 @@ from fastapi import HTTPException
 from ...errors.exceptions import BusinessError
 from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, NO_EXERCISE_FOUND
 from ...models import ExerciseProgressRead, ExerciseRead
-from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseProgress, ExerciseUpdate
 from .base import BaseRepository
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseProgress, ExerciseUpdate
 
 
 class ExerciseRepository(BaseRepository):

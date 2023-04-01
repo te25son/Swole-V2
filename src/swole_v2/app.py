@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 
@@ -6,7 +10,9 @@ from .errors.exceptions import BusinessError
 from .errors.handlers import business_error_handler, http_exception_handler, request_validation_error_handler
 from .routers import router as api_router
 from .schemas import ErrorResponse
-from .settings import Settings
+
+if TYPE_CHECKING:
+    from .settings import Settings
 
 
 class SwoleApp:

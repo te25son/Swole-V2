@@ -1,4 +1,16 @@
 {
+    "black": {
+        "repo": "https://github.com/psf/black",
+        "rev": "${rev}"
+    },
+    "flake8": {
+        "repo": "https://github.com/pycqa/flake8",
+        "rev": "${rev}"
+    },
+    "mypy": {
+        "repo": "https://github.com/pre-commit/mirrors-mypy",
+        "rev": "v${rev}"
+    },
     "ruff": {
         "repo": "https://github.com/charliermarsh/ruff-pre-commit",
         "rev": "v${rev}"

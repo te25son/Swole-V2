@@ -1,17 +1,25 @@
+from __future__ import annotations
+
 import asyncio
-from asyncio import AbstractEventLoop
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_asyncio
 import uvloop
-from edgedb import AsyncIOClient, create_async_client
+from edgedb import create_async_client
 from httpx import AsyncClient
 
 from swole_v2.app import SwoleApp
 from swole_v2.dependencies.settings import get_settings
-from swole_v2.models import User
 
 from .factories import Sample
+
+if TYPE_CHECKING:
+    from asyncio import AbstractEventLoop
+
+    from edgedb import AsyncIOClient
+
+    from swole_v2.models import User
 
 
 @pytest.fixture(scope="session")

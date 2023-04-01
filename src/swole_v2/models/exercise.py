@@ -1,4 +1,6 @@
-from datetime import date
+from __future__ import annotations
+
+import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, validator
@@ -17,7 +19,7 @@ class ExerciseRead(BaseModel):
 
 class ExerciseProgressRead(BaseModel):
     name: str
-    date: date
+    date: datetime.date
     avg_rep_count: float
     avg_weight: float
     max_weight: int

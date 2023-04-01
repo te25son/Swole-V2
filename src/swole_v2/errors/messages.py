@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 EXERCISE_WITH_NAME_ALREADY_EXISTS = "Exercise with the given name already exists"
 FIELD_CANNOT_BE_EMPTY = "Field {} cannot be empty"
 INCORRECT_DATE_FORMAT = "Incorrect date format, should be YYYY-MM-DD"

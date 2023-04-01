@@ -1,9 +1,17 @@
-from fastapi import HTTPException, Request, status
-from fastapi.exceptions import RequestValidationError
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from fastapi import status
 from fastapi.responses import JSONResponse
 
 from ..schemas import ErrorResponse
-from .exceptions import BusinessError
+
+if TYPE_CHECKING:
+    from fastapi import HTTPException, Request
+    from fastapi.exceptions import RequestValidationError
+
+    from .exceptions import BusinessError
 
 
 def http_exception_handler(_: Request, exception: HTTPException) -> JSONResponse:
