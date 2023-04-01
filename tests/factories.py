@@ -91,7 +91,7 @@ class Sample:
                         username := <str>user['username'],
                         hashed_password := <str>user['hashed_password'],
                         email := <str>user['email'],
-                        disabled := <bool>$disabled
+                        disabled := <bool>user['disabled']
                     }
                 )
             )
