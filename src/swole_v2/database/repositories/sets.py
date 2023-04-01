@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from edgedb import MissingRequiredError
 from fastapi import HTTPException
@@ -7,8 +9,12 @@ from fastapi import HTTPException
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NO_SET_FOUND, SET_ADD_FAILED
 from ...models import SetRead
-from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 from .base import BaseRepository
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from ...schemas import SetAdd, SetDelete, SetGetAll, SetUpdate
 
 
 class SetRepository(BaseRepository):

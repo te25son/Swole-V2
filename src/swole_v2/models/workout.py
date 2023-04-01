@@ -1,4 +1,6 @@
-from datetime import date
+from __future__ import annotations
+
+import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -11,10 +13,10 @@ if TYPE_CHECKING:
 class Workout(BaseModel):
     id: UUID | None
     name: str
-    date: date
+    date: datetime.date
     exercises: list["Exercise"] = Field(default=[])
 
 
 class WorkoutRead(BaseModel):
     name: str | None
-    date: date | None
+    date: datetime.date | None

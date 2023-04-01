@@ -1,15 +1,21 @@
+from __future__ import annotations
+
 import asyncio
 import os
 from pathlib import Path
 from random import choice
+from typing import TYPE_CHECKING
 
 import click
 from dotenv import load_dotenv
 
 from swole_v2.dependencies.passwords import hash_password
 from swole_v2.dependencies.settings import get_settings
-from swole_v2.settings import Settings
 from tests.factories import Sample
+
+if TYPE_CHECKING:
+    from swole_v2.settings import Settings
+
 
 ROOT_PATH = Path(__file__).resolve().parents[1]
 

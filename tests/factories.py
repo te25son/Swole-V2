@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from random import choice
 from typing import Any, TypeVar

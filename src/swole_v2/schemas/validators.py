@@ -1,12 +1,10 @@
-from datetime import date, datetime
+from __future__ import annotations
+
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
 
 from pydantic import validator
-from pydantic.typing import AnyCallable
-
-if TYPE_CHECKING:
-    from pydantic.typing import AnyClassMethod
 
 from ..errors.exceptions import BusinessError
 from ..errors.messages import (
@@ -17,6 +15,11 @@ from ..errors.messages import (
     MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
     MUST_BE_LESS_THAN,
 )
+
+if TYPE_CHECKING:
+    from datetime import date
+
+    from pydantic.typing import AnyCallable, AnyClassMethod
 
 
 def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "AnyClassMethod"]:

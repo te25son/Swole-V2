@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Any
 from uuid import uuid4
@@ -196,7 +198,7 @@ class TestSets(APITestBase):
         )
 
         assert post_set is None
-        assert response.results == None
+        assert response.results is None
 
     @pytest.mark.parametrize(*invalid_set_id_params)
     async def test_set_delete_fails_with_invalid_id(self, set_id: Any, message: str) -> None:
