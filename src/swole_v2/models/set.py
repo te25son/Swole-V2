@@ -18,5 +18,6 @@ class Set(BaseModel):
 
 
 class SetRead(BaseModel):
+    id: UUID
     rep_count: int | None
     weight: int | None

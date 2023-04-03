@@ -18,5 +18,6 @@ class Workout(BaseModel):
 
 
 class WorkoutRead(BaseModel):
+    id: UUID
     name: str | None
     date: datetime.date | None
