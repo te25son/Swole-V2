@@ -12,6 +12,7 @@ repos:
       - id: poetry-check
         stages: [manual, commit]
       - id: poetry-lock
+        args: ["--no-update"]
         stages: [manual, commit]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
