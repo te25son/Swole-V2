@@ -44,7 +44,9 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert len(response.results) == len(exercises)
-        assert all(result in response.results for result in [ExerciseRead(**e.dict()).dict() for e in exercises])
+        assert all(
+            result in response.results for result in [json.loads(ExerciseRead(**e.dict()).json()) for e in exercises]
+        )
 
     async def test_exercise_get_all_returns_only_exercises_owned_by_logged_in_user(self) -> None:
         await self.sample.exercises(user=await self.sample.user())
@@ -59,7 +61,7 @@ class TestExercises(APITestBase):
         response = await self._post_success("/detail", data={"exercise_id": str(exercise.id)})
 
         assert response.results
-        assert response.results == [{"name": exercise.name, "notes": exercise.notes}]
+        assert response.results == [{"id": str(exercise.id), "name": exercise.name, "notes": exercise.notes}]
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
@@ -76,7 +78,9 @@ class TestExercises(APITestBase):
         response = await self._post_success("/create", data=data)
 
         assert response.results
-        assert response.results == [data]
+        assert "id" in response.results[0]
+        assert ("name", name) in response.results[0].items()
+        assert ("notes", notes) in response.results[0].items()
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_create_with_invalid_name_fails(self, name: Any, message: str) -> None:
@@ -108,14 +112,14 @@ class TestExercises(APITestBase):
         response = await self._post_success("/update", data=data)
         updated_exercise = await self.db.query_required_single_json(
             """
-            SELECT Exercise {name, notes}
+            SELECT Exercise {id, name, notes}
             FILTER .id = <uuid>$exercise_id
             """,
             exercise_id=exercise.id,
         )
 
         assert response.results
-        assert response.results == [ExerciseRead.parse_raw(updated_exercise).dict()]
+        assert response.results == [json.loads(ExerciseRead.parse_raw(updated_exercise).json())]
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_update_fails_with_invalid_name(self, name: Any, message: str) -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -51,7 +52,7 @@ class TestUsers(APITestBase):
         response = await self._post_success("users/profile")
 
         assert response.results
-        assert response.results == [UserRead(**response.results[0]).dict()]
+        assert response.results == [json.loads(UserRead(**response.results[0]).json())]
 
     async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/{endpoint}", json=data or {})).json())

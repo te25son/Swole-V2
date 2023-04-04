@@ -13,6 +13,7 @@ class Exercise(BaseModel):
 
 
 class ExerciseRead(BaseModel):
+    id: UUID
     name: str | None
     notes: str | None
 

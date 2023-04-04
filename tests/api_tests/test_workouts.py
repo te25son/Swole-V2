@@ -41,7 +41,9 @@ class TestWorkouts(APITestBase):
         response = await self._post_success("/detail", data={"workout_id": str(workout.id)})
 
         assert response.results
-        assert response.results == [{"name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}]
+        assert response.results == [
+            {"id": str(workout.id), "name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}
+        ]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_detail_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
@@ -93,7 +95,9 @@ class TestWorkouts(APITestBase):
         response = await self._post_success("/create", data=data)
 
         assert response.results
-        assert response.results == [data]
+        assert "id" in response.results[0]
+        assert ("name", name) in response.results[0].items()
+        assert ("date", date) in response.results[0].items()
 
     async def test_workout_create_fails_with_unique_constraint(self) -> None:
         # Add first workout
@@ -149,6 +153,7 @@ class TestWorkouts(APITestBase):
         assert response.results
         assert response.results == [
             {
+                "id": str(workout.id),
                 "name": name or original_workout_name,
                 "date": date or original_workout_date,
             }
@@ -272,7 +277,7 @@ class TestWorkouts(APITestBase):
 
         if no_exercises:
             assert response.results == []
-        assert response.results == [{"name": e.name, "notes": e.notes} for e in workout.exercises]
+        assert response.results == [{"id": str(e.id), "name": e.name, "notes": e.notes} for e in workout.exercises]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:
@@ -297,11 +302,12 @@ class TestWorkouts(APITestBase):
             )
         )
         workouts = [Workout(**r) for r in workout_results]
+        new_workout_id = [w.id for w in workouts if w.id != workout.id][0]
 
         assert len(workouts) == 2
         assert all(len(w.exercises) == len(exercises) for w in workouts)
         assert all(e in exercises for w in workouts for e in w.exercises)
-        assert response.results == [{"name": workout.name, "date": date}]
+        assert response.results == [{"id": str(new_workout_id), "name": workout.name, "date": date}]
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_copy_fails_with_invalid_workout_ids(self, workout_id: Any, message: str) -> None:

@@ -14,5 +14,6 @@ class User(BaseModel):
 
 
 class UserRead(BaseModel):
+    id: UUID
     username: str | None
     email: EmailStr | None
