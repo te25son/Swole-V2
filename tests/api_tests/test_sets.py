@@ -78,7 +78,7 @@ class TestSets(APITestBase):
         )
 
         assert response.results
-        assert response.results == [SetRead(**s.dict()).dict() for s in sets]
+        assert response.results == [json.loads(SetRead(**s.dict()).json()) for s in sets]
 
     async def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
         user = await self.sample.user()
@@ -107,7 +107,9 @@ class TestSets(APITestBase):
         response = await self._post_success("/add", data)
 
         assert response.results
-        assert response.results == [{"rep_count": rep_count, "weight": weight}]
+        assert "id" in response.results[0]
+        assert ("rep_count", rep_count) in response.results[0].items()
+        assert ("weight", weight) in response.results[0].items()
 
     async def test_set_add_fails_with_exercise_belonging_to_other_user(self) -> None:
         rep_count = fake.random_digit_not_null()
@@ -250,7 +252,9 @@ class TestSets(APITestBase):
         response = await self._post_success("/update", data)
 
         assert response.results
-        assert response.results == [{"rep_count": rep_count or set.rep_count, "weight": weight or set.weight}]
+        assert response.results == [
+            {"id": str(set.id), "rep_count": rep_count or set.rep_count, "weight": weight or set.weight}
+        ]
 
     @pytest.mark.parametrize("rep_count, weight, message", invalid_set_data_params)
     async def test_set_update_fails(self, rep_count: int | None, weight: int | None, message: str) -> None:

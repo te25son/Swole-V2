@@ -22,7 +22,7 @@ class SetRepository(BaseRepository):
         results = json.loads(
             await self.client.query_json(
                 """
-                SELECT ExerciseSet {weight, rep_count}
+                SELECT ExerciseSet {id, weight, rep_count}
                 FILTER (
                     .exercise.id = <uuid>$exercise_id
                     and .workout.id = <uuid>$workout_id
@@ -56,7 +56,7 @@ class SetRepository(BaseRepository):
                         )
                     }
                 )
-                SELECT exercise_set {weight, rep_count}
+                SELECT exercise_set {id, weight, rep_count}
                 """,
                 weight=data.weight,
                 rep_count=data.rep_count,
@@ -93,7 +93,7 @@ class SetRepository(BaseRepository):
                         rep_count := <optional int64>$rep_count ?? .rep_count
                     }
                 )
-                SELECT exercise_set {weight, rep_count}
+                SELECT exercise_set {id, weight, rep_count}
                 """,
                 set_id=data.set_id,
                 weight=data.weight,

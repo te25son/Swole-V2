@@ -22,7 +22,7 @@ class WorkoutRepository(BaseRepository):
         results = json.loads(
             await self.client.query_json(
                 """
-                SELECT Workout {name, date}
+                SELECT Workout {id, name, date}
                 FILTER .user.id = <uuid>$user_id
                 ORDER BY .date DESC
                 """,
@@ -42,7 +42,7 @@ class WorkoutRepository(BaseRepository):
                         exercises += (SELECT Exercise FILTER .id = <uuid>$exercise_id)
                     }
                 )
-                SELECT workout {name, date}
+                SELECT workout {id, name, date}
                 """,
                 workout_id=data.workout_id,
                 exercise_id=data.exercise_id,
@@ -59,7 +59,7 @@ class WorkoutRepository(BaseRepository):
         result = json.loads(
             await self.client.query_single_json(
                 """
-                SELECT Workout {name, date, exercises: {name, notes}}
+                SELECT Workout {name, date, exercises: {id, name, notes}}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
                 """,
                 workout_id=data.workout_id,
@@ -76,7 +76,7 @@ class WorkoutRepository(BaseRepository):
         result = json.loads(
             await self.client.query_single_json(
                 """
-                SELECT Workout {name, date}
+                SELECT Workout {id, name, date}
                 FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
                 """,
                 workout_id=workout_id,
@@ -103,7 +103,7 @@ class WorkoutRepository(BaseRepository):
                         )
                     }
                 )
-                SELECT workout {name, date}
+                SELECT workout {id, name, date}
                 """,
                 name=data.name,
                 date=data.date,
@@ -140,7 +140,7 @@ class WorkoutRepository(BaseRepository):
                             date := <optional cal::local_date>$date ?? .date
                         }
                     )
-                    SELECT workout {name, date}
+                    SELECT workout {id, name, date}
                     """,
                     workout_id=data.workout_id,
                     user_id=user_id,
@@ -170,7 +170,7 @@ class WorkoutRepository(BaseRepository):
                             exercises := existing_workout.exercises
                         }
                     )
-                SELECT copied_workout {name, date}
+                SELECT copied_workout {id, name, date}
                 """,
                 workout_id=data.workout_id,
                 user_id=user_id,

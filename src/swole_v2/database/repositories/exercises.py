@@ -22,7 +22,7 @@ class ExerciseRepository(BaseRepository):
         results = json.loads(
             await self.client.query_json(
                 """
-                SELECT Exercise {name, notes}
+                SELECT Exercise {id, name, notes}
                 FILTER .user.id = <uuid>$user_id
                 """,
                 user_id=user_id,
@@ -34,7 +34,7 @@ class ExerciseRepository(BaseRepository):
         result = json.loads(
             await self.client.query_single_json(
                 """
-                SELECT Exercise {name, notes}
+                SELECT Exercise {id, name, notes}
                 FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
                 """,
                 exercise_id=exercise_id,
@@ -58,7 +58,7 @@ class ExerciseRepository(BaseRepository):
                         user := (SELECT User FILTER .id = <uuid>$user_id)
                     }
                 )
-                SELECT exercise {name, notes}
+                SELECT exercise {id, name, notes}
                 """,
                 name=data.name,
                 notes=data.notes,
@@ -81,7 +81,7 @@ class ExerciseRepository(BaseRepository):
                             notes := <optional str>$notes ?? .notes
                         }
                     )
-                    SELECT exercise {name, notes}
+                    SELECT exercise {id, name, notes}
                     """,
                     exercise_id=data.exercise_id,
                     user_id=user_id,
