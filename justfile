@@ -42,7 +42,7 @@ setup:
 
 # Run all tests
 test *extra_args:
-    pytest -n 2 --cov --random-order {{ extra_args }}
+    pytest -n 4 --cov --random-order {{ extra_args }}
 
 # Run tests and publish coverage report
 publish-test-report:
