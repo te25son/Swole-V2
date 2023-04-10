@@ -89,27 +89,28 @@ class WorkoutRepository(BaseRepository):
 
         return WorkoutRead(**result)
 
-    async def create(self, user_id: UUID | None, data: WorkoutCreate) -> WorkoutRead:
+    async def create(self, user_id: UUID | None, data: list[WorkoutCreate]) -> list[WorkoutRead]:
         try:
-            workout = await self.client.query_single_json(
+            workouts = await self.query_json(
                 """
-                WITH workout := (
-                    INSERT Workout {
-                        name := <str>$name,
-                        date := <cal::local_date>$date,
-                        user := (
-                            SELECT User
-                            FILTER .id = <uuid>$user_id
-                        )
-                    }
+                WITH workouts := (
+                    FOR workout IN array_unpack(<array<json>>$data) UNION (
+                        INSERT Workout {
+                            name := <str>workout['name'],
+                            date := <cal::local_date>workout['date'],
+                            user := (
+                                SELECT User
+                                FILTER .id = <uuid>$user_id
+                            )
+                        }
+                    )
                 )
-                SELECT workout {id, name, date}
+                SELECT workouts {id, name, date}
                 """,
-                name=data.name,
-                date=data.date,
+                data=[d.json() for d in data],
                 user_id=user_id,
             )
-            return WorkoutRead.parse_raw(workout)
+            return [WorkoutRead(**workout) for workout in workouts]
         except ConstraintViolationError as exc:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc
 

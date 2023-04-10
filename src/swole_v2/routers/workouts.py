@@ -38,11 +38,11 @@ async def detail(
 
 @router.post("/create", response_model=SuccessResponse)
 async def create(
-    data: WorkoutCreate,
+    data: list[WorkoutCreate],
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.create(current_user.id, data)])
+    return SuccessResponse(results=await respository.create(current_user.id, data))
 
 
 @router.post("/delete", response_model=SuccessResponse)
