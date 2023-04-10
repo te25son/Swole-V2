@@ -81,23 +81,71 @@ class TestWorkouts(APITestBase):
         ],
     )
     async def test_workout_create_fails(self, name: str, date: str, message: str) -> None:
-        response = await self._post_error("/create", data={"name": name, "date": date})
+        response = await self._post_error("/create", data=[{"name": name, "date": date}])
 
         assert response.message == message
 
     async def test_workout_create_succeeds(self) -> None:
         name = fake.text()
         date = fake.date()
-        data = {"name": name, "date": date}
         # Should pass if other workout exists with same name and date but different user
         await self.sample.workout(name=name, date=date, user=await self.sample.user())
 
-        response = await self._post_success("/create", data=data)
+        response = await self._post_success("/create", data=[{"name": name, "date": date}])
 
         assert response.results
         assert "id" in response.results[0]
         assert ("name", name) in response.results[0].items()
         assert ("date", date) in response.results[0].items()
+
+    async def test_create_workout_succeeds_with_empty_data(self) -> None:
+        response = await self._post_success("create/", data=[])
+        assert not response.results
+
+    async def test_workout_create_multiple_succeeds(self) -> None:
+        workout_1_name, workout_1_date = fake.text(), fake.date()
+        workout_2_name, workout_2_date = fake.text(), fake.date()
+
+        response = await self._post_success(
+            "/create",
+            data=[
+                {"name": workout_1_name, "date": workout_1_date},
+                {"name": workout_2_name, "date": workout_2_date},
+            ],
+        )
+
+        assert response.results
+        assert "id" in response.results[0]
+        assert ("name", workout_1_name) in response.results[0].items()
+        assert ("date", workout_1_date) in response.results[0].items()
+        assert "id" in response.results[1]
+        assert ("name", workout_2_name) in response.results[1].items()
+        assert ("date", workout_2_date) in response.results[1].items()
+
+    async def test_workout_create_does_not_add_others_to_database_when_one_fails(self) -> None:
+        workout_1_name, workout_1_date = fake.text(), fake.date()
+        workout_2_name, workout_2_date = fake.text(), fake.date()
+        # Create an existing workout with the same name and date as one of the workouts
+        await self.sample.workout(name=workout_2_name, date=workout_2_date)
+
+        response = await self._post_error(
+            "/create",
+            data=[
+                {"name": workout_1_name, "date": workout_1_date},
+                {"name": workout_2_name, "date": workout_2_date},
+            ],
+        )
+
+        # Assert only pre-existing workout still belongs to user
+        results = json.loads(
+            await self.db.query_json(
+                "SELECT Workout {name, date} FILTER .user.id = <uuid>$user_id", user_id=self.user.id
+            )
+        )
+        assert len(results) == 1
+        assert ("name", workout_2_name) in results[0].items()
+        assert ("date", workout_2_date) in results[0].items()
+        assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
     async def test_workout_create_fails_with_unique_constraint(self) -> None:
         # Add first workout
@@ -106,7 +154,7 @@ class TestWorkouts(APITestBase):
         await self.sample.workout(name=name, date=date)
 
         # Create second workout with same name and date
-        response = await self._post_error("/create", data={"name": name, "date": date})
+        response = await self._post_error("/create", data=[{"name": name, "date": date}])
 
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
@@ -342,12 +390,14 @@ class TestWorkouts(APITestBase):
 
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
-    async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
+    async def _post_success(
+        self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]] | None = None
+    ) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data or {})).json())
         assert response.code == "ok"
         return response
 
-    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+    async def _post_error(self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]]) -> ErrorResponse:
         response = ErrorResponse(**(await self.client.post(f"/api/v2/workouts{endpoint}", json=data)).json())
         assert response.code == "error"
         return response
