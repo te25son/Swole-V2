@@ -93,6 +93,18 @@ class TestWorkouts(APITestBase):
 
         assert response.message == message
 
+    async def test_workout_detail_fails_with_at_least_one_workout_belonging_to_another_user(self) -> None:
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        data = [
+            {"workout_id": str(workout.id)},
+            {"workout_id": str(workout_belonging_to_other_user.id)},
+        ]
+
+        response = await self._post_error("/detail", data=data)
+
+        assert response.message == NO_WORKOUT_FOUND
+
     @pytest.mark.parametrize(
         "name, date, message",
         [
