@@ -49,11 +49,11 @@ async def create(
 
 @router.post("/delete", response_model=SuccessResponse)
 async def delete(
-    data: WorkoutDelete,
+    data: list[WorkoutDelete],
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
-    await respository.delete(current_user.id, data.workout_id)
+    await respository.delete(current_user.id, data)
     return SuccessResponse()
 
 

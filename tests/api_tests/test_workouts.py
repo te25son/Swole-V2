@@ -223,17 +223,55 @@ class TestWorkouts(APITestBase):
         # Make sure that we can delete a workout that has linked exercises
         workout = await self.sample.workout(exercises=await self.sample.exercises())
 
-        result = await self._post_success("/delete", data={"workout_id": str(workout.id)})
+        result = await self._post_success("/delete", data=[{"workout_id": str(workout.id)}])
         deleted_workout = json.loads(
             await self.db.query_single_json("SELECT Workout FILTER .id = <uuid>$workout_id", workout_id=workout.id)
         )
 
         assert deleted_workout is None
-        assert result.results is None
+        assert result.results == []
+
+    async def test_workout_delete_mulitple_succeeds(self) -> None:
+        workout_1 = await self.sample.workout()
+        workout_2 = await self.sample.workout()
+        data = [
+            {"workout_id": str(workout_1.id)},
+            {"workout_id": str(workout_2.id)},
+        ]
+
+        result = await self._post_success("/delete", data=data)
+        deleted_workout_1 = json.loads(
+            await self.db.query_single_json("SELECT Workout FILTER .id = <uuid>$id", id=workout_1.id)
+        )
+        deleted_workout_2 = json.loads(
+            await self.db.query_single_json("SELECT Workout FILTER .id = <uuid>$id", id=workout_2.id)
+        )
+
+        assert deleted_workout_1 is None
+        assert deleted_workout_2 is None
+        assert result.results == []
+
+    async def test_workout_delete_fails_with_workout_belonging_to_other_user(self) -> None:
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        data = [
+            {"workout_id": str(workout.id)},
+            {"workout_id": str(workout_belonging_to_other_user.id)},
+        ]
+
+        result = await self._post_error("/delete", data=data)
+
+        assert result.message == NO_WORKOUT_FOUND
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_delete_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
-        result = await self._post_error("/delete", data={"workout_id": str(workout_id)})
+        valid_workout = await self.sample.workout()
+        data = [
+            {"workout_id": str(valid_workout.id)},
+            {"workout_id": str(workout_id)},
+        ]
+
+        result = await self._post_error("/delete", data=data)
 
         assert result.message == message
 
