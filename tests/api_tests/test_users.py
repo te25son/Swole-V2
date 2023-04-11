@@ -38,9 +38,13 @@ class TestUsers(APITestBase):
     @pytest.mark.parametrize(
         "data, message",
         [
-            pytest.param({"password": fake.word()}, "Field Required (username).", id="Missing username fails"),
-            pytest.param({"username": fake.word()}, "Field Required (password).", id="Missing password fails"),
-            pytest.param({}, "Field Required (username).", id="Empty json fails"),
+            pytest.param(
+                {"password": fake.word()}, "Field Required. Hint: (body > username).", id="Missing username fails"
+            ),
+            pytest.param(
+                {"username": fake.word()}, "Field Required. Hint: (body > password).", id="Missing password fails"
+            ),
+            pytest.param({}, "Field Required. Hint: (body > username).", id="Empty json fails"),
         ],
     )
     async def test_login_with_missing_json_fields_fails(self, data: dict[str, Any], message: str) -> None:

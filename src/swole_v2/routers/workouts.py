@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from ..database.repositories import WorkoutRepository
 from ..dependencies.auth import get_current_active_user
@@ -12,7 +14,6 @@ from ..schemas import (
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
-    WorkoutGetAllExercises,
     WorkoutUpdate,
 )
 
@@ -29,11 +30,12 @@ async def get_all(
 
 @router.post("/detail", response_model=SuccessResponse)
 async def detail(
-    data: WorkoutDetail,
+    data: list[WorkoutDetail],
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
+    with_exercises: Annotated[bool, Query()] = False,
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.detail(current_user.id, data.workout_id)])
+    return SuccessResponse(results=await respository.detail(current_user.id, data, with_exercises))
 
 
 @router.post("/create", response_model=SuccessResponse)
@@ -71,15 +73,6 @@ async def add_exercises(
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
     return SuccessResponse(results=await respository.add_exercises(current_user.id, data))
-
-
-@router.post("/exercises", response_model=SuccessResponse)
-async def get_all_exercises(
-    data: WorkoutGetAllExercises,
-    current_user: User = Depends(get_current_active_user),
-    respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
-) -> SuccessResponse:
-    return SuccessResponse(results=await respository.get_all_exercises(current_user.id, data))
 
 
 @router.post("/copy", response_model=SuccessResponse)

@@ -45,12 +45,6 @@ class WorkoutAddExercise(BaseModel):
     _check_id = schema_validator("workout_id", "exercise_id")(check_is_uuid)
 
 
-class WorkoutGetAllExercises(BaseModel):
-    workout_id: UUID
-
-    _check_id = schema_validator("workout_id")(check_is_uuid)
-
-
 class WorkoutCopy(BaseModel):
     workout_id: UUID
     date: datetime.date

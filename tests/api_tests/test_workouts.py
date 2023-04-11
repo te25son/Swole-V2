@@ -29,7 +29,7 @@ class TestWorkouts(APITestBase):
         ],
     )
 
-    async def test_workout_get_all(self) -> None:
+    async def test_workout_get_all_succeeds(self) -> None:
         workouts = await self.sample.workouts()
         response = await self._post_success("/all")
 
@@ -39,18 +39,78 @@ class TestWorkouts(APITestBase):
     async def test_workout_detail_succeeds(self) -> None:
         workout = await self.sample.workout()
 
-        response = await self._post_success("/detail", data={"workout_id": str(workout.id)})
+        response = await self._post_success("/detail", data=[{"workout_id": str(workout.id)}])
 
         assert response.results
         assert response.results == [
             {"id": str(workout.id), "name": workout.name, "date": workout.date.strftime("%Y-%m-%d")}
         ]
 
+    async def test_workout_detail_succeeds_with_multiple_workouts(self) -> None:
+        workout_1 = await self.sample.workout()
+        workout_2 = await self.sample.workout()
+        data = [
+            {"workout_id": str(workout_1.id)},
+            {"workout_id": str(workout_2.id)},
+        ]
+
+        response = await self._post_success("/detail", data=data)
+
+        assert response.results
+        assert len(response.results) == 2
+
+    async def test_workout_detail_succeeds_with_query_parameter(self) -> None:
+        workout_with_exercises = await self.sample.workout(exercises=await self.sample.exercises())
+        workout_without_exercises = await self.sample.workout()
+        data = [
+            {"workout_id": str(workout_with_exercises.id)},
+            {"workout_id": str(workout_without_exercises.id)},
+        ]
+
+        response = await self._post_success("/detail?with_exercises=true", data=data)
+        expected_results = [
+            {
+                "id": str(workout_with_exercises.id),
+                "name": workout_with_exercises.name,
+                "date": workout_with_exercises.date.strftime("%Y-%m-%d"),
+                "exercises": [
+                    {"id": str(e.id), "name": e.name, "notes": e.notes} for e in workout_with_exercises.exercises
+                ],
+            },
+            {
+                "id": str(workout_without_exercises.id),
+                "name": workout_without_exercises.name,
+                "date": workout_without_exercises.date.strftime("%Y-%m-%d"),
+                "exercises": [],
+            },
+        ]
+
+        assert response.results
+        assert all(results in response.results for results in expected_results)
+
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_detail_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
-        response = await self._post_error("/detail", data={"workout_id": str(workout_id)})
+        valid_workout = await self.sample.workout()
+        data = [
+            {"workout_id": str(valid_workout.id)},
+            {"workout_id": str(workout_id)},
+        ]
+
+        response = await self._post_error("/detail", data=data)
 
         assert response.message == message
+
+    async def test_workout_detail_fails_with_at_least_one_workout_belonging_to_another_user(self) -> None:
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        data = [
+            {"workout_id": str(workout.id)},
+            {"workout_id": str(workout_belonging_to_other_user.id)},
+        ]
+
+        response = await self._post_error("/detail", data=data)
+
+        assert response.message == NO_WORKOUT_FOUND
 
     @pytest.mark.parametrize(
         "name, date, message",
@@ -399,30 +459,6 @@ class TestWorkouts(APITestBase):
         response = await self._post_error("/add-exercises", data=[data])
 
         assert response.message == INVALID_ID
-
-    @pytest.mark.parametrize(
-        "no_exercises",
-        [
-            pytest.param(True, id="Test get all exercises returns empty list when workout has no exercises"),
-            pytest.param(False, id="Test get all exercises returns all exercises belonging to workout"),
-        ],
-    )
-    async def test_get_all_exercises_succeeds(self, no_exercises: bool) -> None:
-        exercises = await self.sample.exercises(size=10)
-        # add half of the exercises since the result should only return those owned by the workout
-        workout = await self.sample.workout(exercises=[] if no_exercises else exercises[:5])
-
-        response = await self._post_success("/exercises", data={"workout_id": str(workout.id)})
-
-        if no_exercises:
-            assert response.results == []
-        assert response.results == [{"id": str(e.id), "name": e.name, "notes": e.notes} for e in workout.exercises]
-
-    @pytest.mark.parametrize(*invalid_workout_id_params)
-    async def test_get_all_exercises_fails(self, workout_id: Any, message: str) -> None:
-        response = await self._post_error("/exercises", data={"workout_id": str(workout_id)})
-
-        assert response.message == message
 
     async def test_workout_copy_succeeds(self) -> None:
         exercises = await self.sample.exercises()
