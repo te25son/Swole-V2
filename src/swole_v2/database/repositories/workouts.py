@@ -31,29 +31,28 @@ class WorkoutRepository(BaseRepository):
         )
         return [WorkoutRead(**result) for result in results]
 
-    async def add_exercise(self, user_id: UUID | None, data: WorkoutAddExercise) -> WorkoutRead:
-        result = json.loads(
-            await self.client.query_single_json(
-                """
-                WITH workout := (
+    async def add_exercises(self, user_id: UUID | None, data: list[WorkoutAddExercise]) -> list[WorkoutRead]:
+        workouts = await self.query_json(
+            """
+            WITH workouts := (
+                FOR data IN array_unpack(<array<json>>$data) UNION (
                     UPDATE Workout
-                    FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+                    FILTER (.id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id)
                     SET {
-                        exercises += (SELECT Exercise FILTER .id = <uuid>$exercise_id)
+                        exercises += (
+                            SELECT Exercise
+                            FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                        )
                     }
                 )
-                SELECT workout {id, name, date}
-                """,
-                workout_id=data.workout_id,
-                exercise_id=data.exercise_id,
-                user_id=user_id,
             )
+            SELECT workouts {id, name, date}
+            """,
+            # Convert from set to list to ensure unique values
+            data=list({d.json() for d in data}),
+            user_id=user_id,
         )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
-
-        return WorkoutRead(**result)
+        return [WorkoutRead(**workout) for workout in workouts]
 
     async def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
         result = json.loads(

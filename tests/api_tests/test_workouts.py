@@ -279,7 +279,7 @@ class TestWorkouts(APITestBase):
         exercise = await self.sample.exercise()
         data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
 
-        response = await self._post_success("/add-exercise", data=data)
+        response = await self._post_success("/add-exercises", data=[data])
         updated_workout = Workout.parse_raw(
             await self.db.query_single_json(
                 """
@@ -296,18 +296,83 @@ class TestWorkouts(APITestBase):
         assert len(exercises) == 1
         assert exercise.name in [e.name for e in exercises]
 
-    @pytest.mark.parametrize(
-        "workout_id, exercise_id, message",
-        [
-            pytest.param(fake.random_digit(), fake.random_digit(), INVALID_ID, id="Test non uuid fails"),
-            pytest.param(uuid4(), uuid4(), NO_WORKOUT_FOUND, id="Test random uuid fails"),
-        ],
-    )
-    async def test_add_exercise_fails_with_invalid_id(self, workout_id: Any, exercise_id: Any, message: str) -> None:
-        data = {"workout_id": str(workout_id), "exercise_id": str(exercise_id)}
-        response = await self._post_error("/add-exercise", data=data)
+    async def test_add_multiple_exercises_succeeds(self) -> None:
+        num_of_exercise_to_add = 10
+        workout = await self.sample.workout()
+        exercises = await self.sample.exercises(size=num_of_exercise_to_add)
+        data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)} for exercise in exercises]
 
-        assert response.message == message
+        response = await self._post_success("/add-exercises", data=data)
+        updated_workout = Workout.parse_raw(
+            await self.db.query_single_json(
+                """
+                SELECT Workout {name, date, exercises: {name}}
+                FILTER .id = <uuid>$workout_id
+                """,
+                workout_id=workout.id,
+            )
+        )
+        workout_exercises = updated_workout.exercises
+
+        assert response.results
+        assert workout_exercises
+        assert len(workout_exercises) == num_of_exercise_to_add
+        assert all(e.name in [e.name for e in workout_exercises] for e in exercises)
+
+    async def test_add_multiple_exercises_to_multiple_workouts_succeeds(self) -> None:
+        num_of_workouts_to_update = 10
+        workouts = await self.sample.workouts(size=num_of_workouts_to_update)
+        exercise = await self.sample.exercise()
+        data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)} for workout in workouts]
+
+        response = await self._post_success("/add-exercises", data=data)
+        query_results = json.loads(
+            await self.db.query_json(
+                """
+                WITH workouts := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION (
+                        SELECT Workout FILTER .id = <uuid>data['workout_id']
+                    )
+                )
+                SELECT workouts {name, date, exercises: {name}}
+                """,
+                data=[json.dumps(d) for d in data],
+            )
+        )
+        updated_workouts = [Workout(**r) for r in query_results]
+
+        assert response.results
+        assert len(response.results) == num_of_workouts_to_update
+        assert all(exercise.name in [e.name for e in workout.exercises] for workout in updated_workouts)
+
+    async def test_add_the_same_exercise_to_a_workout_mulitple_times_succeeds(self) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)} for _ in range(5)]
+
+        response = await self._post_success("/add-exercises", data=data)
+        updated_workout = Workout.parse_raw(
+            await self.db.query_single_json(
+                """
+                SELECT Workout {name, date, exercises: {name}}
+                FILTER .id = <uuid>$workout_id
+                """,
+                workout_id=workout.id,
+            )
+        )
+        workout_exercises = updated_workout.exercises
+
+        assert response.results
+        assert len(response.results) == 1
+        # Should have only added the exercise once
+        assert len(workout_exercises) == 1
+        assert exercise.name == workout_exercises[0].name
+
+    async def test_add_exercise_fails_with_invalid_id(self) -> None:
+        data = {"workout_id": str(fake.random_digit()), "exercise_id": str(fake.random_digit())}
+        response = await self._post_error("/add-exercises", data=[data])
+
+        assert response.message == INVALID_ID
 
     @pytest.mark.parametrize(
         "no_exercises",
