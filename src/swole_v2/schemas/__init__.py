@@ -8,7 +8,6 @@ from .workouts import (
     WorkoutCreate,
     WorkoutDelete,
     WorkoutDetail,
-    WorkoutGetAllExercises,
     WorkoutUpdate,
 )
 
@@ -24,7 +23,6 @@ __all__ = [
     "WorkoutDetail",
     "WorkoutDelete",
     "WorkoutAddExercise",
-    "WorkoutGetAllExercises",
     "SuccessResponse",
     "ErrorResponse",
     "SetGetAll",

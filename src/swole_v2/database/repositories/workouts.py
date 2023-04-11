@@ -8,29 +8,16 @@ from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_EXERCISE_FOUND, NO_WORKOUT_FOUND
-from ...models import ExerciseRead, Workout, WorkoutRead
+from ...models import Workout, WorkoutRead
 from .base import BaseRepository
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutGetAllExercises, WorkoutUpdate
+    from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutDetail, WorkoutUpdate
 
 
 class WorkoutRepository(BaseRepository):
-    async def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
-        results = json.loads(
-            await self.client.query_json(
-                """
-                SELECT Workout {id, name, date}
-                FILTER .user.id = <uuid>$user_id
-                ORDER BY .date DESC
-                """,
-                user_id=user_id,
-            )
-        )
-        return [WorkoutRead(**result) for result in results]
-
     async def add_exercises(self, user_id: UUID | None, data: list[WorkoutAddExercise]) -> list[WorkoutRead]:
         try:
             workouts = await self.query_json(
@@ -57,39 +44,30 @@ class WorkoutRepository(BaseRepository):
         except CardinalityViolationError as error:
             raise BusinessError(NO_EXERCISE_FOUND) from error
 
-    async def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
-        result = json.loads(
-            await self.client.query_single_json(
-                """
-                SELECT Workout {name, date, exercises: {id, name, notes}}
-                FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+    async def detail(
+        self, user_id: UUID | None, data: list[WorkoutDetail], with_exercises: bool
+    ) -> list[WorkoutRead | Workout]:
+        try:
+            select_query = "{id, name, date, exercises: {id, name, notes}}" if with_exercises else "{id, name, date}"
+            workouts = await self.query_json(
+                f"""
+                WITH workouts := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        SELECT Workout
+                        FILTER .id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id
+                    ))
+                )
+                SELECT workouts {select_query}
+                ORDER BY .date DESC
                 """,
-                workout_id=data.workout_id,
+                data=list({d.json() for d in data}),
                 user_id=user_id,
             )
-        )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
-
-        return [ExerciseRead(**e.dict()) for e in Workout(**result).exercises]
-
-    async def detail(self, user_id: UUID | None, workout_id: UUID) -> WorkoutRead:
-        result = json.loads(
-            await self.client.query_single_json(
-                """
-                SELECT Workout {id, name, date}
-                FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
-                """,
-                workout_id=workout_id,
-                user_id=user_id,
-            )
-        )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
-
-        return WorkoutRead(**result)
+            if with_exercises:
+                return [Workout(**workout) for workout in workouts]
+            return [WorkoutRead(**workout) for workout in workouts]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_WORKOUT_FOUND) from error
 
     async def create(self, user_id: UUID | None, data: list[WorkoutCreate]) -> list[WorkoutRead]:
         try:
