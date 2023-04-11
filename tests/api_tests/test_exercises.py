@@ -154,7 +154,7 @@ class TestExercises(APITestBase):
         )
 
         assert deleted_exercise is None
-        assert response.results is None
+        assert response.results == []
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_delete_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:

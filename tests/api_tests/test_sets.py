@@ -200,7 +200,7 @@ class TestSets(APITestBase):
         )
 
         assert post_set is None
-        assert response.results is None
+        assert response.results == []
 
     @pytest.mark.parametrize(*invalid_set_id_params)
     async def test_set_delete_fails_with_invalid_id(self, set_id: Any, message: str) -> None:

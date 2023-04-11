@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Response(BaseModel):
@@ -16,4 +16,4 @@ class ErrorResponse(Response):
 
 class SuccessResponse(Response):
     code: str = "ok"
-    results: list[Any] | None = None
+    results: list[Any] | None = Field(default=[])

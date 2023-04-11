@@ -14,7 +14,7 @@ from .base import BaseRepository
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutDetail, WorkoutUpdate
+    from ...schemas import WorkoutAddExercise, WorkoutCopy, WorkoutCreate, WorkoutDelete, WorkoutDetail, WorkoutUpdate
 
 
 class WorkoutRepository(BaseRepository):
@@ -102,19 +102,23 @@ class WorkoutRepository(BaseRepository):
         except ConstraintViolationError as exc:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from exc
 
-    async def delete(self, user_id: UUID | None, workout_id: UUID) -> None:
-        result = json.loads(
-            await self.client.query_single_json(
+    async def delete(self, user_id: UUID | None, data: list[WorkoutDelete]) -> None:
+        try:
+            await self.query_json(
                 """
-                DELETE Workout
-                FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
+                WITH workouts := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        SELECT Workout
+                        FILTER .id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id
+                    ))
+                )
+                DELETE workouts
                 """,
-                workout_id=workout_id,
+                data=data,
                 user_id=user_id,
             )
-        )
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_WORKOUT_FOUND) from error
 
     async def update(self, user_id: UUID | None, data: WorkoutUpdate) -> WorkoutRead:
         try:
