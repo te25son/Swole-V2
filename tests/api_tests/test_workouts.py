@@ -11,6 +11,7 @@ from swole_v2.errors.messages import (
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
     NAME_AND_DATE_MUST_BE_UNIQUE,
+    NO_EXERCISE_FOUND,
     NO_WORKOUT_FOUND,
 )
 from swole_v2.models import Workout
@@ -367,6 +368,31 @@ class TestWorkouts(APITestBase):
         # Should have only added the exercise once
         assert len(workout_exercises) == 1
         assert exercise.name == workout_exercises[0].name
+
+    async def test_add_exercise_to_non_existing_workout_returns_empty_list(self) -> None:
+        exercise = await self.sample.exercise()
+        data = [{"workout_id": str(uuid4()), "exercise_id": str(exercise.id)}]
+
+        response = await self._post_success("/add-exercises", data=data)
+
+        assert not response.results
+
+    async def test_add_exercise_fails_with_non_existing_exercise(self) -> None:
+        workout = await self.sample.workout()
+        data = [{"workout_id": str(workout.id), "exercise_id": str(uuid4())}]
+
+        response = await self._post_error("/add-exercises", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
+
+    async def test_add_exercise_fails_when_adding_exercise_from_other_user(self) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise(user=await self.sample.user())
+        data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)}]
+
+        response = await self._post_error("/add-exercises", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_add_exercise_fails_with_invalid_id(self) -> None:
         data = {"workout_id": str(fake.random_digit()), "exercise_id": str(fake.random_digit())}
