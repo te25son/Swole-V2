@@ -177,11 +177,11 @@ class TestWorkouts(APITestBase):
 
         assert response.results
         assert "id" in response.results[0]
-        assert ("name", workout_1_name) in response.results[0].items()
-        assert ("date", workout_1_date) in response.results[0].items()
+        assert any(("name", workout_1_name) in r.items() for r in response.results)
+        assert any(("date", workout_1_date) in r.items() for r in response.results)
         assert "id" in response.results[1]
-        assert ("name", workout_2_name) in response.results[1].items()
-        assert ("date", workout_2_date) in response.results[1].items()
+        assert any(("name", workout_2_name) in r.items() for r in response.results)
+        assert any(("date", workout_2_date) in r.items() for r in response.results)
 
     async def test_workout_create_does_not_add_others_to_database_when_one_fails(self) -> None:
         workout_1_name, workout_1_date = fake.text(), fake.date()

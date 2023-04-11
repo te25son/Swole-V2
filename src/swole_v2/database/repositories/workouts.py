@@ -47,8 +47,7 @@ class WorkoutRepository(BaseRepository):
                 )
                 SELECT workouts {id, name, date}
                 """,
-                # Convert from set to list to ensure unique values
-                data=list({d.json() for d in data}),
+                data=data,
                 user_id=user_id,
             )
             return [WorkoutRead(**workout) for workout in workouts]
@@ -71,7 +70,7 @@ class WorkoutRepository(BaseRepository):
                 SELECT workouts {select_query}
                 ORDER BY .date DESC
                 """,
-                data=list({d.json() for d in data}),
+                data=data,
                 user_id=user_id,
             )
             return [Workout(**workout) if with_exercises else WorkoutRead(**workout) for workout in workouts]
@@ -96,7 +95,7 @@ class WorkoutRepository(BaseRepository):
                 )
                 SELECT workouts {id, name, date}
                 """,
-                data=[d.json() for d in data],
+                data=data,
                 user_id=user_id,
             )
             return [WorkoutRead(**workout) for workout in workouts]
