@@ -29,6 +29,13 @@ class TestWorkouts(APITestBase):
         ],
     )
 
+    async def test_workout_get_all_succeeds(self) -> None:
+        workouts = await self.sample.workouts()
+        response = await self._post_success("/all")
+
+        assert response.results
+        assert len(response.results) == len(workouts)
+
     async def test_workout_detail_succeeds(self) -> None:
         workout = await self.sample.workout()
 

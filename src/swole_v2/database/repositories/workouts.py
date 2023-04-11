@@ -18,6 +18,17 @@ if TYPE_CHECKING:
 
 
 class WorkoutRepository(BaseRepository):
+    async def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
+        results = await self.query_json(
+            """
+            SELECT Workout {id, name, date}
+            FILTER .user.id = <uuid>$user_id
+            ORDER BY .date DESC
+            """,
+            user_id=user_id,
+        )
+        return [WorkoutRead(**result) for result in results]
+
     async def add_exercises(self, user_id: UUID | None, data: list[WorkoutAddExercise]) -> list[WorkoutRead]:
         try:
             workouts = await self.query_json(

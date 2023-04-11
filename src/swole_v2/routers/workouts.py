@@ -20,6 +20,14 @@ from ..schemas import (
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
 
+@router.post("/all", response_model=SuccessResponse)
+async def get_all(
+    current_user: User = Depends(get_current_active_user),
+    respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
+) -> SuccessResponse:
+    return SuccessResponse(results=await respository.get_all(current_user.id))
+
+
 @router.post("/detail", response_model=SuccessResponse)
 async def detail(
     data: list[WorkoutDetail],
