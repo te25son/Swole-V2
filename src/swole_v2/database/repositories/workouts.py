@@ -63,9 +63,7 @@ class WorkoutRepository(BaseRepository):
                 data=list({d.json() for d in data}),
                 user_id=user_id,
             )
-            if with_exercises:
-                return [Workout(**workout) for workout in workouts]
-            return [WorkoutRead(**workout) for workout in workouts]
+            return [Workout(**workout) if with_exercises else WorkoutRead(**workout) for workout in workouts]
         except CardinalityViolationError as error:
             raise BusinessError(NO_WORKOUT_FOUND) from error
 
