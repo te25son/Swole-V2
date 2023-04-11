@@ -7,7 +7,7 @@ from edgedb import CardinalityViolationError, ConstraintViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
-from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_WORKOUT_FOUND
+from ...errors.messages import NAME_AND_DATE_MUST_BE_UNIQUE, NO_EXERCISE_FOUND, NO_WORKOUT_FOUND
 from ...models import ExerciseRead, Workout, WorkoutRead
 from .base import BaseRepository
 
@@ -31,29 +31,31 @@ class WorkoutRepository(BaseRepository):
         )
         return [WorkoutRead(**result) for result in results]
 
-    async def add_exercise(self, user_id: UUID | None, data: WorkoutAddExercise) -> WorkoutRead:
-        result = json.loads(
-            await self.client.query_single_json(
+    async def add_exercises(self, user_id: UUID | None, data: list[WorkoutAddExercise]) -> list[WorkoutRead]:
+        try:
+            workouts = await self.query_json(
                 """
-                WITH workout := (
-                    UPDATE Workout
-                    FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
-                    SET {
-                        exercises += (SELECT Exercise FILTER .id = <uuid>$exercise_id)
-                    }
+                WITH workouts := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION (
+                        UPDATE Workout
+                        FILTER (.id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id)
+                        SET {
+                            exercises += assert_exists((
+                                SELECT Exercise
+                                FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                            ))
+                        }
+                    )
                 )
-                SELECT workout {id, name, date}
+                SELECT workouts {id, name, date}
                 """,
-                workout_id=data.workout_id,
-                exercise_id=data.exercise_id,
+                # Convert from set to list to ensure unique values
+                data=list({d.json() for d in data}),
                 user_id=user_id,
             )
-        )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND)
-
-        return WorkoutRead(**result)
+            return [WorkoutRead(**workout) for workout in workouts]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_EXERCISE_FOUND) from error
 
     async def get_all_exercises(self, user_id: UUID | None, data: WorkoutGetAllExercises) -> list[ExerciseRead]:
         result = json.loads(
