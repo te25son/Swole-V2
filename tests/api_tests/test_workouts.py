@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
@@ -8,6 +9,7 @@ import pytest
 
 from swole_v2.errors.messages import (
     FIELD_CANNOT_BE_EMPTY,
+    IDS_MUST_BE_UNIQUE,
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
     NAME_AND_DATE_MUST_BE_UNIQUE,
@@ -289,7 +291,7 @@ class TestWorkouts(APITestBase):
         original_workout_date = workout.date.strftime("%Y-%m-%d")
         original_workout_name = workout.name
 
-        response = await self._post_success("/update", data=data)
+        response = await self._post_success("/update", data=[data])
 
         updated_workout = Workout.parse_raw(
             await self.db.query_single_json(
@@ -341,7 +343,7 @@ class TestWorkouts(APITestBase):
         workout = await self.sample.workout()
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
-        response = await self._post_error("/update", data=data)
+        response = await self._post_error("/update", data=[data])
         not_updated_workout = Workout.parse_raw(
             await self.db.query_single_json(
                 "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
@@ -361,7 +363,7 @@ class TestWorkouts(APITestBase):
             "date": workout_one.date.strftime("%Y-%m-%d"),
         }
 
-        response = await self._post_error("/update", data=data)
+        response = await self._post_error("/update", data=[data])
 
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
 
@@ -369,9 +371,60 @@ class TestWorkouts(APITestBase):
     async def test_workout_update_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
         data = {"workout_id": str(workout_id), "name": fake.name(), "date": fake.date()}
 
-        response = await self._post_error("/update", data=data)
+        response = await self._post_error("/update", data=[data])
 
         assert response.message == message
+
+    async def test_workout_update_multiple_succeeds(self) -> None:
+        workout_1 = await self.sample.workout()
+        workout_2 = await self.sample.workout()
+        workout_1_new_name, workout_1_new_date = fake.text(), fake.date()
+        workout_2_new_name, workout_2_new_date = fake.text(), fake.date()
+        data = [
+            {"workout_id": str(workout_1.id), "name": workout_1_new_name, "date": workout_1_new_date},
+            {"workout_id": str(workout_2.id), "name": workout_2_new_name, "date": workout_2_new_date},
+        ]
+
+        response = await self._post_success("/update", data=data)
+        updated_workout_1 = Workout.parse_raw(
+            await self.db.query_single_json(
+                "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=workout_1.id
+            )
+        )
+        updated_workout_2 = Workout.parse_raw(
+            await self.db.query_single_json(
+                "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=workout_2.id
+            )
+        )
+
+        assert response.results
+        assert updated_workout_1.name == workout_1_new_name
+        assert updated_workout_1.date == datetime.strptime(workout_1_new_date, "%Y-%m-%d").date()
+        assert updated_workout_2.name == workout_2_new_name
+        assert updated_workout_2.date == datetime.strptime(workout_2_new_date, "%Y-%m-%d").date()
+
+    async def test_workout_update_fails_when_updating_same_workout_multiple_times(self) -> None:
+        workout = await self.sample.workout()
+        data = [
+            {"workout_id": str(workout.id), "name": fake.text()},
+            {"workout_id": str(workout.id), "date": fake.date()},
+        ]
+
+        response = await self._post_error("/update", data=data)
+
+        assert response.message == IDS_MUST_BE_UNIQUE
+
+    async def test_workout_update_fails_when_updating_at_least_one_workout_not_belonging_to_user(self) -> None:
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        data = [
+            {"workout_id": str(workout.id), "name": fake.text()},
+            {"workout_id": str(workout_belonging_to_other_user.id), "name": fake.text()},
+        ]
+
+        response = await self._post_error("/update", data=data)
+
+        assert response.message == NO_WORKOUT_FOUND
 
     async def test_add_exercise_succeeds(self) -> None:
         workout = await self.sample.workout()
