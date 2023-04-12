@@ -15,3 +15,4 @@ SET_ADD_FAILED = "Failed to add the set. Make sure that the workout and exercise
 INCORRECT_USERNAME_OR_PASSWORD = "Incorrect username or password"
 COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 INACTIVE_USER = "Inactive user"
+IDS_MUST_BE_UNIQUE = "All IDs in the given data must be unique."

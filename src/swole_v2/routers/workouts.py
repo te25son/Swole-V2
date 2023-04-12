@@ -59,11 +59,11 @@ async def delete(
 
 @router.post("/update", response_model=SuccessResponse)
 async def update(
-    data: WorkoutUpdate,
+    data: list[WorkoutUpdate],
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.update(current_user.id, data)])
+    return SuccessResponse(results=await respository.update(current_user.id, data))
 
 
 @router.post("/add-exercises", response_model=SuccessResponse)
