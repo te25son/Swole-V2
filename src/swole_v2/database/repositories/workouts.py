@@ -149,29 +149,30 @@ class WorkoutRepository(BaseRepository):
         except ConstraintViolationError as error:
             raise BusinessError(NAME_AND_DATE_MUST_BE_UNIQUE) from error
 
-    async def copy(self, user_id: UUID | None, data: WorkoutCopy) -> WorkoutRead:
+    async def copy(self, user_id: UUID | None, data: list[WorkoutCopy]) -> list[WorkoutRead]:
         try:
-            workout = await self.client.query_single_json(
+            workouts = await self.query_json(
                 """
-                WITH
-                    existing_workout := assert_exists(
-                        (SELECT Workout FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id))
-                    ),
-                    copied_workout := (
+                WITH copies := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION (
+                        WITH workout := assert_exists((
+                            SELECT Workout
+                            FILTER .id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id
+                        ))
                         INSERT Workout {
-                            name := existing_workout.name,
-                            date := <cal::local_date>$date,
-                            user := existing_workout.user,
-                            exercises := existing_workout.exercises
+                            name := workout.name,
+                            date := <cal::local_date>data['date'],
+                            user := workout.user,
+                            exercises := workout.exercises
                         }
                     )
-                SELECT copied_workout {id, name, date}
+                )
+                SELECT copies {id, name, date}
                 """,
-                workout_id=data.workout_id,
+                data=data,
                 user_id=user_id,
-                date=data.date,
             )
-            return WorkoutRead.parse_raw(workout)
+            return [WorkoutRead(**workout) for workout in workouts]
         except CardinalityViolationError as exc:
             raise HTTPException(status_code=404, detail=NO_WORKOUT_FOUND) from exc
         except ConstraintViolationError as exc:

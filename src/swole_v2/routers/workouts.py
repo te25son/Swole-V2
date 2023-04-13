@@ -77,8 +77,8 @@ async def add_exercises(
 
 @router.post("/copy", response_model=SuccessResponse)
 async def copy(
-    data: WorkoutCopy,
+    data: list[WorkoutCopy],
     current_user: User = Depends(get_current_active_user),
     respository: WorkoutRepository = Depends(WorkoutRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.copy(current_user.id, data)])
+    return SuccessResponse(results=await respository.copy(current_user.id, data))

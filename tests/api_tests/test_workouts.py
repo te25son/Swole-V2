@@ -556,7 +556,7 @@ class TestWorkouts(APITestBase):
         workout = await self.sample.workout(exercises=exercises)
         date = fake.date()
 
-        response = await self._post_success("/copy", data={"workout_id": str(workout.id), "date": date})
+        response = await self._post_success("/copy", data=[{"workout_id": str(workout.id), "date": date}])
 
         workout_results = json.loads(
             await self.db.query_json(
@@ -577,7 +577,7 @@ class TestWorkouts(APITestBase):
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_copy_fails_with_invalid_workout_ids(self, workout_id: Any, message: str) -> None:
-        response = await self._post_error("/copy", data={"workout_id": str(workout_id), "date": fake.date()})
+        response = await self._post_error("/copy", data=[{"workout_id": str(workout_id), "date": fake.date()}])
 
         assert response.message == message
 
@@ -590,13 +590,13 @@ class TestWorkouts(APITestBase):
     )
     async def test_workout_copy_fails_with_improperly_formatted_date(self, date: Any) -> None:
         workout = await self.sample.workout()
-        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": date})
+        response = await self._post_error("/copy", data=[{"workout_id": str(workout.id), "date": date}])
 
         assert response.message == INCORRECT_DATE_FORMAT
 
     async def test_cannot_copy_workout_belonging_to_other_user(self) -> None:
         workout = await self.sample.workout(user=await self.sample.user())
-        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": fake.date()})
+        response = await self._post_error("/copy", data=[{"workout_id": str(workout.id), "date": fake.date()}])
 
         assert response.message == NO_WORKOUT_FOUND
 
@@ -604,9 +604,89 @@ class TestWorkouts(APITestBase):
         date = fake.date()
         workout = await self.sample.workout(date=date)
 
-        response = await self._post_error("/copy", data={"workout_id": str(workout.id), "date": date})
+        response = await self._post_error("/copy", data=[{"workout_id": str(workout.id), "date": date}])
 
         assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
+
+    async def test_workout_copy_multiple_succeeds(self) -> None:
+        workout_1 = await self.sample.workout(exercises=await self.sample.exercises())
+        workout_2 = await self.sample.workout(exercises=await self.sample.exercises())
+        copy_1_date = fake.date()
+        copy_2_date = fake.date()
+        data = [
+            {"workout_id": str(workout_1.id), "date": copy_1_date},
+            {"workout_id": str(workout_2.id), "date": copy_2_date},
+        ]
+
+        response = await self._post_success("/copy", data=data)
+        copied_workout_1_data = json.loads(
+            await self.db.query_json(
+                """
+                SELECT Workout {id, name, date, exercises: {id, name, notes}}
+                FILTER .name = <str>$name
+                """,
+                name=workout_1.name,
+            )
+        )
+        copied_workout_2_data = json.loads(
+            await self.db.query_json(
+                """
+                SELECT Workout {id, name, date, exercises: {id, name, notes}}
+                FILTER .name = <str>$name
+                """,
+                name=workout_2.name,
+            )
+        )
+        copied_workout_1_pair = [Workout(**d) for d in copied_workout_1_data]
+        copied_workout_2_pair = [Workout(**d) for d in copied_workout_2_data]
+
+        assert response.results
+        assert len(response.results) == 2
+        assert len(copied_workout_1_pair) == 2
+        assert all(len(w.exercises) == len(workout_1.exercises) for w in copied_workout_1_pair)
+        assert all(e in workout_1.exercises for w in copied_workout_1_pair for e in w.exercises)
+        assert len(copied_workout_2_pair) == 2
+        assert all(len(w.exercises) == len(workout_2.exercises) for w in copied_workout_2_pair)
+        assert all(e in workout_2.exercises for w in copied_workout_2_pair for e in w.exercises)
+
+    async def test_workout_copy_succeeds_when_updating_the_same_workout_with_different_dates(self) -> None:
+        workout = await self.sample.workout()
+        date_1 = fake.date()
+        date_2 = fake.date()
+        data = [
+            {"workout_id": str(workout.id), "date": date_1},
+            {"workout_id": str(workout.id), "date": date_2},
+        ]
+
+        response = await self._post_success("/copy", data=data)
+        copied_workout_data = json.loads(
+            await self.db.query_json(
+                """
+                SELECT Workout {id, name, date}
+                FILTER .name = <str>$name
+                """,
+                name=workout.name,
+            )
+        )
+        copied_workout_group = [Workout(**d) for d in copied_workout_data]
+
+        assert response.results
+        assert len(response.results) == 2
+        assert len(copied_workout_data) == 3
+        assert any(datetime.strptime(date_1, "%Y-%m-%d").date() == workout.date for workout in copied_workout_group)
+        assert any(datetime.strptime(date_2, "%Y-%m-%d").date() == workout.date for workout in copied_workout_group)
+
+    async def test_workout_copy_multiple_fails_when_copying_workout_belonging_to_other_user(self) -> None:
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        data = [
+            {"workout_id": str(workout.id), "date": fake.date()},
+            {"workout_id": str(workout_belonging_to_other_user.id), "date": fake.date()},
+        ]
+
+        response = await self._post_error("/copy", data=data)
+
+        assert response.message == NO_WORKOUT_FOUND
 
     async def _post_success(
         self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]] | None = None
