@@ -20,11 +20,11 @@ async def get_all_by_user(
 
 @router.post("/detail", response_model=SuccessResponse)
 async def detail(
-    data: ExerciseDetail,
+    data: list[ExerciseDetail],
     current_user: User = Depends(get_current_active_user),
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.detail(current_user.id, data.exercise_id)])
+    return SuccessResponse(results=await respository.detail(current_user.id, data))
 
 
 @router.post("/create", response_model=SuccessResponse)

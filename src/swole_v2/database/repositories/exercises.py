@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from edgedb import ConstraintViolationError
+from edgedb import CardinalityViolationError, ConstraintViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
@@ -14,38 +14,38 @@ from .base import BaseRepository
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseProgress, ExerciseUpdate
+    from ...schemas import ExerciseCreate, ExerciseDelete, ExerciseDetail, ExerciseProgress, ExerciseUpdate
 
 
 class ExerciseRepository(BaseRepository):
     async def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
-        results = json.loads(
-            await self.client.query_json(
+        exercises = await self.query_json(
+            """
+            SELECT Exercise {id, name, notes}
+            FILTER .user.id = <uuid>$user_id
+            """,
+            user_id=user_id,
+        )
+        return [ExerciseRead(**exercise) for exercise in exercises]
+
+    async def detail(self, user_id: UUID | None, data: list[ExerciseDetail]) -> list[ExerciseRead]:
+        try:
+            exercises = await self.query_json(
                 """
-                SELECT Exercise {id, name, notes}
-                FILTER .user.id = <uuid>$user_id
+                WITH exercises := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        SELECT Exercise
+                        FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                    ))
+                )
+                SELECT exercises {id, name, notes}
                 """,
+                data=data,
                 user_id=user_id,
             )
-        )
-        return [ExerciseRead(**result) for result in results]
-
-    async def detail(self, user_id: UUID | None, exercise_id: UUID) -> ExerciseRead:
-        result = json.loads(
-            await self.client.query_single_json(
-                """
-                SELECT Exercise {id, name, notes}
-                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                """,
-                exercise_id=exercise_id,
-                user_id=user_id,
-            )
-        )
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
-
-        return ExerciseRead(**result)
+            return [ExerciseRead(**exercise) for exercise in exercises]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_EXERCISE_FOUND) from error
 
     async def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
         try:
