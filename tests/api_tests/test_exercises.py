@@ -58,15 +58,46 @@ class TestExercises(APITestBase):
     async def test_exercise_detail_succeeds(self) -> None:
         exercise = await self.sample.exercise()
 
-        response = await self._post_success("/detail", data={"exercise_id": str(exercise.id)})
+        response = await self._post_success("/detail", data=[{"exercise_id": str(exercise.id)}])
 
         assert response.results
         assert response.results == [{"id": str(exercise.id), "name": exercise.name, "notes": exercise.notes}]
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_detail_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = await self._post_error("/detail", data={"exercise_id": str(exercise_id)})
+        response = await self._post_error("/detail", data=[{"exercise_id": str(exercise_id)}])
         assert response.message == message
+
+    async def test_exercise_detail_multiple_succeeds(self) -> None:
+        exercise_1 = await self.sample.exercise()
+        exercise_2 = await self.sample.exercise()
+        data = [
+            {"exercise_id": str(exercise_1.id)},
+            {"exercise_id": str(exercise_2.id)},
+        ]
+
+        response = await self._post_success("/detail", data=data)
+
+        assert response.results
+        assert len(response.results) == 2
+        assert any(("id", str(exercise_1.id)) in results.items() for results in response.results)
+        assert any(("name", exercise_1.name) in results.items() for results in response.results)
+        assert any(("notes", exercise_1.notes) in results.items() for results in response.results)
+        assert any(("id", str(exercise_2.id)) in results.items() for results in response.results)
+        assert any(("name", exercise_2.name) in results.items() for results in response.results)
+        assert any(("notes", exercise_2.notes) in results.items() for results in response.results)
+
+    async def test_exercise_detail_fails_with_at_least_one_exercise_belonging_to_other_user(self) -> None:
+        exercise = await self.sample.exercise()
+        exercise_belonging_to_other_user = await self.sample.exercise(user=await self.sample.user())
+        data = [
+            {"exercise_id": str(exercise.id)},
+            {"exercise_id": str(exercise_belonging_to_other_user.id)},
+        ]
+
+        response = await self._post_error("/detail", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_exercise_create_succeeds(self) -> None:
         name = fake.text()
@@ -206,12 +237,14 @@ class TestExercises(APITestBase):
 
         assert response.results == []
 
-    async def _post_success(self, endpoint: str, data: dict[str, Any] | None = None) -> SuccessResponse:
+    async def _post_success(
+        self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]] | None = None
+    ) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data or {})).json())
         assert response.code == "ok"
         return response
 
-    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+    async def _post_error(self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]]) -> ErrorResponse:
         response = ErrorResponse(**(await self.client.post(f"/api/v2/exercises{endpoint}", json=data)).json())
         assert response.code == "error"
         return response
