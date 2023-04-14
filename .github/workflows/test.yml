@@ -51,9 +51,7 @@ jobs:
 
       - name: Install Dev Dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          poetry install --no-interaction
-          pip install pytest-github-actions-annotate-failures
+        run: poetry install --no-interaction
 
       - name: Install Just
         uses: extractions/setup-just@v1
