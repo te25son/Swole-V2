@@ -47,26 +47,30 @@ class ExerciseRepository(BaseRepository):
         except CardinalityViolationError as error:
             raise BusinessError(NO_EXERCISE_FOUND) from error
 
-    async def create(self, user_id: UUID | None, data: ExerciseCreate) -> ExerciseRead:
+    async def create(self, user_id: UUID | None, data: list[ExerciseCreate]) -> list[ExerciseRead]:
         try:
-            exercise = await self.client.query_single_json(
+            exercises = await self.query_json(
                 """
-                WITH exercise := (
-                    INSERT Exercise {
-                        name := <str>$name,
-                        notes := <optional str>$notes,
-                        user := (SELECT User FILTER .id = <uuid>$user_id)
-                    }
+                WITH exercises := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION (
+                        INSERT Exercise {
+                            name := <str>data['name'],
+                            notes := <optional str>data['notes'],
+                            user := (
+                                SELECT User
+                                FILTER .id = <uuid>$user_id
+                            )
+                        }
+                    )
                 )
-                SELECT exercise {id, name, notes}
+                SELECT exercises {id, name, notes}
                 """,
-                name=data.name,
-                notes=data.notes,
+                data=data,
                 user_id=user_id,
             )
-            return ExerciseRead.parse_raw(exercise)
-        except ConstraintViolationError as exc:
-            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from exc
+            return [ExerciseRead(**exercise) for exercise in exercises]
+        except ConstraintViolationError as error:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from error
 
     async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
         try:
