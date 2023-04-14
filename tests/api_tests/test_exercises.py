@@ -106,7 +106,7 @@ class TestExercises(APITestBase):
         # Excercise with name exists but belongs to other user
         await self.sample.exercise(user=await self.sample.user(), name=name)
 
-        response = await self._post_success("/create", data=data)
+        response = await self._post_success("/create", data=[data])
 
         assert response.results
         assert "id" in response.results[0]
@@ -115,13 +115,43 @@ class TestExercises(APITestBase):
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_create_with_invalid_name_fails(self, name: Any, message: str) -> None:
-        response = await self._post_error("/create", data={"name": name})
+        response = await self._post_error("/create", data=[{"name": name}])
 
         assert response.message == message
 
     async def test_exercise_create_with_existing_name_fails(self) -> None:
         exercise = await self.sample.exercise()
-        response = await self._post_error("/create", data={"name": exercise.name})
+        response = await self._post_error("/create", data=[{"name": exercise.name}])
+
+        assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
+
+    async def test_exercise_create_multiple_succeeds(self) -> None:
+        name_1, notes_1 = fake.text(), fake.text()
+        name_2, notes_2 = fake.text(), fake.text()
+        data = [
+            {"name": name_1, "notes": notes_1},
+            {"name": name_2, "notes": notes_2},
+        ]
+
+        response = await self._post_success("/create", data=data)
+
+        assert response.results
+        assert len(response.results) == 2
+        assert "id" in response.results[0]
+        assert any(("name", name_1) in results.items() for results in response.results)
+        assert any(("notes", notes_1) in results.items() for results in response.results)
+        assert "id" in response.results[1]
+        assert any(("name", name_2) in results.items() for results in response.results)
+        assert any(("notes", notes_2) in results.items() for results in response.results)
+
+    async def test_exercise_create_fails_when_trying_to_create_an_exercise_with_the_same_name_twice(self) -> None:
+        common_name = fake.text()
+        data = [
+            {"name": common_name},
+            {"name": common_name, "notes": fake.text()},
+        ]
+
+        response = await self._post_error("/create", data=data)
 
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 

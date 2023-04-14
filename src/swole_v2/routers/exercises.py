@@ -29,11 +29,11 @@ async def detail(
 
 @router.post("/create", response_model=SuccessResponse)
 async def create(
-    data: ExerciseCreate,
+    data: list[ExerciseCreate],
     current_user: User = Depends(get_current_active_user),
     respository: ExerciseRepository = Depends(ExerciseRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.create(current_user.id, data)])
+    return SuccessResponse(results=await respository.create(current_user.id, data))
 
 
 @router.post("/update", response_model=SuccessResponse)
