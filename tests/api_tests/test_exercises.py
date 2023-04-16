@@ -11,10 +11,11 @@ import pytest
 from swole_v2.errors.messages import (
     EXERCISE_WITH_NAME_ALREADY_EXISTS,
     FIELD_CANNOT_BE_EMPTY,
+    IDS_MUST_BE_UNIQUE,
     INVALID_ID,
     NO_EXERCISE_FOUND,
 )
-from swole_v2.models import ExerciseRead
+from swole_v2.models import Exercise, ExerciseRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
 
 from .base import APITestBase, fake
@@ -170,7 +171,7 @@ class TestExercises(APITestBase):
         exercise = await self.sample.exercise()
         data = {"exercise_id": str(exercise.id), "name": name, "notes": notes}
 
-        response = await self._post_success("/update", data=data)
+        response = await self._post_success("/update", data=[data])
         updated_exercise = await self.db.query_required_single_json(
             """
             SELECT Exercise {id, name, notes}
@@ -186,7 +187,7 @@ class TestExercises(APITestBase):
     async def test_exercise_update_fails_with_invalid_name(self, name: Any, message: str) -> None:
         exercise = await self.sample.exercise()
 
-        response = await self._post_error("/update", data={"exercise_id": str(exercise.id), "name": name})
+        response = await self._post_error("/update", data=[{"exercise_id": str(exercise.id), "name": name}])
 
         assert response.message == message
 
@@ -194,15 +195,69 @@ class TestExercises(APITestBase):
         name = (await self.sample.exercise()).name
         exercise = await self.sample.exercise()
 
-        response = await self._post_error("/update", data={"exercise_id": str(exercise.id), "name": name})
+        response = await self._post_error("/update", data=[{"exercise_id": str(exercise.id), "name": name}])
 
         assert response.message == EXERCISE_WITH_NAME_ALREADY_EXISTS
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_update_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = await self._post_error("/update", data={"exercise_id": str(exercise_id), "name": fake.text()})
+        response = await self._post_error("/update", data=[{"exercise_id": str(exercise_id), "name": fake.text()}])
 
         assert response.message == message
+
+    async def test_exercise_update_multiple_succeeds(self) -> None:
+        exercise_1 = await self.sample.exercise()
+        exercise_2 = await self.sample.exercise()
+        new_name_1, new_notes_1 = fake.text(), fake.text()
+        new_name_2, new_notes_2 = fake.text(), fake.text()
+        data = [
+            {"exercise_id": str(exercise_1.id), "name": new_name_1, "notes": new_notes_1},
+            {"exercise_id": str(exercise_2.id), "name": new_name_2, "notes": new_notes_2},
+        ]
+
+        response = await self._post_success("/update", data=data)
+        updated_exercise_1_data = json.loads(
+            await self.db.query_single_json(
+                "SELECT Exercise {id, name, notes} FILTER .id = <uuid>$exercise_id", exercise_id=exercise_1.id
+            )
+        )
+        updated_exercise_1 = Exercise(**updated_exercise_1_data)
+        updated_exercise_2_data = json.loads(
+            await self.db.query_single_json(
+                "SELECT Exercise {id, name, notes} FILTER .id = <uuid>$exercise_id", exercise_id=exercise_2.id
+            )
+        )
+        updated_exercise_2 = Exercise(**updated_exercise_2_data)
+
+        assert response.results
+        assert len(response.results) == 2
+        assert updated_exercise_1.name == new_name_1
+        assert updated_exercise_1.notes == new_notes_1
+        assert updated_exercise_2.name == new_name_2
+        assert updated_exercise_2.notes == new_notes_2
+
+    async def test_updating_the_same_exercise_multiple_times_in_the_same_request_fails(self) -> None:
+        exercise = await self.sample.exercise()
+        data = [
+            {"exercise_id": str(exercise.id), "name": fake.text()},
+            {"exercise_id": str(exercise.id), "notes": fake.text()},
+        ]
+
+        response = await self._post_error("/update", data=data)
+
+        assert response.message == IDS_MUST_BE_UNIQUE
+
+    async def test_updating_at_least_one_exercise_belonging_to_other_user_fails(self) -> None:
+        exercise = await self.sample.exercise()
+        exercise_belonging_to_other_user = await self.sample.exercise(user=await self.sample.user())
+        data = [
+            {"exercise_id": str(exercise.id), "name": fake.text()},
+            {"exercise_id": str(exercise_belonging_to_other_user.id), "name": fake.text()},
+        ]
+
+        response = await self._post_error("/update", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_exercise_delete_succeeds(self) -> None:
         exercise = await self.sample.exercise()
