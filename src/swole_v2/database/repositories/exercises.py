@@ -7,7 +7,7 @@ from edgedb import CardinalityViolationError, ConstraintViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
-from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, NO_EXERCISE_FOUND
+from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, IDS_MUST_BE_UNIQUE, NO_EXERCISE_FOUND
 from ...models import ExerciseProgressRead, ExerciseRead
 from .base import BaseRepository
 
@@ -72,33 +72,33 @@ class ExerciseRepository(BaseRepository):
         except ConstraintViolationError as error:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from error
 
-    async def update(self, user_id: UUID | None, data: ExerciseUpdate) -> ExerciseRead:
+    async def update(self, user_id: UUID | None, data: list[ExerciseUpdate]) -> list[ExerciseRead]:
         try:
-            result = json.loads(
-                await self.client.query_single_json(
-                    """
-                    WITH exercise := (
-                        UPDATE Exercise
-                        FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                        SET {
-                            name := <optional str>$name ?? .name,
-                            notes := <optional str>$notes ?? .notes
-                        }
-                    )
-                    SELECT exercise {id, name, notes}
-                    """,
-                    exercise_id=data.exercise_id,
-                    user_id=user_id,
-                    name=data.name,
-                    notes=data.notes,
-                )
-            )
-            if result is None:
-                raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+            if len({d.exercise_id for d in data}) != len(data):
+                raise BusinessError(IDS_MUST_BE_UNIQUE)
 
-            return ExerciseRead(**result)
-        except ConstraintViolationError as exc:
-            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from exc
+            exercises = await self.query_json(
+                """
+                WITH exercises := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        UPDATE Exercise
+                        FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                        SET {
+                            name := <optional str>data['name'] ?? .name,
+                            notes := <optional str>data['notes'] ?? .notes
+                        }
+                    ))
+                )
+                SELECT exercises {id, name, notes}
+                """,
+                data=data,
+                user_id=user_id,
+            )
+            return [ExerciseRead(**exercise) for exercise in exercises]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_EXERCISE_FOUND) from error
+        except ConstraintViolationError as error:
+            raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from error
 
     async def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
         result = json.loads(
