@@ -41,7 +41,7 @@ class WorkoutFactory(BaseFactory[Workout]):
     exercises = Ignore()
 
 
-class SetFactory(ModelFactory[Set]):
+class SetFactory(BaseFactory[Set]):
     __model__ = Set
 
     rep_count = Use(choice, [*range(1, 501)])
