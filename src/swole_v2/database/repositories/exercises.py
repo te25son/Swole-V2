@@ -4,7 +4,6 @@ import json
 from typing import TYPE_CHECKING
 
 from edgedb import CardinalityViolationError, ConstraintViolationError
-from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, IDS_MUST_BE_UNIQUE, NO_EXERCISE_FOUND
@@ -100,19 +99,23 @@ class ExerciseRepository(BaseRepository):
         except ConstraintViolationError as error:
             raise BusinessError(EXERCISE_WITH_NAME_ALREADY_EXISTS) from error
 
-    async def delete(self, user_id: UUID | None, data: ExerciseDelete) -> None:
-        result = json.loads(
-            await self.client.query_single_json(
+    async def delete(self, user_id: UUID | None, data: list[ExerciseDelete]) -> None:
+        try:
+            await self.query_json(
                 """
-                DELETE Exercise
-                FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
+                WITH exercises := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        SELECT Exercise
+                        FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                    ))
+                )
+                DELETE exercises
                 """,
-                exercise_id=data.exercise_id,
+                data=data,
                 user_id=user_id,
             )
-        )
-        if result is None:
-            raise HTTPException(status_code=404, detail=NO_EXERCISE_FOUND)
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_EXERCISE_FOUND) from error
 
     async def progress(self, user_id: UUID | None, data: ExerciseProgress) -> list[ExerciseProgressRead]:
         results = json.loads(

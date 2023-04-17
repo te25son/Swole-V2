@@ -264,7 +264,7 @@ class TestExercises(APITestBase):
         # Make sure we can delete an exercise that belongs to a workout
         await self.sample.workout(exercises=[exercise])
 
-        response = await self._post_success("/delete", data={"exercise_id": str(exercise.id)})
+        response = await self._post_success("/delete", data=[{"exercise_id": str(exercise.id)}])
         deleted_exercise = json.loads(
             await self.db.query_single_json("SELECT Exercise FILTER .id = <uuid>$exercise_id", exercise_id=exercise.id)
         )
@@ -274,9 +274,50 @@ class TestExercises(APITestBase):
 
     @pytest.mark.parametrize(*invalid_exercise_id_params)
     async def test_exercise_delete_fails_with_invalid_exercise_id(self, exercise_id: Any, message: str) -> None:
-        response = await self._post_error("/delete", data={"exercise_id": str(exercise_id)})
+        valid_exercise = await self.sample.exercise()
+        data = [
+            {"exercise_id": str(valid_exercise.id)},
+            {"exercise_id": str(exercise_id)},
+        ]
+        response = await self._post_error("/delete", data=data)
+        valid_exercise = json.loads(
+            await self.db.query_single_json("SELECT Exercise FILTER .id = <uuid>$id", id=valid_exercise.id)
+        )
 
         assert response.message == message
+        assert valid_exercise is not None
+
+    async def test_exercise_delete_multiple_succeeds(self) -> None:
+        exercise_1 = await self.sample.exercise()
+        exercise_2 = await self.sample.exercise()
+        data = [
+            {"exercise_id": str(exercise_1.id)},
+            {"exercise_id": str(exercise_2.id)},
+        ]
+
+        response = await self._post_success("/delete", data=data)
+        deleted_exercise_1 = json.loads(
+            await self.db.query_single_json("SELECT Exercise FILTER .id = <uuid>$id", id=exercise_1.id)
+        )
+        deleted_exercise_2 = json.loads(
+            await self.db.query_single_json("SELECT Exercise FILTER .id = <uuid>$id", id=exercise_2.id)
+        )
+
+        assert deleted_exercise_1 is None
+        assert deleted_exercise_2 is None
+        assert response.results == []
+
+    async def test_exercise_delete_fails_when_at_least_one_exercise_belongs_to_other_user(self) -> None:
+        exercise = await self.sample.exercise()
+        exercise_belonging_to_other_user = await self.sample.exercise(user=await self.sample.user())
+        data = [
+            {"exercise_id": str(exercise.id)},
+            {"exercise_id": str(exercise_belonging_to_other_user.id)},
+        ]
+
+        response = await self._post_error("/delete", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_exercise_progress_succeeds(self) -> None:
         exercise = await self.sample.exercise()
