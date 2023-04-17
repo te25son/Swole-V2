@@ -5,8 +5,9 @@ from random import choice
 from typing import Any, TypeVar
 
 from edgedb import create_async_client
+from polyfactory import Ignore, Use
+from polyfactory.factories.pydantic_factory import ModelFactory
 from pydantic import BaseModel
-from pydantic_factories import Ignore, ModelFactory, Use
 
 from swole_v2.dependencies.settings import get_settings
 from swole_v2.models import Exercise, Set, User, Workout
@@ -18,6 +19,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class BaseFactory(ModelFactory[T]):
+    __is_base_factory__ = True
     __allow_none_optionals__ = False
 
     id = Ignore()
