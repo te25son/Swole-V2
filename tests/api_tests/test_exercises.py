@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from itertools import filterfalse
 from statistics import mean
 from typing import Any, Iterable
 from uuid import uuid4
@@ -326,40 +327,81 @@ class TestExercises(APITestBase):
         set_group_3 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
         # Should not calculate other sets in same workout but different exercise
         await self.sample.sets(workout=set_group_1[0].workout)
+        # Pass the same exercise twice to ensure it does not return double the expected results
+        data = [
+            {"exercise_id": str(exercise.id)},
+            {"exercise_id": str(exercise.id)},
+        ]
 
-        response = await self._post_success("/progress", data={"exercise_id": str(exercise.id)})
+        response = await self._post_success("/progress", data=data)
 
         assert response.results
-        assert len(response.results) == 3
-        assert response.results[0]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_1])
-        assert response.results[1]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_2])
-        assert response.results[2]["avg_rep_count"] == await self._rounded_mean([g.rep_count for g in set_group_3])
-        assert response.results[0]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_1])
-        assert response.results[1]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_2])
-        assert response.results[2]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_3])
-        assert response.results[0]["max_weight"] == max([g.weight for g in set_group_1])
-        assert response.results[1]["max_weight"] == max([g.weight for g in set_group_2])
-        assert response.results[2]["max_weight"] == max([g.weight for g in set_group_3])
-        assert response.results[0]["name"] == exercise.name
-        assert response.results[1]["name"] == exercise.name
-        assert response.results[2]["name"] == exercise.name
-        assert response.results[0]["date"] == set_group_1[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
-        assert response.results[1]["date"] == set_group_2[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
-        assert response.results[2]["date"] == set_group_3[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+        assert len(response.results) == 1
+        assert len(response.results[0]["data"]) == 3
+        assert response.results[0]["exercise_name"] == exercise.name
+        assert response.results[0]["data"][0]["avg_rep_count"] == await self._rounded_mean(
+            [g.rep_count for g in set_group_1]
+        )
+        assert response.results[0]["data"][1]["avg_rep_count"] == await self._rounded_mean(
+            [g.rep_count for g in set_group_2]
+        )
+        assert response.results[0]["data"][2]["avg_rep_count"] == await self._rounded_mean(
+            [g.rep_count for g in set_group_3]
+        )
+        assert response.results[0]["data"][0]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_1])
+        assert response.results[0]["data"][1]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_2])
+        assert response.results[0]["data"][2]["avg_weight"] == await self._rounded_mean([g.weight for g in set_group_3])
+        assert response.results[0]["data"][0]["max_weight"] == max([g.weight for g in set_group_1])
+        assert response.results[0]["data"][1]["max_weight"] == max([g.weight for g in set_group_2])
+        assert response.results[0]["data"][2]["max_weight"] == max([g.weight for g in set_group_3])
+        assert response.results[0]["data"][0]["date"] == set_group_1[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+        assert response.results[0]["data"][1]["date"] == set_group_2[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
+        assert response.results[0]["data"][2]["date"] == set_group_3[0].workout.date.strftime("%Y-%m-%d")  # type: ignore
 
-    async def test_exercise_progress_fails_with_invalid_id(self) -> None:
-        response = await self._post_error("/progress", data={"exercise_id": str(fake.random_digit())})
+    @pytest.mark.parametrize(*invalid_exercise_id_params)
+    async def test_exercise_progress_fails_with_invalid_id(self, exercise_id: Any, message: str) -> None:
+        response = await self._post_error("/progress", data=[{"exercise_id": str(exercise_id)}])
 
-        assert response.message == INVALID_ID
+        assert response.message == message
 
-    async def test_exercise_progress_returns_empty_list_with_random_id(self) -> None:
-        response = await self._post_success("/progress", data={"exercise_id": str(uuid4())})
+    async def test_exercise_progress_multiple_succeeds(self) -> None:
+        exercise_1 = await self.sample.exercise()
+        await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10)))
+        await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10)))
+        exercise_2 = await self.sample.exercise()
+        data = [
+            {"exercise_id": str(exercise_1.id)},
+            {"exercise_id": str(exercise_2.id)},
+        ]
 
-        assert response.results == []
+        response = await self._post_success("/progress", data=data)
+
+        assert response.results
+        assert len(response.results) == 2
+        exercise_1_progress_report = list(
+            filterfalse(lambda r: r["exercise_name"] != exercise_1.name, response.results)
+        )[0]
+        exercise_2_progress_report = list(
+            filterfalse(lambda r: r["exercise_name"] != exercise_2.name, response.results)
+        )[0]
+        assert len(exercise_1_progress_report["data"]) == 2
+        assert len(exercise_2_progress_report["data"]) == 0
+
+    async def test_exercise_progress_fails_when_using_an_exercise_id_belonging_to_another_user(self) -> None:
+        exercise = await self.sample.exercise()
+        exercise_belonging_to_other_user = await self.sample.exercise(user=await self.sample.user())
+        data = [
+            {"exercise_id": str(exercise.id)},
+            {"exercise_id": str(exercise_belonging_to_other_user.id)},
+        ]
+
+        response = await self._post_error("/progress", data=data)
+
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_exercise_progress_returns_empty_list_when_exercise_has_no_sets(self) -> None:
         exercise = await self.sample.exercise()
-        response = await self._post_success("/progress", data={"exercise_id": str(exercise.id)})
+        response = await self._post_success("/progress", data=[{"exercise_id": str(exercise.id)}])
 
         assert response.results == []
 

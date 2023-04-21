@@ -1,0 +1,29 @@
+[
+    {
+        "data": [
+            {
+                "avg_rep_count": 172.33,
+                "avg_weight": 4864.67,
+                "date": "2020-03-25",
+                "max_weight": 7838
+            },
+            {
+                "avg_rep_count": 169.75,
+                "avg_weight": 5018.0,
+                "date": "2021-06-11",
+                "max_weight": 9388
+            },
+            {
+                "avg_rep_count": 262.0,
+                "avg_weight": 5654.17,
+                "date": "2021-06-07",
+                "max_weight": 8048
+            }
+        ],
+        "exercise_name": "yVzQkwVSRJcsFPgWkuLr"
+    },
+    {
+        "data": [],
+        "exercise_name": "YbhKKeRjaKMmAlxfqBVg"
+    }
+]

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import json
-from typing import TYPE_CHECKING
+from collections import defaultdict
+from typing import TYPE_CHECKING, Any
 
 from edgedb import CardinalityViolationError, ConstraintViolationError
 
 from ...errors.exceptions import BusinessError
 from ...errors.messages import EXERCISE_WITH_NAME_ALREADY_EXISTS, IDS_MUST_BE_UNIQUE, NO_EXERCISE_FOUND
-from ...models import ExerciseProgressRead, ExerciseRead
+from ...models import ExerciseProgressReport, ExerciseRead
 from .base import BaseRepository
 
 if TYPE_CHECKING:
@@ -117,21 +117,32 @@ class ExerciseRepository(BaseRepository):
         except CardinalityViolationError as error:
             raise BusinessError(NO_EXERCISE_FOUND) from error
 
-    async def progress(self, user_id: UUID | None, data: ExerciseProgress) -> list[ExerciseProgressRead]:
-        results = json.loads(
-            await self.client.query_json(
+    async def progress(self, user_id: UUID | None, data: list[ExerciseProgress]) -> list[ExerciseProgressReport]:
+        try:
+            exercises = await self.query_json(
                 """
-                WITH
-                    exercise_sets := (
-                        SELECT ExerciseSet {
-                            weight,
-                            rep_count,
-                        } FILTER .exercise.id = <uuid>$exercise_id
-                    ),
-                    groups := (
-                        GROUP exercise_sets BY (.workout, .exercise)
-                    )
-                SELECT groups {
+                WITH exercises := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        SELECT Exercise
+                        FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                    ))
+                )
+                SELECT exercises {id, name}
+                """,
+                data=data,
+                user_id=user_id,
+            )
+            progress_results = await self.query_json(
+                """
+                WITH grouped_exercise_sets := (
+                    GROUP (
+                        FOR data IN array_unpack(<array<json>>$data) UNION (
+                            SELECT ExerciseSet
+                            FILTER .exercise.id = <uuid>data['exercise_id'] AND .exercise.user.id = <uuid>$user_id
+                        )
+                    ) BY (.workout, .exercise)
+                )
+                SELECT grouped_exercise_sets {
                     name := .key.exercise.name,
                     date := .key.workout.date,
                     avg_rep_count := math::mean(.elements.rep_count),
@@ -139,7 +150,28 @@ class ExerciseRepository(BaseRepository):
                     max_weight := max(.elements.weight)
                 }
                 """,
-                exercise_id=data.exercise_id,
+                data=data,
+                user_id=user_id,
             )
-        )
-        return [ExerciseProgressRead(**r) for r in results]
+            progress_by_exercise = await self._join_progress_data_and_exercises_by_name(exercises, progress_results)
+            progress_reports = [
+                {"exercise_name": exercise_name, "data": data_list}
+                for exercise_name, data_list in progress_by_exercise.items()
+            ]
+            return [ExerciseProgressReport(**report) for report in progress_reports]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_EXERCISE_FOUND) from error
+
+    @staticmethod
+    async def _join_progress_data_and_exercises_by_name(
+        exercises: list[dict[str, Any]], progress_data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        progress_by_exercise = defaultdict(list)
+        for exercise in exercises:
+            exercise_name = exercise["name"]
+            for data in progress_data:
+                if exercise_name == data["name"]:
+                    progress_by_exercise[exercise_name].append(data)
+                else:
+                    progress_by_exercise[exercise_name]
+        return progress_by_exercise
