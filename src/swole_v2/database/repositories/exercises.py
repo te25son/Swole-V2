@@ -153,7 +153,9 @@ class ExerciseRepository(BaseRepository):
                 data=data,
                 user_id=user_id,
             )
-            progress_by_exercise = await self._join_progress_data_and_exercises_by_name(exercises, progress_results)
+            progress_by_exercise = await self._join_progress_data_and_exercises_by_exercise_name(
+                exercises, progress_results
+            )
             progress_reports = [
                 {"exercise_name": exercise_name, "data": data_list}
                 for exercise_name, data_list in progress_by_exercise.items()
@@ -163,7 +165,7 @@ class ExerciseRepository(BaseRepository):
             raise BusinessError(NO_EXERCISE_FOUND) from error
 
     @staticmethod
-    async def _join_progress_data_and_exercises_by_name(
+    async def _join_progress_data_and_exercises_by_exercise_name(
         exercises: list[dict[str, Any]], progress_data: list[dict[str, Any]]
     ) -> dict[str, Any]:
         progress_by_exercise = defaultdict(list)
