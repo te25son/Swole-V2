@@ -126,6 +126,13 @@ class TestSets(APITestBase):
                 "rep_count": set_1_rep_count,
                 "weight": set_1_weight,
             },
+            # We want to be able to add the same information twice
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": set_1_rep_count,
+                "weight": set_1_weight,
+            },
             {
                 "workout_id": str(workout.id),
                 "exercise_id": str(exercise.id),
@@ -146,7 +153,7 @@ class TestSets(APITestBase):
         )
 
         assert response.results
-        assert len(exercise_sets["sets"]) == 2
+        assert len(exercise_sets["sets"]) == 3
         assert all("id" in result for result in response.results)
         assert any(("weight", set_1_weight) in results.items() for results in response.results)
         assert any(("rep_count", set_1_rep_count) in results.items() for results in response.results)

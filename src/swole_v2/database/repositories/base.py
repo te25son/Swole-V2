@@ -23,13 +23,15 @@ class BaseRepository:
     async def as_dependency(cls, client: AsyncIOClient = Depends(get_async_client)) -> "BaseRepository":
         return cls(client)
 
-    async def query_json(self, query: str, user_id: UUID | None, data: list[T] | None = None) -> list[dict[str, Any]]:
+    async def query_json(
+        self, query: str, user_id: UUID | None, data: list[T] | None = None, unique: bool = True
+    ) -> list[dict[str, Any]]:
         async for transaction in self.client.transaction():
             async with transaction:
                 if data:
                     # Convert from set to list to ensure unique values
-                    unique_data = list({d.json() for d in data})
-                    result = await transaction.query_json(query, data=unique_data, user_id=user_id)
+                    trusted_data = list({d.json() for d in data}) if unique else [d.json() for d in data]
+                    result = await transaction.query_json(query, data=trusted_data, user_id=user_id)
                 else:
                     result = await transaction.query_json(query, user_id=user_id)
         return json.loads(result)

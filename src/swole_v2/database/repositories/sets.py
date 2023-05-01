@@ -66,6 +66,7 @@ class SetRepository(BaseRepository):
                 """,
                 data=data,
                 user_id=user_id,
+                unique=False,
             )
             return [SetRead(**exercise_set) for exercise_set in exercise_sets]
         except CardinalityViolationError as error:
