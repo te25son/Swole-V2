@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from edgedb import MissingRequiredError
+from edgedb import CardinalityViolationError
 from fastapi import HTTPException
 
 from ...errors.exceptions import BusinessError
-from ...errors.messages import NO_SET_FOUND, SET_ADD_FAILED
+from ...errors.messages import NO_EXERCISE_FOUND, NO_SET_FOUND, NO_WORKOUT_FOUND
 from ...models import SetRead
 from .base import BaseRepository
 
@@ -38,35 +38,38 @@ class SetRepository(BaseRepository):
 
         return [SetRead(**result) for result in results]
 
-    async def add(self, user_id: UUID | None, data: SetAdd) -> SetRead:
+    async def add(self, user_id: UUID | None, data: list[SetAdd]) -> list[SetRead]:
         try:
-            result = await self.client.query_single_json(
-                """
-                WITH exercise_set := (
-                    INSERT ExerciseSet {
-                        weight := <int64>$weight,
-                        rep_count := <int64>$rep_count,
-                        workout := (
-                            SELECT Workout
-                            FILTER (.id = <uuid>$workout_id and .user.id = <uuid>$user_id)
-                        ),
-                        exercise := (
-                            SELECT Exercise
-                            FILTER (.id = <uuid>$exercise_id and .user.id = <uuid>$user_id)
-                        )
-                    }
+            exercise_sets = await self.query_json(
+                f"""
+                WITH exercise_sets := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION (
+                        INSERT ExerciseSet {{
+                            weight := <int64>data['weight'],
+                            rep_count := <int64>data['rep_count'],
+                            workout := (
+                                SELECT assert_exists((
+                                    SELECT Workout
+                                    FILTER .id = <uuid>data['workout_id'] AND .user.id = <uuid>$user_id
+                                ), message := '{NO_WORKOUT_FOUND}')
+                            ),
+                            exercise := (
+                                SELECT assert_exists((
+                                    SELECT Exercise
+                                    FILTER .id = <uuid>data['exercise_id'] AND .user.id = <uuid>$user_id
+                                ), message := '{NO_EXERCISE_FOUND}')
+                            )
+                        }}
+                    )
                 )
-                SELECT exercise_set {id, weight, rep_count}
+                SELECT exercise_sets {{id, weight, rep_count}}
                 """,
-                weight=data.weight,
-                rep_count=data.rep_count,
-                workout_id=data.workout_id,
-                exercise_id=data.exercise_id,
+                data=data,
                 user_id=user_id,
             )
-            return SetRead.parse_raw(result)
-        except MissingRequiredError as exc:
-            raise BusinessError(SET_ADD_FAILED) from exc
+            return [SetRead(**exercise_set) for exercise_set in exercise_sets]
+        except CardinalityViolationError as error:
+            raise BusinessError(error.args[0]) from error
 
     async def delete(self, user_id: UUID | None, data: SetDelete) -> None:
         result = json.loads(
