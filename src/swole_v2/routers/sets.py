@@ -21,11 +21,11 @@ async def get_all_by_workout_and_exercise(
 
 @router.post("/add", response_model=SuccessResponse)
 async def add_to_workout_and_exercise(
-    data: SetAdd,
+    data: list[SetAdd],
     current_user: User = Depends(get_current_active_user),
     respository: SetRepository = Depends(SetRepository.as_dependency),
 ) -> SuccessResponse:
-    return SuccessResponse(results=[await respository.add(current_user.id, data)])
+    return SuccessResponse(results=await respository.add(current_user.id, data))
 
 
 @router.post("/delete", response_model=SuccessResponse)

@@ -11,8 +11,9 @@ from swole_v2.errors.messages import (
     MUST_BE_A_NON_NEGATIVE_NUMBER,
     MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
     MUST_BE_LESS_THAN,
+    NO_EXERCISE_FOUND,
     NO_SET_FOUND,
-    SET_ADD_FAILED,
+    NO_WORKOUT_FOUND,
 )
 from swole_v2.models import SetRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
@@ -104,12 +105,157 @@ class TestSets(APITestBase):
             "weight": weight,
         }
 
-        response = await self._post_success("/add", data)
+        response = await self._post_success("/add", [data])
 
         assert response.results
         assert "id" in response.results[0]
         assert ("rep_count", rep_count) in response.results[0].items()
         assert ("weight", weight) in response.results[0].items()
+
+    async def test_set_add_multiple_succeeds(self) -> None:
+        set_1_weight = fake.random_digit_not_null()
+        set_1_rep_count = fake.random_digit_not_null()
+        set_2_weight = fake.random_digit_not_null()
+        set_2_rep_count = fake.random_digit_not_null()
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        data = [
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": set_1_rep_count,
+                "weight": set_1_weight,
+            },
+            # We want to be able to add the same information twice
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": set_1_rep_count,
+                "weight": set_1_weight,
+            },
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": set_2_rep_count,
+                "weight": set_2_weight,
+            },
+        ]
+
+        response = await self._post_success("/add", data=data)
+        exercise_sets = json.loads(
+            await self.db.query_single_json(
+                """
+                SELECT Exercise {sets := .<exercise[is ExerciseSet]}
+                FILTER .id = <uuid>$exercise_id
+                """,
+                exercise_id=exercise.id,
+            )
+        )
+
+        assert response.results
+        assert len(exercise_sets["sets"]) == 3
+        assert all("id" in result for result in response.results)
+        assert any(("weight", set_1_weight) in results.items() for results in response.results)
+        assert any(("rep_count", set_1_rep_count) in results.items() for results in response.results)
+        assert any(("weight", set_2_weight) in results.items() for results in response.results)
+        assert any(("rep_count", set_2_rep_count) in results.items() for results in response.results)
+
+    async def test_set_add_fails_with_at_least_one_workout_belonging_to_another_user(self) -> None:
+        weight = fake.random_digit_not_null()
+        rep_count = fake.random_digit_not_null()
+        workout = await self.sample.workout()
+        workout_belonging_to_other_user = await self.sample.workout(user=await self.sample.user())
+        exercise = await self.sample.exercise()
+        data = [
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": rep_count,
+                "weight": weight,
+            },
+            {
+                "workout_id": str(workout_belonging_to_other_user.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": rep_count,
+                "weight": weight,
+            },
+        ]
+
+        response = await self._post_error("/add", data=data)
+        exercise_sets = json.loads(
+            await self.db.query_single_json(
+                """
+                SELECT Exercise {sets := .<exercise[is ExerciseSet]}
+                FILTER .id = <uuid>$exercise_id
+                """,
+                exercise_id=exercise.id,
+            )
+        )
+
+        assert response.message == NO_WORKOUT_FOUND
+        # Ensure no sets were added to the database
+        assert len(exercise_sets["sets"]) == 0
+
+    async def test_set_add_fails_with_at_least_one_exercise_belonging_to_another_user(self) -> None:
+        weight = fake.random_digit_not_null()
+        rep_count = fake.random_digit_not_null()
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        exercise_belonging_to_other_user = await self.sample.exercise(user=await self.sample.user())
+        data = [
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise.id),
+                "rep_count": rep_count,
+                "weight": weight,
+            },
+            {
+                "workout_id": str(workout.id),
+                "exercise_id": str(exercise_belonging_to_other_user.id),
+                "rep_count": rep_count,
+                "weight": weight,
+            },
+        ]
+
+        response = await self._post_error("/add", data=data)
+        exercise_sets = json.loads(
+            await self.db.query_single_json(
+                """
+                SELECT Exercise {sets := .<exercise[is ExerciseSet]}
+                FILTER .id = <uuid>$exercise_id
+                """,
+                exercise_id=exercise.id,
+            )
+        )
+        exercise_belonging_to_other_user_sets = json.loads(
+            await self.db.query_single_json(
+                """
+                SELECT Exercise {sets := .<exercise[is ExerciseSet]}
+                FILTER .id = <uuid>$exercise_id
+                """,
+                exercise_id=exercise_belonging_to_other_user.id,
+            )
+        )
+
+        assert response.message == NO_EXERCISE_FOUND
+        # Ensure no sets were added to the database
+        assert len(exercise_sets["sets"]) == 0
+        assert len(exercise_belonging_to_other_user_sets["sets"]) == 0
+
+    async def test_set_add_fails_with_missing_required_value(self) -> None:
+        workout = await self.sample.workout()
+        exercise = await self.sample.exercise()
+        data = [
+            {
+                "weight": fake.random_digit_not_null(),
+                "exercise_id": str(exercise.id),
+                "workout_id": str(workout.id),
+            }
+        ]
+
+        response = await self._post_error("/add", data=data)
+
+        assert response.message == "Field Required. Hint: (body > 0 > rep_count)."
 
     async def test_set_add_fails_with_exercise_belonging_to_other_user(self) -> None:
         rep_count = fake.random_digit_not_null()
@@ -123,9 +269,9 @@ class TestSets(APITestBase):
             "weight": weight,
         }
 
-        response = await self._post_error("/add", data)
+        response = await self._post_error("/add", [data])
 
-        assert response.message == SET_ADD_FAILED
+        assert response.message == NO_EXERCISE_FOUND
 
     async def test_set_add_fails_with_workout_belonging_to_other_user(self) -> None:
         workout = await self.sample.workout(user=await self.sample.user())
@@ -137,9 +283,9 @@ class TestSets(APITestBase):
             "weight": fake.random_digit_not_null(),
         }
 
-        response = await self._post_error("/add", data)
+        response = await self._post_error("/add", [data])
 
-        assert response.message == SET_ADD_FAILED
+        assert response.message == NO_WORKOUT_FOUND
 
     @pytest.mark.parametrize(
         "rep_count, weight, message",
@@ -163,7 +309,7 @@ class TestSets(APITestBase):
             "weight": weight,
         }
 
-        response = await self._post_error("/add", data)
+        response = await self._post_error("/add", [data])
 
         assert response.message == message
 
@@ -181,7 +327,7 @@ class TestSets(APITestBase):
             "weight": fake.random_digit_not_null(),
         }
 
-        response = await self._post_error("/add", data)
+        response = await self._post_error("/add", [data])
 
         assert response.message == message
 
@@ -283,12 +429,12 @@ class TestSets(APITestBase):
 
         assert response.message == message
 
-    async def _post_success(self, endpoint: str, data: dict[str, Any]) -> SuccessResponse:
+    async def _post_success(self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]]) -> SuccessResponse:
         response = SuccessResponse(**(await self.client.post(f"/api/v2/sets{endpoint}", json=data)).json())
         assert response.code == "ok"
         return response
 
-    async def _post_error(self, endpoint: str, data: dict[str, Any]) -> ErrorResponse:
+    async def _post_error(self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]]) -> ErrorResponse:
         response = ErrorResponse(**(await self.client.post(f"/api/v2/sets{endpoint}", json=data)).json())
         assert response.code == "error"
         return response
