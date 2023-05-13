@@ -62,6 +62,7 @@ disallow_untyped_decorators = false
 disallow_subclassing_any = false
 warn_return_any = false
 warn_unused_ignores = true
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
