@@ -1,13 +1,13 @@
 repos:
   - repo: https://github.com/floatingpurr/sync_with_poetry
-    rev: 0.4.0
+    rev: 1.0.0
     hooks:
       - id: sync_with_poetry
         args: ["--db", "pre_commit_sync.json"]
         stages: [manual, commit]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.4.0
+    rev: 1.5.0
     hooks:
       - id: poetry-check
         stages: [manual, commit]
