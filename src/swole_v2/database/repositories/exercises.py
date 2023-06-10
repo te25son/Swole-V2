@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class ExerciseRepository(BaseRepository):
     async def get_all(self, user_id: UUID | None) -> list[ExerciseRead]:
-        exercises = await self.query_json(
+        exercises = await self.query_owned_json(
             """
             SELECT Exercise {id, name, notes}
             FILTER .user.id = <uuid>$user_id
@@ -29,7 +29,7 @@ class ExerciseRepository(BaseRepository):
 
     async def detail(self, user_id: UUID | None, data: list[ExerciseDetail]) -> list[ExerciseRead]:
         try:
-            exercises = await self.query_json(
+            exercises = await self.query_owned_json(
                 """
                 WITH exercises := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -48,7 +48,7 @@ class ExerciseRepository(BaseRepository):
 
     async def create(self, user_id: UUID | None, data: list[ExerciseCreate]) -> list[ExerciseRead]:
         try:
-            exercises = await self.query_json(
+            exercises = await self.query_owned_json(
                 """
                 WITH exercises := (
                     FOR data IN array_unpack(<array<json>>$data) UNION (
@@ -76,7 +76,7 @@ class ExerciseRepository(BaseRepository):
             if len({d.exercise_id for d in data}) != len(data):
                 raise BusinessError(IDS_MUST_BE_UNIQUE)
 
-            exercises = await self.query_json(
+            exercises = await self.query_owned_json(
                 """
                 WITH exercises := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -101,7 +101,7 @@ class ExerciseRepository(BaseRepository):
 
     async def delete(self, user_id: UUID | None, data: list[ExerciseDelete]) -> None:
         try:
-            await self.query_json(
+            await self.query_owned_json(
                 """
                 WITH exercises := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -119,7 +119,7 @@ class ExerciseRepository(BaseRepository):
 
     async def progress(self, user_id: UUID | None, data: list[ExerciseProgress]) -> list[ExerciseProgressReport]:
         try:
-            exercises = await self.query_json(
+            exercises = await self.query_owned_json(
                 """
                 WITH exercises := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -132,7 +132,7 @@ class ExerciseRepository(BaseRepository):
                 data=data,
                 user_id=user_id,
             )
-            progress_results = await self.query_json(
+            progress_results = await self.query_owned_json(
                 """
                 WITH grouped_exercise_sets := (
                     GROUP (

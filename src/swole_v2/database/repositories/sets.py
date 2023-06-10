@@ -40,7 +40,7 @@ class SetRepository(BaseRepository):
 
     async def add(self, user_id: UUID | None, data: list[SetAdd]) -> list[SetRead]:
         try:
-            exercise_sets = await self.query_json(
+            exercise_sets = await self.query_owned_json(
                 f"""
                 WITH exercise_sets := (
                     FOR data IN array_unpack(<array<json>>$data) UNION (

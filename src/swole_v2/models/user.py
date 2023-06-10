@@ -15,5 +15,6 @@ class User(BaseModel):
 
 class UserRead(BaseModel):
     id: UUID
-    username: str | None
+    username: str
+    disabled: bool | None
     email: EmailStr | None
