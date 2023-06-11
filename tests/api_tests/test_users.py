@@ -79,6 +79,34 @@ class TestUsers(APITestBase):
 
         assert response.message == USER_ALREADY_EXISTS
 
+    async def test_user_create_multiple_succeeds(self) -> None:
+        username_1, email_1 = fake.uuid4(), fake.email()
+        username_2, email_2 = fake.uuid4(), fake.email()
+        data = [
+            {"username": username_1, "password": fake.word(), "email": email_1},
+            {"username": username_2, "password": fake.word(), "email": email_2},
+        ]
+        response = await self._post_success("users/create", data)
+        results = response.results
+
+        assert results
+        assert len(results) == 2
+        assert all("id" in result for result in results)
+        assert any(("username", username_1) in result.items() for result in results)
+        assert any(("username", username_2) in result.items() for result in results)
+        assert any(("email", email_1) in result.items() for result in results)
+        assert any(("email", email_2) in result.items() for result in results)
+
+    async def test_user_create_fails_when_adding_multiple_users_with_same_username(self) -> None:
+        username = fake.uuid4()
+        data = [
+            {"username": username, "password": fake.word()},
+            {"username": username, "password": fake.word()},
+        ]
+        response = await self._post_error("users/create", data)
+
+        assert response.message == USER_ALREADY_EXISTS
+
     async def _post_success(
         self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]] | None = None
     ) -> SuccessResponse:
