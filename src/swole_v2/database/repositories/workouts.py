@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class WorkoutRepository(BaseRepository):
     async def get_all(self, user_id: UUID | None) -> list[WorkoutRead]:
-        results = await self.query_json(
+        results = await self.query_owned_json(
             """
             SELECT Workout {id, name, date}
             FILTER .user.id = <uuid>$user_id
@@ -30,7 +30,7 @@ class WorkoutRepository(BaseRepository):
 
     async def add_exercises(self, user_id: UUID | None, data: list[WorkoutAddExercise]) -> list[WorkoutRead]:
         try:
-            workouts = await self.query_json(
+            workouts = await self.query_owned_json(
                 """
                 WITH workouts := (
                     FOR data IN array_unpack(<array<json>>$data) UNION (
@@ -58,7 +58,7 @@ class WorkoutRepository(BaseRepository):
     ) -> list[WorkoutRead | Workout]:
         try:
             select_query = "{id, name, date, exercises: {id, name, notes}}" if with_exercises else "{id, name, date}"
-            workouts = await self.query_json(
+            workouts = await self.query_owned_json(
                 f"""
                 WITH workouts := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -78,7 +78,7 @@ class WorkoutRepository(BaseRepository):
 
     async def create(self, user_id: UUID | None, data: list[WorkoutCreate]) -> list[WorkoutRead]:
         try:
-            workouts = await self.query_json(
+            workouts = await self.query_owned_json(
                 """
                 WITH workouts := (
                     FOR workout IN array_unpack(<array<json>>$data) UNION (
@@ -103,7 +103,7 @@ class WorkoutRepository(BaseRepository):
 
     async def delete(self, user_id: UUID | None, data: list[WorkoutDelete]) -> None:
         try:
-            await self.query_json(
+            await self.query_owned_json(
                 """
                 WITH workouts := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -126,7 +126,7 @@ class WorkoutRepository(BaseRepository):
             if len({d.workout_id for d in data}) != len(data):
                 raise BusinessError(IDS_MUST_BE_UNIQUE)
 
-            workouts = await self.query_json(
+            workouts = await self.query_owned_json(
                 """
                 WITH workouts := (
                     FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
@@ -151,7 +151,7 @@ class WorkoutRepository(BaseRepository):
 
     async def copy(self, user_id: UUID | None, data: list[WorkoutCopy]) -> list[WorkoutRead]:
         try:
-            workouts = await self.query_json(
+            workouts = await self.query_owned_json(
                 """
                 WITH copies := (
                     FOR data IN array_unpack(<array<json>>$data) UNION (
