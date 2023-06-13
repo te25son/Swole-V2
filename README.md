@@ -1,4 +1,4 @@
-<h1 align="center">Swole V2</h1>
+![Swole-V2](https://github.com/te25son/Swole-V2/assets/39095798/72450352-5788-491d-90ae-482c625f1c31)
 
 <p align="center">API for tracking workouts</p>
 
