@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from edgedb import AsyncIOClient, ConstraintViolationError
+from edgedb import AsyncIOClient, CardinalityViolationError, ConstraintViolationError
 from fastapi import Depends, HTTPException
 from jose import JWTError, jwt
 
@@ -12,13 +12,20 @@ from ...database.database import get_async_client
 from ...dependencies.passwords import verify_password
 from ...dependencies.settings import get_settings
 from ...errors.exceptions import BusinessError
-from ...errors.messages import COULD_NOT_VALIDATE_CREDENTIALS, INCORRECT_USERNAME_OR_PASSWORD, USER_ALREADY_EXISTS
+from ...errors.messages import (
+    COULD_NOT_VALIDATE_CREDENTIALS,
+    INCORRECT_USERNAME_OR_PASSWORD,
+    NO_USER_FOUND,
+    USER_ALREADY_EXISTS,
+)
 from ...models import Token, User, UserRead
 from ...settings import Settings
 from .base import BaseRepository
 
 if TYPE_CHECKING:
-    from ...schemas import UserCreate
+    from uuid import UUID
+
+    from ...schemas import UserCreate, UserDelete
 
 
 class UserRepository(BaseRepository):
@@ -55,6 +62,28 @@ class UserRepository(BaseRepository):
             return [UserRead(**user) for user in users]
         except ConstraintViolationError as error:
             raise BusinessError(USER_ALREADY_EXISTS) from error
+
+    async def delete(self, user_id: UUID | None, data: list[UserDelete]) -> list[UserRead]:
+        try:
+            users = await self.query_owned_json(
+                """
+                WITH users := (
+                    FOR data IN array_unpack(<array<json>>$data) UNION assert_exists((
+                        UPDATE User
+                        FILTER .id = <uuid>data['user_id'] AND .id = <uuid>$user_id
+                        SET {
+                            disabled := <bool>True
+                        }
+                    ))
+                )
+                SELECT users {id, username, disabled, email}
+                """,
+                data=data,
+                user_id=user_id,
+            )
+            return [UserRead(**user) for user in users]
+        except CardinalityViolationError as error:
+            raise BusinessError(NO_USER_FOUND) from error
 
     async def get_token(self, username: str, password: str) -> Token:
         if (user := await self.authenticate_user(username, password)) is None:

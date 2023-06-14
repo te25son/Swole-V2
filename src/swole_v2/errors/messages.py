@@ -11,6 +11,7 @@ NAME_AND_DATE_MUST_BE_UNIQUE = "Another workout already exists with the same nam
 NO_EXERCISE_FOUND = "No exercise found"
 NO_WORKOUT_FOUND = "No workout found"
 NO_SET_FOUND = "No set was found with the given ids"
+NO_USER_FOUND = "No user found"
 INCORRECT_USERNAME_OR_PASSWORD = "Incorrect username or password"
 COULD_NOT_VALIDATE_CREDENTIALS = "Could not validate credentials"
 USER_ALREADY_EXISTS = "A user with that username already exists"
