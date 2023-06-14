@@ -34,7 +34,7 @@ async def test_client(test_app: SwoleApp) -> AsyncClient:
 
 @pytest.fixture(scope="session", autouse=True)
 async def test_database() -> AsyncIOClient:
-    return create_async_client(dsn=get_settings().EDGEDB_DSN)
+    return create_async_client(dsn=get_settings().EDGEDB_INSTANCE)
 
 
 @pytest.fixture(scope="function")

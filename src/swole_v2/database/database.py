@@ -11,4 +11,4 @@ if TYPE_CHECKING:
 
 
 def get_async_client() -> AsyncIOClient:
-    return create_async_client(dsn=get_settings().EDGEDB_DSN)
+    return create_async_client(dsn=get_settings().EDGEDB_INSTANCE)

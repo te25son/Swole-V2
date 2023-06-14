@@ -69,8 +69,7 @@ env = [
     "SECRET_KEY=12345",
     "DUMMY_USERNAME=test",
     "DUMMY_PASSWORD=password123",
-    "EDGEDB_INSTANCE=test_db",
-    "EDGEDB_DSN=test_db"
+    "EDGEDB_INSTANCE=test_db"
 ]
 
 [tool.coverage.paths]
