@@ -55,7 +55,7 @@ class SetFactory(BaseFactory[Set]):
 
 class Sample:
     def __init__(self) -> None:
-        self.client = create_async_client(dsn=get_settings().EDGEDB_DSN)
+        self.client = create_async_client(dsn=get_settings().EDGEDB_INSTANCE)
 
     # Needed to create instance with async user method
     async def initialize(self, user: User | None = None) -> "Sample":
