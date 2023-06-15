@@ -1,1 +1,1 @@
-web: uvicorn src.swole_v2.main:app --host=0.0.0.0 --port=${PORT:-5000}
+web: gunicorn src.swole_v2.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:80
