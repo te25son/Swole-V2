@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from .dependencies.settings import get_settings
 from .errors.exceptions import BusinessError
@@ -30,6 +31,17 @@ class SwoleApp:
                 status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse},
                 status.HTTP_422_UNPROCESSABLE_ENTITY: {"model": ErrorResponse},
             },
+        )
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[
+                "https://swolev2.com",
+                "https://www.swolev2.com",
+            ],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
 
         app.include_router(api_router)
