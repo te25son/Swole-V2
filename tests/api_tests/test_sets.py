@@ -22,7 +22,7 @@ from .base import APITestBase, fake
 
 
 class TestSets(APITestBase):
-    invalid_set_data_params = [
+    invalid_set_data_params = (
         pytest.param(
             -fake.random_digit_not_null(),
             fake.random_digit_not_null(),
@@ -59,7 +59,7 @@ class TestSets(APITestBase):
         pytest.param(
             "", fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test empty weight fails"
         ),
-    ]
+    )
 
     invalid_set_id_params = (
         "set_id, message",
