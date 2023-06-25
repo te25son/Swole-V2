@@ -107,6 +107,18 @@ class TestUsers(APITestBase):
 
         assert response.message == USER_ALREADY_EXISTS
 
+    async def test_user_delete_succeeds(self) -> None:
+        data = [
+            {"user_id": str(self.user.id)},
+        ]
+        response = await self._post_success("users/delete", data)
+
+        assert response.results
+        assert all("id" in result for result in response.results)
+        assert all(("username", self.user.username) in result.items() for result in response.results)
+        assert all(("email", self.user.email) in result.items() for result in response.results)
+        assert all(("disabled", True) in result.items() for result in response.results)
+
     async def _post_success(
         self, endpoint: str, data: dict[str, Any] | list[dict[str, Any]] | None = None
     ) -> SuccessResponse:
