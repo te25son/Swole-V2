@@ -835,13 +835,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polyfactory"
-version = "2.4.0"
+version = "2.5.0"
 description = "Mock data generation factories"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "polyfactory-2.4.0-py3-none-any.whl", hash = "sha256:fbd43844d052d124b46fe23f6fd19b73ffd21a08080c387bce56533925b19fd3"},
-    {file = "polyfactory-2.4.0.tar.gz", hash = "sha256:561a6e2d551492431e5ded760763b76c904176cdf6a36f48e33f1611fdff5b26"},
+    {file = "polyfactory-2.5.0-py3-none-any.whl", hash = "sha256:b27d00b5c920649b6f172f203f2a6e6ddfb0b9ad1cccdae95d8354ea60e7d39c"},
+    {file = "polyfactory-2.5.0.tar.gz", hash = "sha256:23854cc52d06935e145fc87dddecdd1797ecd2a40ba2f3fcc06dc3d2a2f5a80d"},
 ]
 
 [package.dependencies]
@@ -849,10 +849,10 @@ faker = "*"
 typing-extensions = "*"
 
 [package.extras]
-beanie = ["beanie[beanie]", "pydantic[beanie,odmantic,pydantic]"]
-msgspec = ["msgspec[msgspec]"]
-odmantic = ["odmantic[odmantic]", "pydantic[beanie,odmantic,pydantic]"]
-pydantic = ["pydantic[beanie,odmantic,pydantic]"]
+beanie = ["beanie", "pydantic"]
+msgspec = ["msgspec"]
+odmantic = ["odmantic", "pydantic"]
+pydantic = ["pydantic"]
 
 [[package]]
 name = "pyasn1"
