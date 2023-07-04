@@ -499,18 +499,19 @@ python-dateutil = ">=2.4"
 
 [[package]]
 name = "fastapi"
-version = "0.98.0"
+version = "0.99.1"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "fastapi-0.98.0-py3-none-any.whl", hash = "sha256:f4165fb1fe3610c52cb1b8282c1480de9c34bc270f56a965aa93a884c350d605"},
-    {file = "fastapi-0.98.0.tar.gz", hash = "sha256:0d3c18886f652038262b5898fec6b09f4ca92ee23e9d9b1d1d24e429f84bf27b"},
+    {file = "fastapi-0.99.1-py3-none-any.whl", hash = "sha256:976df7bab51ac7beda9f68c4513b8c4490b5c1135c72aafd0a5ee4023ec5282e"},
+    {file = "fastapi-0.99.1.tar.gz", hash = "sha256:ac78f717cd80d657bd183f94d33b9bda84aa376a46a9dab513586b8eef1dc6fc"},
 ]
 
 [package.dependencies]
 pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0"
 starlette = ">=0.27.0,<0.28.0"
+typing-extensions = ">=4.5.0"
 
 [package.extras]
 all = ["email-validator (>=1.1.1)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)", "jinja2 (>=2.11.2)", "orjson (>=3.2.1)", "python-multipart (>=0.0.5)", "pyyaml (>=5.3.1)", "ujson (>=4.0.1,!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0)", "uvicorn[standard] (>=0.12.0)"]
@@ -640,13 +641,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "hypothesis"
-version = "6.79.3"
+version = "6.80.0"
 description = "A library for property-based testing"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "hypothesis-6.79.3-py3-none-any.whl", hash = "sha256:245bed0fcf7612caa0ca1ecaa5c1e3a7100bbf9fd0fe4a24bdd9e46249b2774f"},
-    {file = "hypothesis-6.79.3.tar.gz", hash = "sha256:69b55ee1dae2c7edd214e273a977d0dfba542946a211c9ef1f958743b49e430e"},
+    {file = "hypothesis-6.80.0-py3-none-any.whl", hash = "sha256:63dc6b094b52da6180ca50edd63bf08184bc96810f8624fdbe66578aaf377993"},
+    {file = "hypothesis-6.80.0.tar.gz", hash = "sha256:75d74da36fd3837b5b3fe15211dabc7389e78d882bf2c91bab2184ccf91fe64c"},
 ]
 
 [package.dependencies]
@@ -655,7 +656,7 @@ exceptiongroup = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 sortedcontainers = ">=2.1.0,<3.0.0"
 
 [package.extras]
-all = ["backports.zoneinfo (>=0.2.1)", "black (>=19.10b0)", "click (>=7.0)", "django (>=3.2)", "dpcontracts (>=0.4)", "importlib-metadata (>=3.6)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.16.0)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2023.3)"]
+all = ["backports.zoneinfo (>=0.2.1)", "black (>=19.10b0)", "click (>=7.0)", "django (>=3.2)", "dpcontracts (>=0.4)", "lark (>=0.10.1)", "libcst (>=0.3.16)", "numpy (>=1.17.3)", "pandas (>=1.1)", "pytest (>=4.6)", "python-dateutil (>=1.4)", "pytz (>=2014.1)", "redis (>=3.0.0)", "rich (>=9.0.0)", "tzdata (>=2023.3)"]
 cli = ["black (>=19.10b0)", "click (>=7.0)", "rich (>=9.0.0)"]
 codemods = ["libcst (>=0.3.16)"]
 dateutil = ["python-dateutil (>=1.4)"]
@@ -663,7 +664,7 @@ django = ["django (>=3.2)"]
 dpcontracts = ["dpcontracts (>=0.4)"]
 ghostwriter = ["black (>=19.10b0)"]
 lark = ["lark (>=0.10.1)"]
-numpy = ["numpy (>=1.16.0)"]
+numpy = ["numpy (>=1.17.3)"]
 pandas = ["pandas (>=1.1)"]
 pytest = ["pytest (>=4.6)"]
 pytz = ["pytz (>=2014.1)"]
@@ -834,13 +835,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polyfactory"
-version = "2.4.0"
+version = "2.5.0"
 description = "Mock data generation factories"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "polyfactory-2.4.0-py3-none-any.whl", hash = "sha256:fbd43844d052d124b46fe23f6fd19b73ffd21a08080c387bce56533925b19fd3"},
-    {file = "polyfactory-2.4.0.tar.gz", hash = "sha256:561a6e2d551492431e5ded760763b76c904176cdf6a36f48e33f1611fdff5b26"},
+    {file = "polyfactory-2.5.0-py3-none-any.whl", hash = "sha256:b27d00b5c920649b6f172f203f2a6e6ddfb0b9ad1cccdae95d8354ea60e7d39c"},
+    {file = "polyfactory-2.5.0.tar.gz", hash = "sha256:23854cc52d06935e145fc87dddecdd1797ecd2a40ba2f3fcc06dc3d2a2f5a80d"},
 ]
 
 [package.dependencies]
@@ -848,10 +849,10 @@ faker = "*"
 typing-extensions = "*"
 
 [package.extras]
-beanie = ["beanie[beanie]", "pydantic[beanie,odmantic,pydantic]"]
-msgspec = ["msgspec[msgspec]"]
-odmantic = ["odmantic[odmantic]", "pydantic[beanie,odmantic,pydantic]"]
-pydantic = ["pydantic[beanie,odmantic,pydantic]"]
+beanie = ["beanie", "pydantic"]
+msgspec = ["msgspec"]
+odmantic = ["odmantic", "pydantic"]
+pydantic = ["pydantic"]
 
 [[package]]
 name = "pyasn1"
@@ -1421,4 +1422,4 @@ test = ["Cython (>=0.29.32,<0.30.0)", "aiohttp", "flake8 (>=3.9.2,<3.10.0)", "my
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5d9a069a30cbb8ddda33ac4bcf788a7450e786e6b9073e13075912201dd09524"
+content-hash = "23dea9f30410563ad4f82439d77fff23f00878bae8d0f8583252f6e43c4608a8"
