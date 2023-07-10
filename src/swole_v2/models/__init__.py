@@ -4,8 +4,8 @@ from .token import Token
 from .user import User, UserRead
 from .workout import Workout, WorkoutRead
 
-Set.update_forward_refs(Workout=Workout, Exercise=Exercise)
-Workout.update_forward_refs(Exercise=Exercise)
+Set.model_rebuild()
+Workout.model_rebuild()
 
 __all__ = [
     "User",

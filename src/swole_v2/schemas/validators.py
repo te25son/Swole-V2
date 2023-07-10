@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
 
-from pydantic import validator
+from pydantic import field_validator
 
 from ..errors.exceptions import BusinessError
 from ..errors.messages import (
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "AnyClassMethod"]:
-    return validator(*fields, allow_reuse=True, pre=True, always=True, **kwargs)
+    return field_validator(*fields, mode="before", **kwargs)
 
 
 def check_is_uuid(id: str) -> UUID:

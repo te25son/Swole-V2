@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .validators import check_is_less_than, check_is_non_negative, check_is_uuid, schema_validator
 
@@ -26,7 +26,7 @@ class SetAdd(BaseModel):
 
     # For some reason reusing validators like the ones above does not work when validating
     # the same field more than once.
-    @validator("rep_count", "weight", pre=True, always=True)
+    @field_validator("rep_count", "weight", mode="before")
     def check_non_negative(cls, value: int) -> int:
         return check_is_non_negative(allow_none=False)(value)  # type: ignore[return-value]
 
@@ -48,6 +48,6 @@ class SetUpdate(BaseModel):
 
     # For some reason reusing validators like the ones above does not work when validating
     # the same field more than once.
-    @validator("rep_count", "weight", pre=True, always=True)
+    @field_validator("rep_count", "weight", mode="before")
     def check_non_negative(cls, value: int | None) -> int | None:
         return check_is_non_negative(allow_none=True)(value)  # type: ignore[arg-type]

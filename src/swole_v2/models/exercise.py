@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class Exercise(BaseModel):
@@ -24,7 +24,7 @@ class ExerciseProgressReportData(BaseModel):
     avg_weight: float
     max_weight: int
 
-    @validator("avg_rep_count", "avg_weight")
+    @field_validator("avg_rep_count", "avg_weight")
     def round_averages(cls, value: float) -> float:
         return round(value, 2)
 
