@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 from random import choice
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
+from uuid import UUID
 
 from edgedb import create_async_client
-from polyfactory import Ignore, Use
+from polyfactory import Use
 from polyfactory.factories.pydantic_factory import ModelFactory
 from pydantic import BaseModel
 
@@ -22,7 +23,7 @@ class BaseFactory(ModelFactory[T]):
     __is_base_factory__ = True
     __allow_none_optionals__ = False
 
-    id = Ignore()
+    id: UUID | None = None
 
 
 class UserFactory(BaseFactory[User]):
@@ -38,7 +39,7 @@ class ExerciseFactory(BaseFactory[Exercise]):
 class WorkoutFactory(BaseFactory[Workout]):
     __model__ = Workout
 
-    exercises = Ignore()
+    exercises: ClassVar[list[Exercise]] = []
 
 
 class SetFactory(BaseFactory[Set]):
@@ -46,8 +47,8 @@ class SetFactory(BaseFactory[Set]):
 
     rep_count = Use(choice, [*range(1, 501)])
     weight = Use(choice, [*range(1, 10001)])
-    workout = Ignore()
-    exercise = Ignore()
+    workout: Workout | None = None
+    exercise: Exercise | None = None
 
 
 # =================== SAMPLE ===================
