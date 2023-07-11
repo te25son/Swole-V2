@@ -8,14 +8,14 @@ from pydantic import BaseModel, Field, field_validator
 
 class Exercise(BaseModel):
     name: str
-    id: UUID | None
-    notes: str | None
+    id: UUID | None = None
+    notes: str | None = None
 
 
 class ExerciseRead(BaseModel):
     id: UUID
-    name: str | None
-    notes: str | None
+    name: str | None = None
+    notes: str | None = None
 
 
 class ExerciseProgressReportData(BaseModel):

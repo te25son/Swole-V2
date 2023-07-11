@@ -293,7 +293,7 @@ class TestWorkouts(APITestBase):
 
         response = await self._post_success("/update", data=[data])
 
-        updated_workout = Workout.parse_raw(
+        updated_workout = Workout.model_validate_json(
             await self.db.query_single_json(
                 "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
             )
@@ -344,7 +344,7 @@ class TestWorkouts(APITestBase):
         data = {"workout_id": str(workout.id), "name": name, "date": date}
 
         response = await self._post_error("/update", data=[data])
-        not_updated_workout = Workout.parse_raw(
+        not_updated_workout = Workout.model_validate_json(
             await self.db.query_single_json(
                 "SELECT Workout {name, date} FILTER .id = <uuid>$workout_id", workout_id=workout.id
             )
@@ -386,12 +386,12 @@ class TestWorkouts(APITestBase):
         ]
 
         response = await self._post_success("/update", data=data)
-        updated_workout_1 = Workout.parse_raw(
+        updated_workout_1 = Workout.model_validate_json(
             await self.db.query_single_json(
                 "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=workout_1.id
             )
         )
-        updated_workout_2 = Workout.parse_raw(
+        updated_workout_2 = Workout.model_validate_json(
             await self.db.query_single_json(
                 "SELECT Workout {id, name, date} FILTER .id = <uuid>$workout_id", workout_id=workout_2.id
             )
@@ -432,10 +432,10 @@ class TestWorkouts(APITestBase):
         data = {"workout_id": str(workout.id), "exercise_id": str(exercise.id)}
 
         response = await self._post_success("/add-exercises", data=[data])
-        updated_workout = Workout.parse_raw(
+        updated_workout = Workout.model_validate_json(
             await self.db.query_single_json(
                 """
-                SELECT Workout {name, date, exercises: {name}}
+                SELECT Workout {id, name, date, exercises: {id, name, notes}}
                 FILTER .id = <uuid>$workout_id
                 """,
                 workout_id=workout.id,
@@ -455,7 +455,7 @@ class TestWorkouts(APITestBase):
         data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)} for exercise in exercises]
 
         response = await self._post_success("/add-exercises", data=data)
-        updated_workout = Workout.parse_raw(
+        updated_workout = Workout.model_validate_json(
             await self.db.query_single_json(
                 """
                 SELECT Workout {name, date, exercises: {name}}
@@ -503,7 +503,7 @@ class TestWorkouts(APITestBase):
         data = [{"workout_id": str(workout.id), "exercise_id": str(exercise.id)} for _ in range(5)]
 
         response = await self._post_success("/add-exercises", data=data)
-        updated_workout = Workout.parse_raw(
+        updated_workout = Workout.model_validate_json(
             await self.db.query_single_json(
                 """
                 SELECT Workout {name, date, exercises: {name}}

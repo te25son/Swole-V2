@@ -15,15 +15,15 @@ class ExerciseDetail(BaseModel):
 
 class ExerciseCreate(BaseModel):
     name: str
-    notes: str | None
+    notes: str | None = None
 
     _check_empty_name = schema_validator("name")(check_empty_string("name"))
 
 
 class ExerciseUpdate(BaseModel):
     exercise_id: UUID
-    name: str | None
-    notes: str | None
+    name: str | None = None
+    notes: str | None = None
 
     _check_ids = schema_validator("exercise_id")(check_is_uuid)
     _check_empty_name = schema_validator("name")(check_empty_string("name", allow_none=True))

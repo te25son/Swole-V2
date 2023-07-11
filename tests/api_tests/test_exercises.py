@@ -182,7 +182,7 @@ class TestExercises(APITestBase):
         )
 
         assert response.results
-        assert response.results == [json.loads(ExerciseRead.parse_raw(updated_exercise).json())]
+        assert response.results == [json.loads(ExerciseRead.model_validate_json(updated_exercise).model_dump_json())]
 
     @pytest.mark.parametrize(*invalid_name_params)
     async def test_exercise_update_fails_with_invalid_name(self, name: Any, message: str) -> None:

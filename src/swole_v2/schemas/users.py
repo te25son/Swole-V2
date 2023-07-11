@@ -14,7 +14,7 @@ class UserLogin(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    email: EmailStr | None
+    email: EmailStr | None = None
 
     _check_empty_username = schema_validator("username")(check_empty_string("username"))
     _check_empty_password = schema_validator("password")(check_empty_string("password"))
