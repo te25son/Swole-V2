@@ -47,7 +47,8 @@ class TestExercises(APITestBase):
         assert response.results
         assert len(response.results) == len(exercises)
         assert all(
-            result in response.results for result in [json.loads(ExerciseRead(**e.dict()).json()) for e in exercises]
+            result in response.results
+            for result in [json.loads(ExerciseRead(**e.model_dump()).model_dump_json()) for e in exercises]
         )
 
     async def test_exercise_get_all_returns_only_exercises_owned_by_logged_in_user(self) -> None:
