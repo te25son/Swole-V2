@@ -835,13 +835,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polyfactory"
-version = "2.6.1"
+version = "2.6.2"
 description = "Mock data generation factories"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "polyfactory-2.6.1-py3-none-any.whl", hash = "sha256:7de8b78b6e76d9adaab3973c71735447a53f21d5351a83c06c81b5e373ddfe1f"},
-    {file = "polyfactory-2.6.1.tar.gz", hash = "sha256:449c37644b738e464f953a37843b990966e999474ddb39bcb9602c24d52cbb8d"},
+    {file = "polyfactory-2.6.2-py3-none-any.whl", hash = "sha256:becdae6720a6df87fb1aa738ba8fa5c26982d72040eb73bf7d938be2637c35b3"},
+    {file = "polyfactory-2.6.2.tar.gz", hash = "sha256:a71016770b643c3bbc26c439cffea13b8510827d6e9e40a857783f8242cb1d8f"},
 ]
 
 [package.dependencies]
