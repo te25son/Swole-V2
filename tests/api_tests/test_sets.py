@@ -79,7 +79,7 @@ class TestSets(APITestBase):
         )
 
         assert response.results
-        assert response.results == [json.loads(SetRead(**s.dict()).json()) for s in sets]
+        assert response.results == [json.loads(SetRead(**s.model_dump()).model_dump_json()) for s in sets]
 
     async def test_set_get_all_only_returns_sets_owned_by_logged_in_user(self) -> None:
         user = await self.sample.user()

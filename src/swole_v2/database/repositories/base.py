@@ -30,7 +30,9 @@ class BaseRepository:
             async with transaction:
                 if data:
                     # Convert from set to list to ensure unique values
-                    trusted_data = list({d.json() for d in data}) if unique else [d.json() for d in data]
+                    trusted_data = (
+                        list({d.model_dump_json() for d in data}) if unique else [d.model_dump_json() for d in data]
+                    )
                     result = await transaction.query_json(query, data=trusted_data, **kwargs)
                 else:
                     result = await transaction.query_json(query, **kwargs)

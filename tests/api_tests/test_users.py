@@ -56,7 +56,7 @@ class TestUsers(APITestBase):
         response = await self._post_success("users/profile")
 
         assert response.results
-        assert response.results == [json.loads(UserRead(**response.results[0]).json())]
+        assert response.results == [json.loads(UserRead(**response.results[0]).model_dump_json())]
 
     async def test_user_create_succeeds(self) -> None:
         data = [{"username": (username := fake.uuid4()), "password": fake.uuid4(), "email": (email := fake.email())}]

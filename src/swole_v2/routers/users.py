@@ -19,4 +19,4 @@ async def create(
 
 @router.post("/profile", response_model=SuccessResponse)
 async def profile(current_user: User = Depends(get_current_active_user)) -> SuccessResponse:
-    return SuccessResponse(results=[UserRead(**current_user.dict())])
+    return SuccessResponse(results=[UserRead(**current_user.model_dump())])

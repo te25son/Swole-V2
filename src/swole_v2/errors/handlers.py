@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 def http_exception_handler(_: Request, exception: HTTPException) -> JSONResponse:
     return JSONResponse(
         status_code=exception.status_code,
-        content=ErrorResponse(message=exception.detail).dict(),
+        content=ErrorResponse(message=exception.detail).model_dump(),
     )
 
 
 def business_error_handler(_: Request, exception: BusinessError) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content=ErrorResponse(message=str(exception)).dict(),
+        content=ErrorResponse(message=str(exception)).model_dump(),
     )
 
 
@@ -33,5 +33,5 @@ def request_validation_error_handler(_: Request, exception: RequestValidationErr
     message = f"{error['msg'].title()}. Hint: {error['loc']}.".replace("'", "").replace(",", " >")
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=ErrorResponse(message=message).dict(),  # Only dsiplays the first error
+        content=ErrorResponse(message=message).model_dump(),  # Only dsiplays the first error
     )

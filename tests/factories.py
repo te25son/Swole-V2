@@ -81,7 +81,7 @@ class Sample:
             email=user_factory.email,
             disabled=user_factory.disabled,
         )
-        return User.parse_raw(user)
+        return User.model_validate_json(user)
 
     async def users(self, size: int = 5, **kwargs: Any) -> list[User]:
         user_factories = UserFactory.batch(size, **kwargs)
@@ -99,7 +99,7 @@ class Sample:
             )
             SELECT users {id, username, hashed_password, email, disabled}
             """,
-            factories=[u.json() for u in user_factories],
+            factories=[u.model_dump_json() for u in user_factories],
         )
         return [User(**u) for u in json.loads(users)]
 
@@ -130,7 +130,7 @@ class Sample:
             user_id=(user or self.test_user).id,
             exercise_ids=[e.id for e in exercises or []],
         )
-        return Workout.parse_raw(workout)
+        return Workout.model_validate_json(workout)
 
     async def workouts(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Workout]:
         workout_factories = WorkoutFactory.batch(size, **kwargs)
@@ -147,7 +147,7 @@ class Sample:
             )
             SELECT workouts {id, name, date}
             """,
-            factories=[w.json() for w in workout_factories],
+            factories=[w.model_dump_json() for w in workout_factories],
             user_id=(user or self.test_user).id,
         )
         return [Workout(**w) for w in json.loads(workouts)]
@@ -169,7 +169,7 @@ class Sample:
             notes=exercise_factory.notes,
             user_id=(user or self.test_user).id,
         )
-        return Exercise.parse_raw(exercise)
+        return Exercise.model_validate_json(exercise)
 
     async def exercises(self, user: User | None = None, size: int = 5, **kwargs: Any) -> list[Exercise]:
         exercise_factories = ExerciseFactory.batch(size, **kwargs)
@@ -186,7 +186,7 @@ class Sample:
             )
             SELECT exercises {id, name, notes}
             """,
-            factories=[e.json() for e in exercise_factories],
+            factories=[e.model_dump_json() for e in exercise_factories],
             user_id=(user or self.test_user).id,
         )
         return [Exercise(**e) for e in json.loads(exercises)]
@@ -216,7 +216,7 @@ class Sample:
             workout_id=(workout or await self.workout()).id,
             exercise_id=(exercise or await self.exercise()).id,
         )
-        return Set.parse_raw(set)
+        return Set.model_validate_json(set)
 
     async def sets(
         self, workout: Workout | None = None, exercise: Exercise | None = None, size: int = 5, **kwargs: Any
@@ -242,7 +242,7 @@ class Sample:
                 workout: {id, name, date}
             }
             """,
-            factories=[s.json() for s in set_factories],
+            factories=[s.model_dump_json() for s in set_factories],
             workout_id=(workout or await self.workout()).id,
             exercise_id=(exercise or await self.exercise()).id,
         )

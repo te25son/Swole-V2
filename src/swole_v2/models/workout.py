@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class Workout(BaseModel):
-    id: UUID | None
+    id: UUID | None = None
     name: str
     date: datetime.date
     exercises: list["Exercise"] = Field(default=[])
@@ -19,5 +19,5 @@ class Workout(BaseModel):
 
 class WorkoutRead(BaseModel):
     id: UUID
-    name: str | None
-    date: datetime.date | None
+    name: str | None = None
+    date: datetime.date | None = None

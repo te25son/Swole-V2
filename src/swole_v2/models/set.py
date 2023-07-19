@@ -10,14 +10,14 @@ if TYPE_CHECKING:
 
 
 class Set(BaseModel):
-    id: UUID | None
+    id: UUID | None = None
     rep_count: int
     weight: int
-    workout: Optional["Workout"]
-    exercise: Optional["Exercise"]
+    workout: Optional["Workout"] = None
+    exercise: Optional["Exercise"] = None
 
 
 class SetRead(BaseModel):
     id: UUID
-    rep_count: int | None
-    weight: int | None
+    rep_count: int | None = None
+    weight: int | None = None
