@@ -17,13 +17,13 @@ seed = "cli.db:seed"
 python = "^3.10"
 fastapi = "^0.100.0"
 python-multipart = "^0.0.6"
-uvicorn = "^0.22.0"
+uvicorn = "^0.23.0"
 pydantic = {extras = ["email"], version = "^2.0.0"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-dotenv = "^1.0.0"
 edgedb = "^1.2.0"
-gunicorn = "^20.1.0"
+gunicorn = "^21.0.0"
 pydantic-settings = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
@@ -38,7 +38,7 @@ pytest-env = "^0.8.1"
 pytest-random-order = "^1.1.0"
 toml = "^0.10.2"
 mypy = "^1.1.1"
-ruff = "^0.0.277"
+ruff = "^0.0.278"
 smokeshow = "^0.3"
 flake8 = "^6.0.0"
 flake8-type-checking = "^2.4.0"
