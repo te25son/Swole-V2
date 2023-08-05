@@ -15,7 +15,7 @@ seed = "cli.db:seed"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.100.0"
+fastapi = "^0.101.0"
 python-multipart = "^0.0.6"
 uvicorn = "^0.23.0"
 pydantic = {extras = ["email"], version = "^2.0.0"}
