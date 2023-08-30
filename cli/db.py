@@ -55,4 +55,4 @@ async def create_instances(settings: Settings) -> None:
         exercises = await sample.exercises(user=user, size=choice(range(10, 20)))
         # Add some sets to the exercises
         for _ in range(5):
-            await sample.sets(workout=choice(workouts), exercise=choice(exercises), size=choice(range(0, 10)))
+            await sample.sets(workout=choice(workouts), exercise=choice(exercises), size=choice(range(10)))

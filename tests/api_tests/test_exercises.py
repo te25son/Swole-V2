@@ -379,12 +379,12 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert len(response.results) == 2
-        exercise_1_progress_report = list(
-            filterfalse(lambda r: r["exercise_name"] != exercise_1.name, response.results)
-        )[0]
-        exercise_2_progress_report = list(
-            filterfalse(lambda r: r["exercise_name"] != exercise_2.name, response.results)
-        )[0]
+        exercise_1_progress_report = next(
+            iter(filterfalse(lambda r: r["exercise_name"] != exercise_1.name, response.results))
+        )
+        exercise_2_progress_report = next(
+            iter(filterfalse(lambda r: r["exercise_name"] != exercise_2.name, response.results))
+        )
         assert len(exercise_1_progress_report["data"]) == 2
         assert len(exercise_2_progress_report["data"]) == 0
 
