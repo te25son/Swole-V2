@@ -568,7 +568,7 @@ class TestWorkouts(APITestBase):
             )
         )
         workouts = [Workout(**r) for r in workout_results]
-        new_workout_id = [w.id for w in workouts if w.id != workout.id][0]
+        new_workout_id = next(w.id for w in workouts if w.id != workout.id)
 
         assert len(workouts) == 2
         assert all(len(w.exercises) == len(exercises) for w in workouts)
