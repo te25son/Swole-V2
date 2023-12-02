@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/charliermarsh/ruff">
-    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json">
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json">
   </a>
   <a href="https://github.com/te25son/Swole-V2/actions/workflows/test.yml">
     <img src="https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg">
