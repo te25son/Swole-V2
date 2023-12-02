@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from edgedb import AsyncIOClient
 from fastapi import Depends
 from pydantic import BaseModel
 
@@ -11,6 +10,8 @@ from ..database import get_async_client
 
 if TYPE_CHECKING:
     from uuid import UUID
+
+    from edgedb import AsyncIOClient
 
 T = TypeVar("T", bound=BaseModel)
 

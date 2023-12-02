@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastapi import APIRouter, Depends
 
 from ..database.repositories import SetRepository
 from ..dependencies.auth import get_current_active_user
-from ..models import User
 from ..schemas import SetAdd, SetDelete, SetGetAll, SetUpdate, SuccessResponse
+
+if TYPE_CHECKING:
+    from ..models import User
 
 router = APIRouter(prefix="/sets", tags=["sets"])
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 import pytest
 from hypothesis import given
@@ -14,6 +14,9 @@ from swole_v2.errors.messages import (
     MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
 )
 from swole_v2.schemas.validators import check_date_format, check_empty_string, check_is_non_negative, check_is_uuid
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 @given(value=st.uuids())

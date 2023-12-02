@@ -14,11 +14,11 @@ from ...dependencies.settings import get_settings
 from ...errors.exceptions import BusinessError
 from ...errors.messages import COULD_NOT_VALIDATE_CREDENTIALS, INCORRECT_USERNAME_OR_PASSWORD, USER_ALREADY_EXISTS
 from ...models import Token, User, UserRead
-from ...settings import Settings
 from .base import BaseRepository
 
 if TYPE_CHECKING:
     from ...schemas import UserCreate
+    from ...settings import Settings
 
 
 class UserRepository(BaseRepository):

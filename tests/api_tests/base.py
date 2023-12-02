@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
-from edgedb import AsyncIOClient
 from faker import Faker
-from httpx import AsyncClient
 
-from swole_v2.app import SwoleApp
 from swole_v2.dependencies.auth import get_current_active_user
-from swole_v2.models import User
 
-from ..factories import Sample
+if TYPE_CHECKING:
+    from edgedb import AsyncIOClient
+    from httpx import AsyncClient
+
+    from swole_v2.app import SwoleApp
+    from swole_v2.models import User
+
+    from ..factories import Sample
 
 fake = Faker()
 

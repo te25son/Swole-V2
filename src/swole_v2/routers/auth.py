@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 
 from ..database.repositories import UserRepository
 from ..models import Token
-from ..schemas import UserLogin
+from ..schemas import UserLogin  # noqa
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

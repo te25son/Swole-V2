@@ -1,8 +1,4 @@
 {
-    "flake8": {
-        "repo": "https://github.com/pycqa/flake8",
-        "rev": "${rev}"
-    },
     "mypy": {
         "repo": "https://github.com/pre-commit/mirrors-mypy",
         "rev": "v${rev}"
