@@ -13,5 +13,6 @@ if TYPE_CHECKING:
 def get_async_client() -> AsyncIOClient:
     settings = get_settings()
     return create_async_client(
-        dsn=settings.EDGEDB_INSTANCE, secret_key=settings.EDGEDB_SECRET_KEY  # type: ignore[arg-type]
+        dsn=settings.EDGEDB_INSTANCE,
+        secret_key=settings.EDGEDB_SECRET_KEY,  # type: ignore[arg-type]
     )
