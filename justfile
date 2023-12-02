@@ -64,11 +64,11 @@ check *arg: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
 
 # Run linter on locations with optional arguments
 lint *args:
-    ruff {{ locations }} {{ args }}
+    ruff check {{ locations }} {{ args }}
 
 # Run formatter on locations with optional arguments
 format *args:
-    black {{ locations }} {{ args }}
+    ruff format {{ locations }} {{ args }}
 
 # Run type checker on locations with optional arguments
 type-check *args:
