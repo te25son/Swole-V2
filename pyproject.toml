@@ -39,9 +39,6 @@ toml = "^0.10.2"
 mypy = "^1.1.1"
 ruff = "^0.1.0"
 smokeshow = "^0.4.0"
-flake8 = "^6.0.0"
-flake8-type-checking = "^2.4.0"
-flake8-pyproject = "^1.2.3"
 polyfactory = "^2.0.0"
 
 [tool.poetry.group.stubs.dependencies]
@@ -99,8 +96,7 @@ select = [
     "I", # Isort
     "W", # Warning
     "B", # Flake8-Bugbear
-    # Ignore until Fastapi can be used with ruff TCH
-    # "TCH", # Flake8-Type-Checking
+    "TCH", # Flake8-Type-Checking
     "PIE", # Flake8-Pie
     "T20", # Flake8-Print
     "RET", # Flake8-Return
@@ -121,13 +117,5 @@ order-by-type = true
 force-single-line = false
 known-first-party = ["swole_v2", "cli", "tests"]
 
-# Ignore until Fastapi can be used with ruff TCH
-# [tool.ruff.flake8-type-checking]
-# strict = true
-# runtime-evaluated-base-classes = ["pydantic.BaseModel"]
-
-[tool.flake8]
-ignore = ["E501"]
-enable-extensions = ["TC", "TC1"]
-type-checking-fastapi-enabled = true
-type-checking-pydantic-enabled = true
+[tool.ruff.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]

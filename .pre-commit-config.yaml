@@ -45,10 +45,3 @@ repos:
       - id: mypy
         language: system
         stages: [commit]
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
-    hooks:
-      - id: flake8
-        language: system
-        stages: [commit]

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import APIRouter, Depends, Query
 
 from ..database.repositories import WorkoutRepository
 from ..dependencies.auth import get_current_active_user
-from ..models import User
 from ..schemas import (
     SuccessResponse,
     WorkoutAddExercise,
@@ -16,6 +15,9 @@ from ..schemas import (
     WorkoutDetail,
     WorkoutUpdate,
 )
+
+if TYPE_CHECKING:
+    from ..models import User
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
 
