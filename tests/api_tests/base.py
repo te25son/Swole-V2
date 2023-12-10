@@ -21,7 +21,7 @@ fake = Faker()
 
 class APITestBase:
     @pytest.fixture(autouse=True)
-    async def common_fixtures(
+    async def common_fixtures(  # noqa
         self,
         test_app: SwoleApp,
         test_user: User,

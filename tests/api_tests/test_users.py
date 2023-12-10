@@ -21,7 +21,6 @@ class TestUsers(APITestBase):
         token = Token(**response.json())
 
         assert token.token_type == "bearer"
-        # assert token.access_token == await create_access_token(data=dict(username=user.username))
 
     async def test_login_with_invalid_creds_fails(self) -> None:
         password = fake.word()
@@ -90,7 +89,7 @@ class TestUsers(APITestBase):
         results = response.results
 
         assert results
-        assert len(results) == 2
+        assert len(results) == len(data)
         assert all("id" in result for result in results)
         assert any(("username", username_1) in result.items() for result in results)
         assert any(("username", username_2) in result.items() for result in results)
