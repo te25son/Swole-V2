@@ -153,7 +153,7 @@ class TestSets(APITestBase):
         )
 
         assert response.results
-        assert len(exercise_sets["sets"]) == 3
+        assert len(exercise_sets["sets"]) == len(data)
         assert all("id" in result for result in response.results)
         assert any(("weight", set_1_weight) in results.items() for results in response.results)
         assert any(("rep_count", set_1_rep_count) in results.items() for results in response.results)
@@ -354,9 +354,6 @@ class TestSets(APITestBase):
 
         assert response.message == message
 
-    @pytest.mark.skip(
-        "This should not pass. We don't want to allow users to delete other users data if they have the id."
-    )
     async def test_cannot_delete_set_belonging_to_other_user(self) -> None:
         user = await self.sample.user()
         workout = await self.sample.workout(user)
@@ -368,10 +365,10 @@ class TestSets(APITestBase):
             "exercise_id": str(exercise.id),
         }
 
-        response = await self._post_success("/delete", data)
+        response = await self._post_error("/delete", data)
 
         await self.db.query_required_single_json("SELECT ExerciseSet FILTER .id = <uuid>$set_id", set_id=set.id)
-        assert response.results is None
+        assert response.message == NO_SET_FOUND
 
     @pytest.mark.parametrize(
         "rep_count, weight",

@@ -59,7 +59,7 @@ class TestWorkouts(APITestBase):
         response = await self._post_success("/detail", data=data)
 
         assert response.results
-        assert len(response.results) == 2
+        assert len(response.results) == len(data)
 
     async def test_workout_detail_succeeds_with_query_parameter(self) -> None:
         workout_with_exercises = await self.sample.workout(exercises=await self.sample.exercises())
@@ -570,7 +570,7 @@ class TestWorkouts(APITestBase):
         workouts = [Workout(**r) for r in workout_results]
         new_workout_id = next(w.id for w in workouts if w.id != workout.id)
 
-        assert len(workouts) == 2
+        assert len(workouts) == 2  # noqa
         assert all(len(w.exercises) == len(exercises) for w in workouts)
         assert all(e in exercises for w in workouts for e in w.exercises)
         assert response.results == [{"id": str(new_workout_id), "name": workout.name, "date": date}]
@@ -641,11 +641,11 @@ class TestWorkouts(APITestBase):
         copied_workout_2_pair = [Workout(**d) for d in copied_workout_2_data]
 
         assert response.results
-        assert len(response.results) == 2
-        assert len(copied_workout_1_pair) == 2
+        assert len(response.results) == len(data)
+        assert len(copied_workout_1_pair) == 2  # noqa
         assert all(len(w.exercises) == len(workout_1.exercises) for w in copied_workout_1_pair)
         assert all(e in workout_1.exercises for w in copied_workout_1_pair for e in w.exercises)
-        assert len(copied_workout_2_pair) == 2
+        assert len(copied_workout_2_pair) == 2  # noqa
         assert all(len(w.exercises) == len(workout_2.exercises) for w in copied_workout_2_pair)
         assert all(e in workout_2.exercises for w in copied_workout_2_pair for e in w.exercises)
 
@@ -671,8 +671,8 @@ class TestWorkouts(APITestBase):
         copied_workout_group = [Workout(**d) for d in copied_workout_data]
 
         assert response.results
-        assert len(response.results) == 2
-        assert len(copied_workout_data) == 3
+        assert len(response.results) == len(data)
+        assert len(copied_workout_data) == 3  # noqa
         assert any(datetime.strptime(date_1, "%Y-%m-%d").date() == workout.date for workout in copied_workout_group)
         assert any(datetime.strptime(date_2, "%Y-%m-%d").date() == workout.date for workout in copied_workout_group)
 

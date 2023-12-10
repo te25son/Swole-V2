@@ -77,9 +77,14 @@ class SetRepository(BaseRepository):
             await self.client.query_single_json(
                 """
                 DELETE ExerciseSet
-                FILTER .id = <uuid>$set_id
+                FILTER (
+                    .id = <uuid>$set_id
+                    and .exercise.user.id = <uuid>$user_id
+                    and .workout.user.id = <uuid>$user_id
+                )
                 """,
                 set_id=data.set_id,
+                user_id=user_id,
             )
         )
         if result is None:
@@ -91,7 +96,11 @@ class SetRepository(BaseRepository):
                 """
                 WITH exercise_set := (
                     UPDATE ExerciseSet
-                    FILTER .id = <uuid>$set_id
+                    FILTER (
+                        .id = <uuid>$set_id
+                        and .exercise.user.id = <uuid>$user_id
+                        and .workout.user.id = <uuid>$user_id
+                    )
                     SET {
                         weight := <optional int64>$weight ?? .weight,
                         rep_count := <optional int64>$rep_count ?? .rep_count
@@ -100,6 +109,7 @@ class SetRepository(BaseRepository):
                 SELECT exercise_set {id, weight, rep_count}
                 """,
                 set_id=data.set_id,
+                user_id=user_id,
                 weight=data.weight,
                 rep_count=data.rep_count,
             )
