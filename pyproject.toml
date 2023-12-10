@@ -92,16 +92,20 @@ extend-safe-fixes = ["TCH"]
 exclude = ["__init__.py"]
 ignore = ["E731", "B008"]
 select = [
-    "C",
-    "F", # Pyflakes
-    "I", # Isort
-    "W", # Warning
-    "B", # Flake8-Bugbear
+    "C",   # McCabe
+    "F",   # Pyflakes
+    "I",   # Isort
+    "W",   # Warning
+    "B",   # Flake8-Bugbear
     "TCH", # Flake8-Type-Checking
     "PIE", # Flake8-Pie
     "T20", # Flake8-Print
     "RET", # Flake8-Return
     "RUF", # Ruff-Specfic
+    "SIM", # Flake8-Simplify
+    "ARG", # Flake8-Unused-Arguments
+    "PL",  # Pylint
+    "ERA", # Eradicate
 ]
 
 [tool.ruff.format]

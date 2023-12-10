@@ -82,7 +82,7 @@ class TestExercises(APITestBase):
         response = await self._post_success("/detail", data=data)
 
         assert response.results
-        assert len(response.results) == 2
+        assert len(response.results) == len(data)
         assert any(("id", str(exercise_1.id)) in results.items() for results in response.results)
         assert any(("name", exercise_1.name) in results.items() for results in response.results)
         assert any(("notes", exercise_1.notes) in results.items() for results in response.results)
@@ -139,7 +139,7 @@ class TestExercises(APITestBase):
         response = await self._post_success("/create", data=data)
 
         assert response.results
-        assert len(response.results) == 2
+        assert len(response.results) == len(data)
         assert "id" in response.results[0]
         assert any(("name", name_1) in results.items() for results in response.results)
         assert any(("notes", notes_1) in results.items() for results in response.results)
@@ -232,7 +232,7 @@ class TestExercises(APITestBase):
         updated_exercise_2 = Exercise(**updated_exercise_2_data)
 
         assert response.results
-        assert len(response.results) == 2
+        assert len(response.results) == len(data)
         assert updated_exercise_1.name == new_name_1
         assert updated_exercise_1.notes == new_notes_1
         assert updated_exercise_2.name == new_name_2
@@ -323,9 +323,11 @@ class TestExercises(APITestBase):
 
     async def test_exercise_progress_succeeds(self) -> None:
         exercise = await self.sample.exercise()
-        set_group_1 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
-        set_group_2 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
-        set_group_3 = await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10)))
+        exercise_set_groups = [
+            set_group_1 := await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10))),
+            set_group_2 := await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10))),
+            set_group_3 := await self.sample.sets(exercise=exercise, size=random.choice(range(1, 10))),
+        ]
         # Should not calculate other sets in same workout but different exercise
         await self.sample.sets(workout=set_group_1[0].workout)
         # Pass the same exercise twice to ensure it does not return double the expected results
@@ -338,7 +340,7 @@ class TestExercises(APITestBase):
 
         assert response.results
         assert len(response.results) == 1
-        assert len(response.results[0]["data"]) == 3
+        assert len(response.results[0]["data"]) == len(exercise_set_groups)
         assert response.results[0]["exercise_name"] == exercise.name
         assert response.results[0]["data"][0]["avg_rep_count"] == await self._rounded_mean(
             [g.rep_count for g in set_group_1]
@@ -367,8 +369,10 @@ class TestExercises(APITestBase):
 
     async def test_exercise_progress_multiple_succeeds(self) -> None:
         exercise_1 = await self.sample.exercise()
-        await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10)))
-        await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10)))
+        exercise_1_set_groups = [
+            await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10))),
+            await self.sample.sets(exercise=exercise_1, size=random.choice(range(1, 10))),
+        ]
         exercise_2 = await self.sample.exercise()
         data = [
             {"exercise_id": str(exercise_1.id)},
@@ -378,15 +382,15 @@ class TestExercises(APITestBase):
         response = await self._post_success("/progress", data=data)
 
         assert response.results
-        assert len(response.results) == 2
+        assert len(response.results) == len(data)
         exercise_1_progress_report = next(
             iter(filterfalse(lambda r: r["exercise_name"] != exercise_1.name, response.results))
         )
         exercise_2_progress_report = next(
             iter(filterfalse(lambda r: r["exercise_name"] != exercise_2.name, response.results))
         )
-        assert len(exercise_1_progress_report["data"]) == 2
-        assert len(exercise_2_progress_report["data"]) == 0
+        assert len(exercise_1_progress_report["data"]) == len(exercise_1_set_groups)
+        assert len(exercise_2_progress_report["data"]) == 0  # no sets were added to exercise 2
 
     async def test_exercise_progress_fails_when_using_an_exercise_id_belonging_to_another_user(self) -> None:
         exercise = await self.sample.exercise()
