@@ -37,6 +37,6 @@ class SwoleApp:
         return app
 
     def register_error_handlers(self) -> None:
-        self.app.add_exception_handler(HTTPException, http_exception_handler)
-        self.app.add_exception_handler(RequestValidationError, request_validation_error_handler)
-        self.app.add_exception_handler(BusinessError, business_error_handler)
+        self.app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
+        self.app.add_exception_handler(RequestValidationError, request_validation_error_handler)  # type: ignore[arg-type]
+        self.app.add_exception_handler(BusinessError, business_error_handler)  # type: ignore[arg-type]
