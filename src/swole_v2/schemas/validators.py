@@ -1,90 +1,75 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable
+import re
+from datetime import date, datetime
+from typing import Annotated, Any, Callable
 from uuid import UUID
 
-from pydantic import field_validator
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    ValidationInfo,
+    ValidatorFunctionWrapHandler,
+    WrapValidator,
+)
 
 from ..errors.exceptions import BusinessError
 from ..errors.messages import (
+    CANNOT_BE_GREATER_THAN,
     FIELD_CANNOT_BE_EMPTY,
     INCORRECT_DATE_FORMAT,
     INVALID_ID,
-    MUST_BE_A_NON_NEGATIVE_NUMBER,
-    MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
-    MUST_BE_LESS_THAN,
+    MUST_BE_A_VALID_POSITIVE_INT,
+    MUST_BE_POSITIVE,
 )
 
-if TYPE_CHECKING:
-    from datetime import date
-
-    from pydantic.typing import AnyCallable, AnyClassMethod
+MAX_WEIGHT = 10000
+MAX_REP_COUNT = 500
 
 
-def schema_validator(*fields: str, **kwargs: Any) -> Callable[[AnyCallable], "AnyClassMethod"]:
-    return field_validator(*fields, mode="before", **kwargs)
+def check_non_empty(value: str, _: ValidatorFunctionWrapHandler, info: ValidationInfo) -> str:
+    pattern = re.compile(r"(.|\s)*\S(.|\s)*")
+    if not pattern.match(value):
+        raise BusinessError(FIELD_CANNOT_BE_EMPTY.format(info.field_name))
+    return value
 
 
-def check_is_uuid(id: str) -> UUID:
+def check_uuid(id: str) -> UUID:
     try:
         return UUID(id)
     except (ValueError, AttributeError) as exc:
         raise BusinessError(INVALID_ID) from exc
 
 
-def check_empty_string(field_name: str, allow_none: bool = False) -> Callable[[str], str | None]:
-    def wrapper(value: Any) -> str | None:
-        error = BusinessError(FIELD_CANNOT_BE_EMPTY.format(field_name))
-        if allow_none and value is None:
-            return value
-        if value is None:
-            raise error
-        if isinstance(value, str) and value.strip() == "":
-            raise error
+def check_positive(value: Any, _: ValidatorFunctionWrapHandler, info: ValidationInfo) -> int:
+    try:
+        value_as_int = int(value)
+        if value_as_int <= 0:
+            raise BusinessError(MUST_BE_POSITIVE.format(info.field_name))
+        return value_as_int
+    except (TypeError, ValueError) as exc:
+        raise BusinessError(MUST_BE_A_VALID_POSITIVE_INT) from exc
+
+
+def check_max(max_value: int) -> Callable[[Any], int]:
+    def inner(value: Any) -> int:
+        if value > max_value:
+            raise BusinessError(CANNOT_BE_GREATER_THAN.format(max_value))
         return value
 
-    return wrapper
+    return inner
 
 
-def check_is_non_negative(allow_none: bool = False) -> Callable[[int], int | None]:
-    def wrapper(value: Any) -> int | None:
-        if allow_none and value is None:
-            return value
-        try:
-            value_as_int = int(value)
-            if value_as_int > 0:
-                return value_as_int
-            raise BusinessError(MUST_BE_A_NON_NEGATIVE_NUMBER)
-        except (TypeError, ValueError) as exc:
-            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
-
-    return wrapper
+def check_date_format(value: Any) -> date:
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except (ValueError, TypeError) as exc:
+        raise BusinessError(INCORRECT_DATE_FORMAT) from exc
 
 
-def check_is_less_than(number: int, allow_none: bool = False) -> Callable[[int], int | None]:
-    def wrapper(value: Any) -> int | None:
-        if allow_none and value is None:
-            return value
-        try:
-            value_as_int = int(value)
-            if value_as_int < number:
-                return value_as_int
-            raise BusinessError(MUST_BE_LESS_THAN.format(number))
-        except (TypeError, ValueError) as exc:
-            raise BusinessError(MUST_BE_A_VALID_NON_NEGATIVE_NUMBER) from exc
-
-    return wrapper
-
-
-def check_date_format(allow_none: bool = False) -> Callable[[bool], date | None]:
-    # Should always be run with pre=True so pydantic doesn't convert it first.
-    def wrapper(value: Any) -> date | None:
-        if allow_none and (value is None):
-            return value
-        try:
-            return datetime.strptime(value, "%Y-%m-%d").date()
-        except (ValueError, TypeError) as exc:
-            raise BusinessError(INCORRECT_DATE_FORMAT) from exc
-
-    return wrapper
+ID = Annotated[UUID, BeforeValidator(check_uuid)]
+NonEmptyString = Annotated[str, WrapValidator(check_non_empty)]
+PositiveInt = Annotated[int, WrapValidator(check_positive)]
+Weight = Annotated[PositiveInt, AfterValidator(check_max(MAX_WEIGHT))]
+RepCount = Annotated[PositiveInt, AfterValidator(check_max(MAX_REP_COUNT))]
+Date = Annotated[date, BeforeValidator(check_date_format)]

@@ -7,16 +7,17 @@ from uuid import uuid4
 import pytest
 
 from swole_v2.errors.messages import (
+    CANNOT_BE_GREATER_THAN,
     INVALID_ID,
-    MUST_BE_A_NON_NEGATIVE_NUMBER,
-    MUST_BE_A_VALID_NON_NEGATIVE_NUMBER,
-    MUST_BE_LESS_THAN,
+    MUST_BE_A_VALID_POSITIVE_INT,
+    MUST_BE_POSITIVE,
     NO_EXERCISE_FOUND,
     NO_SET_FOUND,
     NO_WORKOUT_FOUND,
 )
 from swole_v2.models import SetRead
 from swole_v2.schemas import ErrorResponse, SuccessResponse
+from swole_v2.schemas.validators import MAX_REP_COUNT, MAX_WEIGHT
 
 from .base import APITestBase, fake
 
@@ -26,39 +27,31 @@ class TestSets(APITestBase):
         pytest.param(
             -fake.random_digit_not_null(),
             fake.random_digit_not_null(),
-            MUST_BE_A_NON_NEGATIVE_NUMBER,
+            MUST_BE_POSITIVE.format("rep_count"),
             id="Test negative rep count fails",
         ),
         pytest.param(
             fake.random_digit_not_null(),
             -fake.random_digit_not_null(),
-            MUST_BE_A_NON_NEGATIVE_NUMBER,
+            MUST_BE_POSITIVE.format("weight"),
             id="Test negative weight fails",
         ),
         pytest.param(
             501,
             fake.random_digit_not_null(),
-            MUST_BE_LESS_THAN.format(501),
+            CANNOT_BE_GREATER_THAN.format(MAX_REP_COUNT),
             id="Test rep count greater than 500 fails",
         ),
         pytest.param(
             fake.random_digit_not_null(),
             10001,
-            MUST_BE_LESS_THAN.format(10001),
+            CANNOT_BE_GREATER_THAN.format(MAX_WEIGHT),
             id="Test weight greater than 10000 fails",
         ),
-        pytest.param(
-            fake.random_digit_not_null(), "  ", MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test blank weight fails"
-        ),
-        pytest.param(
-            fake.random_digit_not_null(), "", MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test empty weight fails"
-        ),
-        pytest.param(
-            "", fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test blank rep count fails"
-        ),
-        pytest.param(
-            "", fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test empty weight fails"
-        ),
+        pytest.param(fake.random_digit_not_null(), "  ", MUST_BE_A_VALID_POSITIVE_INT, id="Test blank weight fails"),
+        pytest.param(fake.random_digit_not_null(), "", MUST_BE_A_VALID_POSITIVE_INT, id="Test empty weight fails"),
+        pytest.param("", fake.random_digit_not_null(), MUST_BE_A_VALID_POSITIVE_INT, id="Test blank rep count fails"),
+        pytest.param("", fake.random_digit_not_null(), MUST_BE_A_VALID_POSITIVE_INT, id="Test empty weight fails"),
     )
 
     invalid_set_id_params = (
@@ -292,11 +285,9 @@ class TestSets(APITestBase):
         [
             *invalid_set_data_params,
             pytest.param(
-                None, fake.random_digit_not_null(), MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test no rep count fails"
+                None, fake.random_digit_not_null(), MUST_BE_A_VALID_POSITIVE_INT, id="Test no rep count fails"
             ),
-            pytest.param(
-                fake.random_digit_not_null(), None, MUST_BE_A_VALID_NON_NEGATIVE_NUMBER, id="Test no weight fails"
-            ),
+            pytest.param(fake.random_digit_not_null(), None, MUST_BE_A_VALID_POSITIVE_INT, id="Test no weight fails"),
         ],
     )
     async def test_set_add_fails_with_invalid_data(self, rep_count: Any, weight: Any, message: str) -> None:
