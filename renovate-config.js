@@ -1,7 +1,10 @@
 module.exports = {
     autodiscover: false,
     onboardingConfig: {
-        extends: ["config:base"],
+        extends: [
+            "config:base",
+            ":semanticCommits",
+        ],
     },
     onboarding: true,
     platform: "github",
