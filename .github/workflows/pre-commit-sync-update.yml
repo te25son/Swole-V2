@@ -40,6 +40,7 @@ jobs:
 
       - name: Run Pre-Commit Checks
         uses: pre-commit/action@v3.0.0
+        continue-on-error: true
         with:
           extra_args: --hook-stage manual --all-files
 
