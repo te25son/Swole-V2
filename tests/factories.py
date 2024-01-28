@@ -58,7 +58,7 @@ class Sample:
         self.client = create_async_client(dsn=get_settings().EDGEDB_INSTANCE)
 
     # Needed to create instance with async user method
-    async def initialize(self, user: User | None = None) -> "Sample":
+    async def initialize(self, user: User | None = None) -> Sample:
         self.test_user = user or await self.user()
         return self
 
