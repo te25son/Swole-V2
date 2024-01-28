@@ -48,8 +48,12 @@ jobs:
 
       - name: Commit Fixes
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "Update tool versions in pre-commit file"
-          git push
+          if git diff --exit-code; then
+            echo "No changes found."
+          else
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add .
+            git commit -m "Update tool versions in pre-commit file"
+            git push
+          fi
