@@ -36,19 +36,12 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install Dev Dependencies
-        run: poetry install --no-interaction
+        run: poetry install --only=dev --no-interaction
 
-      - name: Install Just
-        uses: extractions/setup-just@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Pre-Commit Checks
+        uses: pre-commit/action@v3.0.0
         with:
-          just-version: '1.13.0'
-
-      - name: Fix
-        run: |
-          source $VENV
-          just fix
+          extra_args: --hook-stage manual --all-files
 
       - name: Commit Fixes
         run: |
