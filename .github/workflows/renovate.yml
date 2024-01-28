@@ -19,6 +19,6 @@ jobs:
         with:
           renovate-version: 35.0.0
           configurationFile: ./renovate-config.js
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ secrets.PAT }}
         env:
           LOG_LEVEL: 'debug'
