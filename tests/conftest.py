@@ -49,7 +49,7 @@ async def test_user(test_sample: Sample) -> User:
 
 @pytest_asyncio.fixture(scope="session")
 def event_loop() -> AbstractEventLoop:  # type: ignore
-    uvloop.install()
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    loop = uvloop.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
     loop.close()

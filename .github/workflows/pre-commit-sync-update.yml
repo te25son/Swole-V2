@@ -1,0 +1,59 @@
+name: Update Pre-Commit Sync File
+
+env:
+  VENV: .venv/bin/activate
+
+on:
+  push:
+    branches: [
+      "renovate/ruff-**",
+      "renovate/mypy-**",
+    ]
+  pull_request:
+    branches: [
+      "renovate/ruff-**",
+      "renovate/mypy-**",
+    ]
+
+jobs:
+  update-pre-commit-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install Dev Dependencies
+        run: poetry install --no-interaction
+
+      - name: Install Just
+        uses: extractions/setup-just@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          just-version: '1.13.0'
+
+      - name: Fix
+        run: |
+          source $VENV
+          just fix
+
+      - name: Commit Fixes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Update tool versions in pre-commit file"
+          git push
