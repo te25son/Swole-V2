@@ -80,7 +80,10 @@ source = ["src"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 100
-exclude_lines = ["if TYPE_CHECKING:"]
+exclude_lines = [
+    "if TYPE_CHECKING:",
+    "pragma: no cover"
+]
 omit = ["*/main.py"]
 
 [tool.ruff]
