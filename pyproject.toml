@@ -37,7 +37,7 @@ pytest-env = "^1.0.0"
 pytest-random-order = "^1.1.0"
 toml = "^0.10.2"
 mypy = "^1.1.1"
-ruff = "^0.1.0"
+ruff = "^0.2.0"
 smokeshow = "^0.4.0"
 polyfactory = "^2.0.0"
 
@@ -89,11 +89,11 @@ omit = ["*/main.py"]
 [tool.ruff]
 fix = true
 line-length = 120
-extend-safe-fixes = ["TCH"]
 
 [tool.ruff.lint]
 exclude = ["__init__.py"]
 ignore = ["E731", "B008"]
+extend-safe-fixes = ["TCH"]
 select = [
     "C",   # McCabe
     "F",   # Pyflakes
@@ -115,15 +115,15 @@ select = [
 quote-style = "double"
 indent-style = "space"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
 max-complexity = 5
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 required-imports = ["from __future__ import annotations"]
 order-by-type = true
 force-single-line = false
 known-first-party = ["swole_v2", "cli", "tests"]
 
-[tool.ruff.flake8-type-checking]
+[tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel"]
