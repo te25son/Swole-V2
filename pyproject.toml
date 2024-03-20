@@ -17,7 +17,7 @@ seed = "cli.db:seed"
 python = "^3.10"
 fastapi = "^0.110.0"
 python-multipart = "^0.0.9"
-uvicorn = "^0.28.0"
+uvicorn = "^0.29.0"
 pydantic = {extras = ["email"], version = "^2.0.0"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
