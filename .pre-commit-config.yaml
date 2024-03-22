@@ -33,7 +33,7 @@ repos:
         args: ["--autofix", "--indent", "4"]
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.3.3
+    rev: v0.3.4
     hooks:
       - id: ruff
         language: system
