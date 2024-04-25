@@ -6,6 +6,7 @@
     "packageRules": [
         {
             "automerge": true,
+            "automergeStrategy": "squash",
             "matchUpdateTypes": [
                 "minor",
                 "patch",
