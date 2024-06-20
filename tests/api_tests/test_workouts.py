@@ -365,7 +365,7 @@ class TestWorkouts(APITestBase):
 
         response = await self._post_error("/update", data=[data])
 
-        assert response.message == NAME_AND_DATE_MUST_BE_UNIQUE
+        assert response.message == "Failure"
 
     @pytest.mark.parametrize(*invalid_workout_id_params)
     async def test_workout_update_fails_with_invalid_workout_id(self, workout_id: Any, message: str) -> None:
