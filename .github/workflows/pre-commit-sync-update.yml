@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.RENOVATE_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -41,7 +41,7 @@ jobs:
         run: poetry install --only=dev --no-interaction
 
       - name: Run Pre-Commit Checks
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
         continue-on-error: true
         with:
           extra_args: --hook-stage manual --all-files
