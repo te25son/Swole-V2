@@ -19,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout Swole V2 Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -53,14 +53,14 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Install Just
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          just-version: '1.13.0'
+          just-version: '1.4.0'
 
       - name: Run Pre-Commit Checks
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
         with:
           extra_args: --hook-stage manual --all-files
 
