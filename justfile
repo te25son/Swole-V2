@@ -25,11 +25,11 @@ alias p := pre-commit-all
 [private]
 alias m := migrate-dev-db
 
-# Show all available recipes
+[doc("Show all available recipes")]
 help:
     @just --list --list-prefix "···· "
 
-# Setup the project
+[doc("Setup the project")]
 setup:
     poetry install
     pre-commit install
@@ -40,37 +40,38 @@ setup:
     -@just seed
     @echo "\nSetup finished. Conisider running 'poetry shell' to activate the virtual environment."
 
-# Run all tests
+[doc("Run all tests")]
+[group("testing")]
 test *extra_args:
     pytest -n 4 --cov --random-order {{ extra_args }}
 
-# Run tests and publish coverage report
+[doc("Run tests and publish coverage report")]
+[group("testing")]
 publish-test-report:
     pytest -n 2 --cov --random-order --cov-report html
     smokeshow upload htmlcov --auth-key $SMOKESHOW_AUTH_KEY
 
-# Run linter and formatter (only run pre-commit if argument is "all")
-fix *arg: (lint) (format)
+[doc("Run linter and formatter (only run pre-commit if argument is 'all')")]
+[group("code quality")]
+fix *arg: (_lint) (_format)
     @if [ '{{ arg }}' = 'all' ]; then \
         just _pre-commit "end-of-file-fixer" "trailing-whitespace" "pretty-format-json" "poetry-lock" "sync_with_poetry"; \
     fi
 
-# Run lint, format, and type checks (only run pre-commit if argument is "all")
-check *arg: (lint "--exit-non-zero-on-fix") (format "--check") (type-check)
+[doc("Run lint, format, and type checks (only run pre-commit if argument is 'all')")]
+[group("code quality")]
+check *arg: (_lint "--exit-non-zero-on-fix") (_format "--check") (_type-check)
     @if [ '{{ arg }}' = 'all' ]; then \
         just _pre-commit "check-toml" "check-yaml" "check-json" "poetry-check"; \
     fi
 
-# Run linter on locations with optional arguments
-lint *args:
+_lint *args:
     ruff check {{ locations }} {{ args }}
 
-# Run formatter on locations with optional arguments
-format *args:
+_format *args:
     ruff format {{ locations }} {{ args }}
 
-# Run type checker on locations with optional arguments
-type-check *args:
+_type-check *args:
     mypy {{ locations }} {{ args }}
 
 _pre-commit +hooks:
@@ -78,15 +79,18 @@ _pre-commit +hooks:
         pre-commit run $hook --all-files; \
     done;
 
-# Run all pre-commit hooks on all files
+[doc("Run all pre-commit hooks on all files")]
+[group("code quality")]
 pre-commit-all:
     pre-commit run --all-files
 
-# Runs the development environment on given port (defaults to 5000)
+[doc("Runs the development environment on given port (defaults to 5000)")]
+[group("application")]
 run port="5000":
     uvicorn src.swole_v2.main:app --reload --port {{ port }}
 
-# Seeds the development database
+[doc("Seeds the development database")]
+[group("database")]
 seed:
     @poetry run seed
 
@@ -94,35 +98,43 @@ _migrate instance:
     -edgedb --instance {{ instance }} migration create
     edgedb --instance {{ instance }} migrate
 
-# Migrate only the development database
+[doc("Migrate only the development database")]
+[group("database")]
 migrate-dev-db: (_migrate "$DEV_DB")
 
-# Migrate only the test database
+[doc("Migrate only the test database")]
+[group("database")]
 migrate-test-db: (_migrate "$TEST_DB")
 
 _init instance:
     edgedb instance create {{ instance }}
 
-# Initialize the development database
+[doc("Initialize the development database")]
+[group("database")]
 init-dev-db: (_init "$DEV_DB")
 
-# Initialize the test database
+[doc("Initialize the test database")]
+[group("database")]
 init-test-db: (_init "$TEST_DB")
 
 _open_ui instance:
     edgedb --instance {{ instance }} ui
 
-# Open development database UI
+[doc("Open development database UI")]
+[group("database")]
 open-dev-ui: (_open_ui "$DEV_DB")
 
-# Open test database UI
+[doc("Open test database UI")]
+[group("database")]
 open-test-ui: (_open_ui "$TEST_DB")
 
 _destroy instance:
     edgedb instance destroy --instance {{ instance }}
 
-# Destroy the development database
+[doc("Destroy the development database")]
+[group("database")]
 destroy-dev-db: (_destroy "$DEV_DB")
 
-# Destroy the test database
+[doc("Destroy the test database")]
+[group("database")]
 destroy-test-db: (_destroy "$TEST_DB")
