@@ -51,7 +51,9 @@ jobs:
 
       - name: Install Dev Dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+        run: |
+          poetry install --no-interaction
+          pip install pytest-github-actions-annotate-failures
 
       - name: Install Just
         uses: extractions/setup-just@v1
@@ -72,6 +74,8 @@ jobs:
         run: |
           source $VENV
           just test --cov-report html
+        env:
+          PYTEST_RUN_PATH: "tests/"
 
       - name: Upload Coverage Folder
         uses: actions/upload-artifact@v3
