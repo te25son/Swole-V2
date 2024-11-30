@@ -1,21 +1,18 @@
 ![Swole-V2](https://github.com/te25son/Swole-V2/assets/39095798/37f08516-8a9f-40f5-88ad-dc26e7dbd721)
 
-<p align="center">API for tracking workouts</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://github.com/charliermarsh/ruff">
-    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json">
-  </a>
-  <a href="https://github.com/te25son/Swole-V2/actions/workflows/test.yml">
-    <img src="https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg">
-  </a>
-  <a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/te25son/Swole-V2" target="_blank">
-    <img src="https://coverage-badge.samuelcolvin.workers.dev/te25son/Swole-V2.svg" alt="Coverage">
-  </a>
-  <a href="https://opensource.org/licenses/Apache-2.0">
-    <img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License">
-  </a>
-<p>
+  ### API for tracking workouts
+
+  ---
+
+  [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+  [![](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/charliermarsh/ruff)
+  [![](https://github.com/te25son/Swole-V2/actions/workflows/test.yml/badge.svg)](https://github.com/te25son/Swole-V2/actions/workflows/test.yml)
+  [![](https://coverage-badge.samuelcolvin.workers.dev/te25son/Swole-V2.svg)](https://coverage-badge.samuelcolvin.workers.dev/redirect/te25son/Swole-V2)
+  [![](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+</div>
 
 ### Setup
 
