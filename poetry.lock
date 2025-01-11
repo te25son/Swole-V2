@@ -1214,13 +1214,13 @@ files = [
 
 [[package]]
 name = "smokeshow"
-version = "0.4.0"
+version = "0.5.0"
 description = "Deploy ephemeral websites."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "smokeshow-0.4.0-py3-none-any.whl", hash = "sha256:472d975eeeae140d80cc7f289f6ed2e89190984fa12e2cdad67e929e2db48da6"},
-    {file = "smokeshow-0.4.0.tar.gz", hash = "sha256:5c767c7a4753187aee065b090d6739cfabbbd04a9cd6648c23e450737d8a6191"},
+    {file = "smokeshow-0.5.0-py3-none-any.whl", hash = "sha256:da12a960fc7cb525efc4035a0c3c9363b6217ea7e66bc39b9ed3cd8bed6eeedc"},
+    {file = "smokeshow-0.5.0.tar.gz", hash = "sha256:91dcabc29ac3116bff59b4d8a7bda4ae3ccc4c70742a38cec7127b8162e4a0f6"},
 ]
 
 [package.dependencies]
@@ -1447,4 +1447,4 @@ test = ["aiohttp (>=3.10.5)", "flake8 (>=5.0,<6.0)", "mypy (>=0.800)", "psutil",
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5251d5e9b00123dd7fa3566b7b6c35efa14835e8f718aa0a753b6fd8cc048814"
+content-hash = "61fa8c402644e5390b252a29b8628e53fd728148df50736fa5fecfa1c34d195e"
